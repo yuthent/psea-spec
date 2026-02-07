@@ -21,6 +21,10 @@ Authority is temporal and context-dependent.
 - Hardening sessions
 - Acting as MFA or Zero Trust
 
+## Whitepaper
+
+[psea-post-session-execution-assurance-v1.0.pdf](docs/psea-post-session-execution-assurance-v1.0.pdf)
+
 ## Reference
 
 [https://yuthent.com/psea](https://yuthent.com/psea)
