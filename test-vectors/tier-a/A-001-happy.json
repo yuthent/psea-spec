@@ -1,0 +1,92 @@
+{
+  "id": "A-001-happy",
+  "description": "Tier-A authoritative proof, synchronous server authorize. Should ACCEPT and persist audit.",
+  "actionClass": "CRITICAL",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "counter": 41,
+      "chainHead": "0000000000000000000000000000000000000000000000000000000000000000",
+      "networkReachable": true,
+      "authorizeEndpointHealthy": true
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+    },
+    "actionRequest": {
+      "actionType": "ADD_BENEFICIARY",
+      "amountCents": 5000000,
+      "destinationAccount": "ACCT-PAYEE-NEW",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTUwMDAwMDA"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "A",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "A",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "actionHash": "e30ca8dc770c71da1ebe64bc2e69f6f8328e3a5fdcae31d8cfd85d9bf09c9442",
+      "counter": 42,
+      "chainPrev": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": 1733280000000,
+      "attestation": {
+        "source": "android-key",
+        "chain": [
+          "TESTCHAIN-ROOT",
+          "TESTCHAIN-INTERMEDIATE",
+          "TESTCHAIN-LEAF"
+        ],
+        "nonce": "c2VydmVyLWlzc3VlZC1ub25jZS0wMDE",
+        "notBefore": 1733000000000,
+        "notAfter": 9999999999999,
+        "packageBinding": {
+          "value": "com.example.banking",
+          "enforcement": "strict-cert-chain"
+        }
+      },
+      "biometric": {
+        "modality": "face",
+        "liveness": {
+          "method": "active-challenge",
+          "score": 0.97
+        },
+        "freshness": {
+          "capturedAt": 1733279999000,
+          "windowMs": 30000
+        },
+        "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+      },
+      "policy": {
+        "requestedTier": "A",
+        "actionType": "ADD_BENEFICIARY",
+        "jurisdiction": "US",
+        "retention": "regulated"
+      },
+      "chainEntry": "65ef047bfdccd4a52ecf9fb48866fbb68cb4a64f70e560f3a00e7f6ab5b3ab02"
+    },
+    "signature": "yA4WobAVbvK-fmdQgfDiuGoZnXvbjvWJVC3GCx4LHdateaOuKfpAufvEwOb2UoSYvnXumB-Le_sB0h4b1RWt9Q"
+  },
+  "expected": {
+    "result": "ACCEPT",
+    "auditAppendRequired": true,
+    "merkleAnchorScheduled": true,
+    "advanceCounterTo": 42,
+    "advanceChainTo": "65ef047bfdccd4a52ecf9fb48866fbb68cb4a64f70e560f3a00e7f6ab5b3ab02"
+  }
+}

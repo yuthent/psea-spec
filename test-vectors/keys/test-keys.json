@@ -1,0 +1,37 @@
+{
+  "_warning": "Verifier-side fixture: contains only public keys and the verifier registry needed to validate the committed test vectors. No private key material is published.",
+  "verifierRegistry": {
+    "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe": {
+      "publicKey": "BKxiCUcYzQi_-avW4Hdn_5BbSbq9Fr0JI2GyoNqrTL4OYG9TllgRTn49oq3xez_1uvXoNK_20iC2FJ57HEqGOeU",
+      "trustState": "ENROLLED",
+      "trustStateHash": "f2329d0b0740b4a69e852e09c08b69dd5c2712c2ead3db5301eb694fc3582d83",
+      "counter": 41,
+      "chainHead": "0000000000000000000000000000000000000000000000000000000000000000",
+      "attestationNotAfter": 9999999999999,
+      "tenantPolicy": "REGULATED"
+    },
+    "23fe881dc954c6b9d208862c4f0d139453a9cb2da8bb5b45e6562fc829fab097": {
+      "publicKey": "BAhw13GRRMd31-4GXyov1piBdpUN5JbNO2iD9lkAzpiR-ebWF07FRb8XPed8s4r-lr7ecQ5vyGr_rfld7nSjlM0",
+      "trustState": "ENROLLED",
+      "trustStateHash": "f2329d0b0740b4a69e852e09c08b69dd5c2712c2ead3db5301eb694fc3582d83",
+      "counter": 0,
+      "chainHead": "0000000000000000000000000000000000000000000000000000000000000000",
+      "attestationNotAfter": 9999999999999,
+      "tenantPolicy": "STANDARD"
+    },
+    "b89932f4a6d0d2d56e56e705c8698a100596aa7b0cfdef26fc041436ecd90493": {
+      "publicKey": "BPQLRacrSQj8zo0WELt2EMYBZd-XkzW581i4JZ4Lk3s7dxfKXiIrzrc9kjz8cxcXRYftZySOaAb9iFSMY_viHrY",
+      "trustState": "ENROLLED_DEGRADED",
+      "trustStateHash": "29648925aaeac88861b4865c0f6c8c85c915ca65945f62fb8d518f8b8c0f6c3a",
+      "counter": 100,
+      "chainHead": "9dc9823850c408551b2025d6a3026ab8e88e0aa9e2d61b36a5dbbe7880592781",
+      "attestationNotAfter": 9999999999999,
+      "tenantPolicy": "STANDARD"
+    }
+  },
+  "fixedTimestampMs": 1733280000000,
+  "maxClockSkewMs": 30000,
+  "biometricFreshnessMs": 30000,
+  "sessionTtlMs": 600000,
+  "sessionMaxActions": 128
+}

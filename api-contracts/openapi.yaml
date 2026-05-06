@@ -1,0 +1,489 @@
+openapi: 3.0.3
+info:
+  title: PSEA Verification API
+  version: "1.0.0"
+  summary: |
+    Reference HTTP contract for a Post-Session Execution Assurance (PSEA)
+    verifier. Defines /enroll, /attest, /verify, and /revoke endpoints.
+  description: |
+    This OpenAPI document is the canonical wire contract for the public PSEA
+    verification model defined by `draft-yossif-psea-00`. Conforming verifiers
+    implementing this contract interoperate with conforming PSEA trust-anchor
+    SDKs without proprietary extension.
+
+    Identity and KYC are explicitly out of scope. The verifier accepts an
+    already-identified subject (referenced via `subjectRef`) and asserts only
+    that a specific subject-bound device, in a known trust state, with a fresh
+    biometric where required, approved a specific action.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  contact:
+    name: PSEA Spec
+    url: https://github.com/yuthent/psea-spec
+
+servers:
+  - url: https://verifier.example.com/psea/v1
+    description: Reference deployment
+
+tags:
+  - name: Enrollment
+  - name: Attestation
+  - name: Verification
+  - name: Revocation
+
+paths:
+  /enroll:
+    post:
+      tags: [Enrollment]
+      operationId: enrollDevice
+      summary: Enroll a trust-anchor device.
+      description: |
+        Verifies the device attestation chain and the freshness of the
+        server-issued nonce, then registers the device public key. On success
+        the device transitions from `UNTRUSTED` → `ENROLLED` (see
+        [`spec/state-transitions.md`](../spec/state-transitions.md)).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:  { $ref: "#/components/schemas/EnrollRequest" }
+            examples:
+              android:
+                $ref: "#/components/examples/EnrollAndroid"
+      responses:
+        "200":
+          description: Enrollment accepted; device is now `ENROLLED`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EnrollResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "409":
+          description: Conflict — device already enrolled with a different key.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "422":
+          description: Attestation chain rejected.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /attest/nonce:
+    post:
+      tags: [Attestation]
+      operationId: requestAttestationNonce
+      summary: Issue a one-time nonce for device attestation.
+      description: |
+        Returns a server-issued nonce that the trust-anchor device must embed
+        in its attestation challenge. Each nonce is valid for a single
+        enrollment attempt and expires after `nonceTtlMs`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NonceRequest" }
+      responses:
+        "200":
+          description: Nonce issued.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NonceResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+
+  /verify:
+    post:
+      tags: [Verification]
+      operationId: verifyProof
+      summary: Verify a PSEA proof.
+      description: |
+        The single execution-time entry point. The verifier inspects the proof
+        token, checks all preconditions for its tier, and returns
+        `ACCEPT` or one of the documented `REJECT_*` codes. For Tier A the
+        verifier additionally performs synchronous authorization and audit
+        append before returning.
+      parameters:
+        - in: header
+          name: X-PSEA-Tenant
+          required: true
+          schema: { type: string }
+        - in: header
+          name: X-PSEA-Idempotency-Key
+          required: false
+          schema: { type: string, maxLength: 128 }
+          description: |
+            Optional idempotency key. A retry within `idempotencyWindowMs`
+            with the same key MUST return the original response.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/VerifyRequest" }
+            examples:
+              tierE:
+                $ref: "#/components/examples/VerifyTierE"
+      responses:
+        "200":
+          description: Verification result (may be ACCEPT or REJECT_*).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/VerifyResponse" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/RateLimited" }
+
+  /revoke:
+    post:
+      tags: [Revocation]
+      operationId: revokeDevice
+      summary: Revoke trust for a device.
+      description: |
+        Operator-initiated revocation. Causes the affected device to
+        transition to `REVOKED` on its next sync.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RevokeRequest" }
+      responses:
+        "204":
+          description: Revocation accepted.
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404":
+          description: Device not found.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+components:
+
+  responses:
+    BadRequest:
+      description: Malformed request body or schema violation.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Missing or invalid tenant credentials.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    RateLimited:
+      description: Too many requests; back off.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+      headers:
+        Retry-After:
+          schema: { type: integer, minimum: 1 }
+
+  schemas:
+
+    # -------- Common -----------
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+          enum:
+            - BAD_REQUEST
+            - UNAUTHORIZED
+            - RATE_LIMITED
+            - INTERNAL_ERROR
+            - APP_PACKAGE_MISMATCH
+            - ATTESTATION_NOT_TRUSTWORTHY
+            - ATTESTATION_EXPIRED
+            - NONCE_INVALID
+            - DEVICE_ALREADY_ENROLLED
+            - DEVICE_NOT_FOUND
+            - REJECT_INSUFFICIENT_TIER
+            - REJECT_UNKNOWN_DEVICE
+            - REJECT_STATE_DRIFT
+            - REJECT_TIMESTAMP_OUT_OF_RANGE
+            - REJECT_UNKNOWN_SESSION
+            - REJECT_ACTION_BINDING
+            - REJECT_BAD_SIGNATURE
+            - REJECT_REPLAY
+            - REJECT_CHAIN_BROKEN
+            - REJECT_BIOMETRIC
+            - REJECT_ATTESTATION
+            - REJECT_POLICY_DENY
+            - REJECT_AUDIT_FAILURE
+            - REJECT_OFFLINE_AUTHORITATIVE_BLOCKED
+            - UNSUPPORTED_VERSION
+        message:
+          type: string
+        traceId:
+          type: string
+
+    Tier:
+      type: string
+      enum: [P, S, E, A]
+
+    RiskClass:
+      type: string
+      enum: [LOW, MEDIUM, HIGH, CRITICAL]
+
+    PseaProof:
+      type: object
+      required: [header, body]
+      properties:
+        header:
+          type: object
+          required: [version, tier, algorithm, encoding]
+          properties:
+            version:   { type: integer, enum: [1] }
+            tier:      { $ref: "#/components/schemas/Tier" }
+            algorithm: { type: string, enum: [ES256] }
+            encoding:  { type: string, enum: [JSON, JWS, COSE_Sign1] }
+        body:
+          $ref: "#/components/schemas/PseaProofBody"
+        signature:
+          type: string
+          description: Base64url(R||S) ECDSA-P256 signature over JCS(body). Omitted for Tier P.
+
+    PseaProofBody:
+      type: object
+      required: [tier, deviceId, timestamp]
+      properties:
+        tier:           { $ref: "#/components/schemas/Tier" }
+        deviceId:       { type: string, pattern: "^[0-9a-f]{64}$" }
+        actionHash:     { type: string, pattern: "^[0-9a-f]{64}$" }
+        timestamp:      { type: integer, minimum: 0 }
+        counter:        { type: integer, minimum: 0 }
+        chainPrev:      { type: string, pattern: "^[0-9a-f]{64}$" }
+        chainEntry:     { type: string, pattern: "^[0-9a-f]{64}$" }
+        sessionId:      { type: string }
+        trustStateHash: { type: string, pattern: "^[0-9a-f]{64}$" }
+        attestation:    { $ref: "#/components/schemas/AttestationBlock" }
+        biometric:      { $ref: "#/components/schemas/BiometricBlock"   }
+        policy:         { $ref: "#/components/schemas/PolicyHints"      }
+
+    AttestationBlock:
+      type: object
+      required: [source, chain, nonce, notBefore, notAfter, packageBinding]
+      properties:
+        source:
+          type: string
+          enum: [android-key, android-play-integrity, ios-app-attest, tpm, test]
+        chain:     { type: array, items: { type: string } }
+        nonce:     { type: string }
+        notBefore: { type: integer }
+        notAfter:  { type: integer }
+        packageBinding:
+          type: object
+          required: [value, enforcement]
+          properties:
+            value:       { type: string }
+            enforcement:
+              type: string
+              enum: [strict-cert-chain, client-claim]
+
+    BiometricBlock:
+      type: object
+      required: [modality, liveness, freshness]
+      properties:
+        modality:
+          type: string
+          enum: [face, fingerprint, passkey-uv, iris]
+        liveness:
+          type: object
+          required: [method, score]
+          properties:
+            method:
+              type: string
+              enum: [passive, active-challenge, platform]
+            score: { type: number, minimum: 0, maximum: 1 }
+        freshness:
+          type: object
+          required: [capturedAt, windowMs]
+          properties:
+            capturedAt: { type: integer, minimum: 0 }
+            windowMs:   { type: integer, minimum: 1, maximum: 60000 }
+        sessionRef:           { type: string }
+        platformAttestation:  { type: string }
+
+    PolicyHints:
+      type: object
+      properties:
+        requestedTier: { $ref: "#/components/schemas/Tier" }
+        actionType:    { type: string }
+        jurisdiction:  { type: string, pattern: "^[A-Z]{2}$" }
+        retention:
+          type: string
+          enum: [ephemeral, audit, regulated]
+
+    # -------- /enroll -----------
+
+    NonceRequest:
+      type: object
+      required: [tenantId, deviceCandidatePublicKey, platform]
+      properties:
+        tenantId:                { type: string }
+        deviceCandidatePublicKey:
+          type: string
+          description: Base64url-encoded uncompressed P-256 public key.
+        platform:
+          type: string
+          enum: [android, ios, web, tpm]
+
+    NonceResponse:
+      type: object
+      required: [nonce, nonceTtlMs, expiresAt]
+      properties:
+        nonce:      { type: string }
+        nonceTtlMs: { type: integer, minimum: 1000 }
+        expiresAt:  { type: integer, description: "Unix ms" }
+
+    EnrollRequest:
+      type: object
+      required: [tenantId, deviceCandidatePublicKey, attestation, subjectRef]
+      properties:
+        tenantId:                { type: string }
+        deviceCandidatePublicKey: { type: string }
+        attestation:             { $ref: "#/components/schemas/AttestationBlock" }
+        subjectRef:
+          type: string
+          description: |
+            Opaque, tenant-issued reference to the already-identified subject.
+            PSEA does not perform identity proofing; the relying party is
+            responsible for the subject lookup before calling /enroll.
+
+    EnrollResponse:
+      type: object
+      required: [deviceId, trustState, counter, chainHead, attestationNotAfter]
+      properties:
+        deviceId:            { type: string, pattern: "^[0-9a-f]{64}$" }
+        trustState:
+          type: string
+          enum: [ENROLLED, ENROLLED_DEGRADED]
+        counter:             { type: integer, minimum: 0 }
+        chainHead:           { type: string, pattern: "^[0-9a-f]{64}$" }
+        attestationNotAfter: { type: integer }
+        ackJws:
+          type: string
+          description: |
+            Optional ES256 JWS signed by the verifier confirming the
+            enrollment. The trust-anchor SDK SHOULD pin the verifier's public
+            key and validate this ACK.
+
+    # -------- /verify -----------
+
+    VerifyRequest:
+      type: object
+      required: [proof, actionRequest, actionClass]
+      properties:
+        proof:         { $ref: "#/components/schemas/PseaProof" }
+        actionRequest:
+          type: object
+          description: |
+            The opaque relying-party action that the proof is binding to. The
+            verifier SHALL compute `H(JCS(actionRequest))` and compare with
+            `proof.body.actionHash`.
+        actionClass:   { $ref: "#/components/schemas/RiskClass" }
+
+    VerifyResponse:
+      type: object
+      required: [result]
+      properties:
+        result:
+          type: string
+          enum:
+            - ACCEPT
+            - REJECT_INSUFFICIENT_TIER
+            - REJECT_UNKNOWN_DEVICE
+            - REJECT_STATE_DRIFT
+            - REJECT_TIMESTAMP_OUT_OF_RANGE
+            - REJECT_UNKNOWN_SESSION
+            - REJECT_ACTION_BINDING
+            - REJECT_BAD_SIGNATURE
+            - REJECT_REPLAY
+            - REJECT_CHAIN_BROKEN
+            - REJECT_BIOMETRIC
+            - REJECT_ATTESTATION
+            - REJECT_POLICY_DENY
+            - REJECT_AUDIT_FAILURE
+            - REJECT_OFFLINE_AUTHORITATIVE_BLOCKED
+        authorizationId:
+          type: string
+          description: Present only when `result == ACCEPT` and `proof.header.tier == "A"`.
+        chainHead:
+          type: string
+          pattern: "^[0-9a-f]{64}$"
+          description: New chain head after this verification (Tier E/A only).
+        counter:
+          type: integer
+          description: New counter value after this verification (Tier E/A only).
+        traceId:    { type: string }
+
+    # -------- /revoke -----------
+
+    RevokeRequest:
+      type: object
+      required: [tenantId, deviceId, reason]
+      properties:
+        tenantId: { type: string }
+        deviceId: { type: string, pattern: "^[0-9a-f]{64}$" }
+        reason:
+          type: string
+          enum:
+            - OPERATOR_REQUESTED
+            - SUBJECT_LOST_DEVICE
+            - SUBJECT_OFFBOARDED
+            - FRAUD_DETECTED
+            - ATTESTATION_EXPIRED
+            - CHAIN_BROKEN
+
+  examples:
+    EnrollAndroid:
+      summary: Android enrollment with Key Attestation
+      value:
+        tenantId: "tenant-acme"
+        deviceCandidatePublicKey: "BEy…"
+        subjectRef: "subj-1234"
+        attestation:
+          source: "android-key"
+          chain: ["MIIB…", "MIIC…"]
+          nonce: "Vk9Z…"
+          notBefore: 1733000000000
+          notAfter:  9999999999999
+          packageBinding: { value: "com.example.banking", enforcement: "strict-cert-chain" }
+
+    VerifyTierE:
+      summary: Tier-E verify request
+      value:
+        actionClass: "HIGH"
+        actionRequest:
+          actionType: "TRANSFER"
+          amountCents: 50000
+          destinationAccount: "ACCT-1001"
+          currency: "USD"
+          nonceB64u: "YWN0aW9uLW5vbmNlLTUwMDAw"
+        proof:
+          header: { version: 1, tier: "E", algorithm: "ES256", encoding: "JSON" }
+          body:
+            tier: "E"
+            deviceId: "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe"
+            actionHash: "5aa69980f391150862cc98e6dfc9acac686234e0cd1d2b451338d42e315e05f8"
+            counter: 42
+            chainPrev: "0000000000000000000000000000000000000000000000000000000000000000"
+            timestamp: 1733280000000
+            attestation:
+              source: "android-key"
+              chain: ["TESTCHAIN-ROOT", "TESTCHAIN-INTERMEDIATE", "TESTCHAIN-LEAF"]
+              nonce: "c2VydmVyLWlzc3VlZC1ub25jZS0wMDE"
+              notBefore: 1733000000000
+              notAfter:  9999999999999
+              packageBinding: { value: "com.example.banking", enforcement: "strict-cert-chain" }
+            biometric:
+              modality: "face"
+              liveness: { method: "active-challenge", score: 0.97 }
+              freshness: { capturedAt: 1733279999000, windowMs: 30000 }
+              platformAttestation: "TEST-PLATFORM-BIO-ATTESTATION"
+            chainEntry: "d120b2017ada61242f4d3f82b7e85e8b90d50cc056bc3180956e42b660bf4ec3"
+          signature: "6B5y_aUadslSTUIexaRnmJUhstmkLmnVJJdzH_DSswCLFhVhty6rStgxAbYaz1_fsX8OmzGin7P4f_1PPEkSxQ"

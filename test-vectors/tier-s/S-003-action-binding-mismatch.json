@@ -1,0 +1,56 @@
+{
+  "id": "S-003-action-binding-mismatch",
+  "description": "Tier-S proof whose actionHash does not match the request body. Should REJECT_ACTION_BINDING.",
+  "actionClass": "MEDIUM",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "session": {
+        "id": "sess-316352085af2ac04",
+        "biometricUnlockedAt": 1733279999000,
+        "actionIndex": 1,
+        "processId": "proc-1"
+      }
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION",
+      "sessionRef": "sess-316352085af2ac04"
+    },
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 5000,
+      "destinationAccount": "ACCT-1234",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTUwMDA"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "S",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "S",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "sessionId": "sess-316352085af2ac04",
+      "actionHash": "ae598154c098be8cd399e598f67208691077bddc8ea84c6b2d429f07c456ffea",
+      "timestamp": 1733280000000
+    },
+    "signature": "HiGweV3BXy_0vGUqBvtlf3hNd--R2J9NOIq016FkGX35BrQnZRkl9POadYhbZva8Y1SIUQTg56rNxLFe3CkBnw"
+  },
+  "expected": {
+    "result": "REJECT_ACTION_BINDING"
+  }
+}

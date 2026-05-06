@@ -1,0 +1,80 @@
+{
+  "id": "E-003-broken-chain",
+  "description": "Tier-E proof whose chainPrev does not match the verifier's chain head. Should REJECT_CHAIN_BROKEN.",
+  "actionClass": "HIGH",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "counter": 41,
+      "chainHead": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+    },
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 25000,
+      "destinationAccount": "ACCT-1003",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTI1MDAw"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "E",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "E",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "actionHash": "e2d70bf7c75df9d6b51b0f4fc55ea1fa2268eaf32d81ae7b60012c5eafb15c26",
+      "counter": 42,
+      "chainPrev": "c3dc7483f35db366ae3f6d842c5b14cf5b5d02a5c165cf7262ff55a9c134e8ac",
+      "timestamp": 1733280000000,
+      "attestation": {
+        "source": "android-key",
+        "chain": [
+          "TESTCHAIN-ROOT",
+          "TESTCHAIN-INTERMEDIATE",
+          "TESTCHAIN-LEAF"
+        ],
+        "nonce": "c2VydmVyLWlzc3VlZC1ub25jZS0wMDE",
+        "notBefore": 1733000000000,
+        "notAfter": 9999999999999,
+        "packageBinding": {
+          "value": "com.example.banking",
+          "enforcement": "strict-cert-chain"
+        }
+      },
+      "biometric": {
+        "modality": "face",
+        "liveness": {
+          "method": "active-challenge",
+          "score": 0.97
+        },
+        "freshness": {
+          "capturedAt": 1733279999000,
+          "windowMs": 30000
+        },
+        "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+      },
+      "chainEntry": "efd3563d70ed0bff1c3602d1cbda9641fec9d6c9c95024f9cc9ab0b0ee44f9bc"
+    },
+    "signature": "v-J7WGE167eTBxb_8HEYIzV4XCbPD1dEjnwlBD7jgUhPAmqR1cQ6yh4UfAzv-xob7Z9vBVq2gO888_VQsJJJaA"
+  },
+  "expected": {
+    "result": "REJECT_CHAIN_BROKEN"
+  }
+}

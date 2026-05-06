@@ -1,0 +1,56 @@
+{
+  "id": "S-001-happy",
+  "description": "Tier-S session-cached proof, happy path. Should ACCEPT.",
+  "actionClass": "MEDIUM",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "session": {
+        "id": "sess-316352085af2ac04",
+        "biometricUnlockedAt": 1733279999000,
+        "actionIndex": 1,
+        "processId": "proc-1"
+      }
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION",
+      "sessionRef": "sess-316352085af2ac04"
+    },
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 5000,
+      "destinationAccount": "ACCT-1234",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTUwMDA"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "S",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "S",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "sessionId": "sess-316352085af2ac04",
+      "actionHash": "17867e54e2eb5f9e5e820bdc57d181b8a15d275f10cc46ae6d3ec0d39f567766",
+      "timestamp": 1733280000000
+    },
+    "signature": "8spAMcqGF3L6VmZQ7naUROkqRTeXR-JOuAc5bJopSUNSVqep3-0XCOyzk1b8cN2VG0N07Dj79JLJlm-2sqyjGw"
+  },
+  "expected": {
+    "result": "ACCEPT"
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "id": "S-004-unknown-session",
+  "description": "Tier-S proof referencing a session the verifier has no record of. Should REJECT_UNKNOWN_SESSION.",
+  "actionClass": "MEDIUM",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "session": null
+    },
+    "biometricAssertion": null,
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 7500,
+      "destinationAccount": "ACCT-2345",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTc1MDA"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "S",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "S",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "sessionId": "sess-deadbeef00000000",
+      "actionHash": "cf8c3c460f3a4c28aa6a57be10d031e83c371b5555c1ef1778a8e4c3f9586f5e",
+      "timestamp": 1733280000000
+    },
+    "signature": "AoAAJO5tfWaUv28hWVXSKDGrcy8X_dlw6mMyZzXkAbVIHrrE-fC5C76gvtuC9cDp4koygNtcGUSaQhmLPNCdYw"
+  },
+  "expected": {
+    "result": "REJECT_UNKNOWN_SESSION"
+  }
+}

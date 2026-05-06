@@ -1,0 +1,80 @@
+{
+  "id": "E-002-replay-counter-regression",
+  "description": "Tier-E proof whose counter has already been seen. Should REJECT_REPLAY.",
+  "actionClass": "HIGH",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "counter": 41,
+      "chainHead": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+    },
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 10000,
+      "destinationAccount": "ACCT-1002",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTEwMDAw"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "E",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "E",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "actionHash": "7204d14821827b68c425eb34bc972fd8f77b38c06aac1d49e0ed3345a806a45a",
+      "counter": 10,
+      "chainPrev": "0000000000000000000000000000000000000000000000000000000000000000",
+      "timestamp": 1733280000000,
+      "attestation": {
+        "source": "android-key",
+        "chain": [
+          "TESTCHAIN-ROOT",
+          "TESTCHAIN-INTERMEDIATE",
+          "TESTCHAIN-LEAF"
+        ],
+        "nonce": "c2VydmVyLWlzc3VlZC1ub25jZS0wMDE",
+        "notBefore": 1733000000000,
+        "notAfter": 9999999999999,
+        "packageBinding": {
+          "value": "com.example.banking",
+          "enforcement": "strict-cert-chain"
+        }
+      },
+      "biometric": {
+        "modality": "face",
+        "liveness": {
+          "method": "active-challenge",
+          "score": 0.97
+        },
+        "freshness": {
+          "capturedAt": 1733279999000,
+          "windowMs": 30000
+        },
+        "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+      },
+      "chainEntry": "c6353cd9b7b4e91816c3a881093bb640c8509fd018f2c30cf89c3f7d2e4694b7"
+    },
+    "signature": "e2E2zC6Gc13ER0GzJpUZOZmhf63igleUS-pLyUFoyBHXLTVjOmS1-StjG_72C-ro1hflnu_rzkuJiqt879rWIQ"
+  },
+  "expected": {
+    "result": "REJECT_REPLAY"
+  }
+}

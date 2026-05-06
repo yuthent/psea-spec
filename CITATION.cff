@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+message: "If you use this specification, please cite it as below."
+title: "Post-Session Execution Assurance (PSEA): Reference Specification"
+abstract: >
+  Reference specification for the PSEA security model — cryptographic proof
+  of authority at the moment of action, independent of session state.
+  Companion to IETF Internet-Draft draft-yossif-psea-00.
+type: software
+version: "1.0.0"
+date-released: 2026-05-04
+license: MIT
+url: "https://github.com/yuthent/psea-spec"
+repository-code: "https://github.com/yuthent/psea-spec"
+authors:
+  - family-names: Yossif
+    given-names: Mohamad
+    name-particle: Khalil
+    affiliation: Yuthent
+    email: mohamad@yuthent.com
+keywords:
+  - PSEA
+  - post-session
+  - execution assurance
+  - authority verification
+  - cryptographic proof
+  - device attestation
+  - biometric
+  - hash chain
+references:
+  - type: report
+    title: "Post-Session Execution Assurance (PSEA): A Security Model for Verifying Authority at the Moment of Action"
+    authors:
+      - family-names: Yossif
+        given-names: Mohamad
+        name-particle: Khalil
+    institution:
+      name: "Internet Engineering Task Force"
+    date-released: 2026-02-07
+    url: "https://datatracker.ietf.org/doc/draft-yossif-psea/"
+    notes: "Internet-Draft draft-yossif-psea-00 (informational, individual submission)."
+preferred-citation:
+  type: report
+  title: "Post-Session Execution Assurance (PSEA): A Security Model for Verifying Authority at the Moment of Action"
+  authors:
+    - family-names: Yossif
+      given-names: Mohamad
+      name-particle: Khalil
+  institution:
+    name: "Yuthent"
+  year: 2026
+  url: "https://yuthent.com/psea"

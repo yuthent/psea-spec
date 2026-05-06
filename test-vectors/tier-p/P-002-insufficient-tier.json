@@ -1,0 +1,33 @@
+{
+  "id": "P-002-insufficient-tier",
+  "description": "Tier-P proof submitted for a HIGH-risk action. Should REJECT_INSUFFICIENT_TIER.",
+  "actionClass": "HIGH",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED"
+    },
+    "biometricAssertion": null,
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 1000000
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "P",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "P",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "timestamp": 1733280000000,
+      "trustStateHash": "f2329d0b0740b4a69e852e09c08b69dd5c2712c2ead3db5301eb694fc3582d83"
+    }
+  },
+  "expected": {
+    "result": "REJECT_INSUFFICIENT_TIER"
+  }
+}

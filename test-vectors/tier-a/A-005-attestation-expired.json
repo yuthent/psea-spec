@@ -1,0 +1,82 @@
+{
+  "id": "A-005-attestation-expired",
+  "description": "Tier-A proof with an expired device attestation. Should REJECT_ATTESTATION.",
+  "actionClass": "CRITICAL",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "counter": 42,
+      "chainHead": "65ef047bfdccd4a52ecf9fb48866fbb68cb4a64f70e560f3a00e7f6ab5b3ab02",
+      "networkReachable": true,
+      "authorizeEndpointHealthy": true
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+    },
+    "actionRequest": {
+      "actionType": "ADD_BENEFICIARY",
+      "amountCents": 1000000,
+      "destinationAccount": "ACCT-PAYEE-NEW5",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTEwMDAwMDA"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "A",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "A",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "actionHash": "1170b36c8959c88a2ad1d057b119d2e70f6a6ffbf95305400d09641ac46bd0b5",
+      "counter": 43,
+      "chainPrev": "65ef047bfdccd4a52ecf9fb48866fbb68cb4a64f70e560f3a00e7f6ab5b3ab02",
+      "timestamp": 1733280000000,
+      "attestation": {
+        "source": "android-key",
+        "chain": [
+          "TESTCHAIN-ROOT",
+          "TESTCHAIN-INTERMEDIATE",
+          "TESTCHAIN-LEAF"
+        ],
+        "nonce": "c2VydmVyLWlzc3VlZC1ub25jZS0wMDE",
+        "notBefore": 1733000000000,
+        "notAfter": 1733279999999,
+        "packageBinding": {
+          "value": "com.example.banking",
+          "enforcement": "strict-cert-chain"
+        }
+      },
+      "biometric": {
+        "modality": "face",
+        "liveness": {
+          "method": "active-challenge",
+          "score": 0.97
+        },
+        "freshness": {
+          "capturedAt": 1733279999000,
+          "windowMs": 30000
+        },
+        "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION"
+      },
+      "chainEntry": "72f372a36117126d911383f8ca27d6452f5aba80b16bdead55fd53ce01dac670"
+    },
+    "signature": "fBa8FRFBEyRfgxdOcL9gz_I6ls5-wmZQ8fO2cny_zsZ6YPsDCoeb7Ylu53FoYLaEzes9AbkOUZlO3DINUcjSGw"
+  },
+  "expected": {
+    "result": "REJECT_ATTESTATION"
+  }
+}

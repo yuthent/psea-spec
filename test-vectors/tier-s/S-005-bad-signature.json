@@ -1,0 +1,56 @@
+{
+  "id": "S-005-bad-signature",
+  "description": "Tier-S proof signed by a key that is not the session-bound signing key. Should REJECT_BAD_SIGNATURE.",
+  "actionClass": "MEDIUM",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED",
+      "session": {
+        "id": "sess-316352085af2ac04",
+        "biometricUnlockedAt": 1733279999000,
+        "actionIndex": 1,
+        "processId": "proc-1"
+      }
+    },
+    "biometricAssertion": {
+      "modality": "face",
+      "liveness": {
+        "method": "active-challenge",
+        "score": 0.97
+      },
+      "freshness": {
+        "capturedAt": 1733279999000,
+        "windowMs": 30000
+      },
+      "platformAttestation": "TEST-PLATFORM-BIO-ATTESTATION",
+      "sessionRef": "sess-316352085af2ac04"
+    },
+    "actionRequest": {
+      "actionType": "TRANSFER",
+      "amountCents": 2000,
+      "destinationAccount": "ACCT-3456",
+      "currency": "USD",
+      "nonceB64u": "YWN0aW9uLW5vbmNlLTIwMDA"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "S",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "S",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "sessionId": "sess-316352085af2ac04",
+      "actionHash": "c9976bb2b5be6d0a19dab05248ef09674a1f01acfa7d058946e740a8028a0af6",
+      "timestamp": 1733280000000
+    },
+    "signature": "yBEgc0vzCEmqn0Heb2ZgmbDSHTw0wPkr7wW0nmLjUswEPo6d7HPOi4jvWJVyQMOil-OI1hOKWNjiU2dSPqBpFA"
+  },
+  "expected": {
+    "result": "REJECT_BAD_SIGNATURE"
+  }
+}

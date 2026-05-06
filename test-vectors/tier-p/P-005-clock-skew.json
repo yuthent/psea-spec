@@ -1,0 +1,32 @@
+{
+  "id": "P-005-clock-skew",
+  "description": "Tier-P proof with timestamp far outside the allowed clock skew. Should REJECT_TIMESTAMP_OUT_OF_RANGE.",
+  "actionClass": "LOW",
+  "input": {
+    "deviceState": {
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "trustState": "ENROLLED"
+    },
+    "biometricAssertion": null,
+    "actionRequest": {
+      "actionType": "RISK_CHECK"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "P",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "P",
+      "deviceId": "d7d612b4635b973b94288fdef2903e833cec059e2e96f42f93a14ea5c24f3afe",
+      "timestamp": 1733279400000,
+      "trustStateHash": "f2329d0b0740b4a69e852e09c08b69dd5c2712c2ead3db5301eb694fc3582d83"
+    }
+  },
+  "expected": {
+    "result": "REJECT_TIMESTAMP_OUT_OF_RANGE"
+  }
+}

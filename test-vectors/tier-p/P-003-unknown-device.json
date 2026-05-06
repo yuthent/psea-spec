@@ -1,0 +1,32 @@
+{
+  "id": "P-003-unknown-device",
+  "description": "Tier-P proof from an unenrolled (evil) device. Should REJECT_UNKNOWN_DEVICE.",
+  "actionClass": "LOW",
+  "input": {
+    "deviceState": {
+      "deviceId": "7f204be1f6baad4f2c00650da11878d0085fd622f39710515ceac6d9e856a203",
+      "trustState": "ENROLLED"
+    },
+    "biometricAssertion": null,
+    "actionRequest": {
+      "actionType": "RISK_CHECK"
+    }
+  },
+  "proofToken": {
+    "header": {
+      "version": 1,
+      "tier": "P",
+      "algorithm": "ES256",
+      "encoding": "JSON"
+    },
+    "body": {
+      "tier": "P",
+      "deviceId": "7f204be1f6baad4f2c00650da11878d0085fd622f39710515ceac6d9e856a203",
+      "timestamp": 1733280000000,
+      "trustStateHash": "f2329d0b0740b4a69e852e09c08b69dd5c2712c2ead3db5301eb694fc3582d83"
+    }
+  },
+  "expected": {
+    "result": "REJECT_UNKNOWN_DEVICE"
+  }
+}
