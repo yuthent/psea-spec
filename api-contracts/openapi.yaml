@@ -7,7 +7,7 @@ info:
     verifier. Defines /enroll, /attest, /verify, and /revoke endpoints.
   description: |
     This OpenAPI document is the canonical wire contract for the public PSEA
-    verification model defined by `draft-yossif-psea-00`. Conforming verifiers
+    verification model defined by `draft-yossif-psea-01`. Conforming verifiers
     implementing this contract interoperate with conforming PSEA trust-anchor
     SDKs without proprietary extension.
 

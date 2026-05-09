@@ -3,7 +3,7 @@
 > Formal state machine for PSEA trust states, allowed transitions, and the
 > trigger conditions that drive each transition.
 >
-> Companion to **draft-yossif-psea-00**, §"Device-Bound Trust" and §"Human
+> Companion to **draft-yossif-psea-01**, §"Device-Bound Trust" and §"Human
 > Presence Assurance".
 
 ---

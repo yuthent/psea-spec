@@ -3,7 +3,7 @@
 > STRIDE-style threat model: threats addressed, threats explicitly out of
 > scope, and assumptions about the trust-anchor device.
 >
-> Companion to **draft-yossif-psea-00**, §"The Broken Assumption of Sessions"
+> Companion to **draft-yossif-psea-01**, §"The Broken Assumption of Sessions"
 > and §"The Authority Gap".
 
 ---

@@ -4,7 +4,7 @@
 > Explicit (E), and Authoritative (A) — including their cryptographic preconditions,
 > payload structure, and verification logic.
 >
-> Companion to **draft-yossif-psea-00**, §"Core Principles of PSEA".
+> Companion to **draft-yossif-psea-01**, §"Core Principles of PSEA".
 
 This document is normative for the public PSEA model. It does not prescribe the
 choice of biometric modality, device-attestation provider, or transport. Any

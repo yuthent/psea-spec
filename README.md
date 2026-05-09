@@ -5,7 +5,7 @@ authority at the moment a sensitive action is executed, independent of any
 session.
 
 This repository is the technical artifact cited by the IETF Internet-Draft
-**`draft-yossif-psea-00`**. It defines the public PSEA model in enough detail
+**`draft-yossif-psea-01`**. It defines the public PSEA model in enough detail
 that a third-party can build a conforming verifier without referencing any
 proprietary implementation.
 
@@ -13,7 +13,7 @@ proprietary implementation.
 
 | Path                                                                                  | Purpose |
 |---------------------------------------------------------------------------------------|---------|
-| [`docs/draft-yossif-psea-00.md`](docs/draft-yossif-psea-00.md)                         | The IETF Internet-Draft (informational). |
+| [`docs/ietf/draft-yossif-psea-01.txt`](docs/ietf/draft-yossif-psea-01.txt)                         | The IETF Internet-Draft (informational). |
 | [`docs/psea-post-session-execution-assurance-v1.0.pdf`](docs/psea-post-session-execution-assurance-v1.0.pdf) | Whitepaper, narrative form. |
 | [`spec/tier-definitions.md`](spec/tier-definitions.md)                                | Formal definition of the four enforcement tiers (P/S/E/A) with ABNF and pseudocode. |
 | [`spec/proof-token-format.md`](spec/proof-token-format.md)                            | Proof token structure: attestation block, biometric block, hash chain, signature envelope. JSON Schema + CBOR notes. |
@@ -48,7 +48,7 @@ node --experimental-strip-types examples/typescript/psea-verify.ts
 4. **Cryptographic proof** — independently verifiable, replay-resistant signatures.
 5. **Connectivity independence** — proof generation does not require real-time network.
 
-Full text in [`docs/draft-yossif-psea-00.md`](docs/draft-yossif-psea-00.md), §"Core Principles of PSEA".
+Full text in [`docs/ietf/draft-yossif-psea-01.txt`](docs/ietf/draft-yossif-psea-01.txt), §"Core Principles of PSEA".
 
 ## Non-goals
 
@@ -67,7 +67,7 @@ executable specifications.
 
 ## Status
 
-- IETF draft: `draft-yossif-psea-00` (informational, individual submission)
+- IETF draft: `draft-yossif-psea-01` (informational, individual submission)
 - Spec version: **1.0**
 - Last updated: 2026-05-04
 

@@ -47,7 +47,7 @@ cryptographers, security engineers, and standards reviewers.
    Proposals that would change vectors require a normative spec proposal —
    see issue process. Do not hand-edit JSON vectors.
 5. **Commit message convention** — every commit MUST reference the section
-   of `draft-yossif-psea-00` it implements:
+   of `draft-yossif-psea-01` it implements:
 
    ```
    Implements §"Core Principles of PSEA": tier-definitions for P/S/E/A

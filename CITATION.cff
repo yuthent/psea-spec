@@ -4,7 +4,7 @@ title: "Post-Session Execution Assurance (PSEA): Reference Specification"
 abstract: >
   Reference specification for the PSEA security model — cryptographic proof
   of authority at the moment of action, independent of session state.
-  Companion to IETF Internet-Draft draft-yossif-psea-00.
+  Companion to IETF Internet-Draft draft-yossif-psea-01.
 type: software
 version: "1.0.0"
 date-released: 2026-05-04
@@ -37,7 +37,7 @@ references:
       name: "Internet Engineering Task Force"
     date-released: 2026-02-07
     url: "https://datatracker.ietf.org/doc/draft-yossif-psea/"
-    notes: "Internet-Draft draft-yossif-psea-00 (informational, individual submission)."
+    notes: "Internet-Draft draft-yossif-psea-01 (informational, individual submission)."
 preferred-citation:
   type: report
   title: "Post-Session Execution Assurance (PSEA): A Security Model for Verifying Authority at the Moment of Action"

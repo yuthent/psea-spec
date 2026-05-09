@@ -4,7 +4,7 @@
 > biometric-assertion block, hash-chain entry, and signature envelope. Includes
 > JSON Schema and CBOR encoding examples.
 >
-> Companion to **draft-yossif-psea-00**, §"Cryptographic Proof".
+> Companion to **draft-yossif-psea-01**, §"Cryptographic Proof".
 
 ---
 
