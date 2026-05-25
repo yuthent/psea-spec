@@ -368,20 +368,20 @@
           <t>Trust is established through cryptographic mechanisms, not inferred from session tokens,
           cookies, or bearer credentials. The Evidence <bcp14>MUST</bcp14> be independently verifiable and
           resistant to replay, forgery, and delegation.</t>
-          <t>The Tier E and Tier A proof and the Verifier acknowledgement are carried as JWS Compact
-          Serialization (<xref target="RFC7515"/>): the signature covers the received
-          <tt>BASE64URL(header) || "." || BASE64URL(payload)</tt> octets, so peer verification is over
-          the bytes on the wire and does not depend on re-canonicalization of the claim set. Canonical
-          encoding per <xref target="canonical-encoding"/> -- a simplified subset of the JSON
-          Canonicalization Scheme (<xref target="RFC8785"/>) -- remains load-bearing for the three places
-          where a signature or hash is taken over canonical JSON octets: (a) the action-payload binding
-          (the SHA-256 over the canonical <tt>actionPayload</tt> that the Verifier re-computes and
-          compares against the signed payload-hash claim; <xref target="action-binding"/>), (b) the
-          Tier P PToken signed body, and (c) the Tier S SessionSummary signed body. The simplification --
-          integer-only numeric serialization -- is documented in
-          <xref target="canonical-encoding-numbers"/>; an implementation that requires full
-          <xref target="RFC8785"/> conformance produces output identical to
-          <xref target="canonical-encoding"/> for all payload schemas defined in this revision.</t>
+          <t>All four PSEA tiers and the Verifier acknowledgement are carried as JWS Compact
+          Serialization (<xref target="RFC7515"/>): the Tier E / Tier A proof, the Tier P PToken, the
+          Tier S SessionSummary, and the Tier E / Tier A acknowledgement are each a compact JWS whose
+          signature covers the received <tt>BASE64URL(header) || "." || BASE64URL(payload)</tt> octets,
+          so peer verification is over the bytes on the wire and does not depend on re-canonicalization
+          of the claim set. Canonical encoding per <xref target="canonical-encoding"/> -- a simplified
+          subset of the JSON Canonicalization Scheme (<xref target="RFC8785"/>) -- remains load-bearing
+          for exactly one place where a hash is taken over canonical JSON octets: the action-payload
+          binding (the SHA-256 over the canonical <tt>actionPayload</tt> that the Verifier re-computes
+          and compares against the signed <tt>psea_payload_hash</tt> claim;
+          <xref target="action-binding"/>). The simplification -- integer-only numeric serialization --
+          is documented in <xref target="canonical-encoding-numbers"/>; an implementation that requires
+          full <xref target="RFC8785"/> conformance produces output identical to
+          <xref target="canonical-encoding"/> for that action-payload hash.</t>
         </section>
 
         <section anchor="connectivity-independence" numbered="true">
@@ -558,22 +558,19 @@
     <section anchor="canonical-encoding" numbered="true" toc="default">
       <name>Canonical Encoding of Proof Payloads</name>
 
-      <t>The canonical encoding rules in this section apply wherever a PSEA signature or hash is taken
-      over canonical JSON octets. With the migration of the Tier E and Tier A proof and the Verifier
-      acknowledgement to JWS Compact Serialization (<xref target="proof-token-format"/>), whose signatures
-      cover the received wire octets directly, canonical encoding is no longer load-bearing for verifying
-      those JWS objects. It remains <bcp14>MUST</bcp14>-strength for the following three uses, each of
-      which signs or hashes canonical JSON bytes with a detached ECDSA P-256 signature or a SHA-256
-      digest:</t>
+      <t>The canonical encoding rules in this section apply wherever a PSEA hash is taken over canonical
+      JSON octets. All four PSEA tiers and the Verifier acknowledgement are now carried as JWS Compact
+      Serialization (<xref target="proof-token-format"/>), whose signatures cover the received wire octets
+      directly; canonical encoding is therefore not load-bearing for verifying any of those JWS objects.
+      It remains <bcp14>MUST</bcp14>-strength for exactly one use, in which the producer and the Verifier
+      independently hash canonical JSON bytes with SHA-256 and compare the result:</t>
       <ul>
         <li>the action-payload binding -- the SHA-256 over the canonical <tt>actionPayload</tt> that
-        produces the signed payload-hash claim, which the Verifier independently re-computes and compares
-        (<xref target="action-binding"/>);</li>
-        <li>the Tier P PToken signed body (<xref target="tier-p"/>); and</li>
-        <li>the Tier S SessionSummary signed body (<xref target="tier-s"/>).</li>
+        produces the signed <tt>psea_payload_hash</tt> claim, which the Verifier independently re-computes
+        and compares (<xref target="action-binding"/>).</li>
       </ul>
-      <t>For these three uses, implementations that deviate from the rules below will produce byte
-      sequences that fail signature verification or payload-binding comparison on peer platforms.</t>
+      <t>For this use, implementations that deviate from the rules below will produce byte sequences that
+      fail the payload-binding comparison on peer platforms.</t>
 
       <t>The canonical encoding defined here is a simplified subset of the JSON Canonicalization Scheme
       (JCS) specified in <xref target="RFC8785"/>. Implementers <bcp14>MUST</bcp14> read this section in
@@ -721,8 +718,9 @@
       those inputs.</t>
 
       <t>Tier P (PToken, <xref target="tier-p"/>) and Tier S (SessionSummary, <xref target="tier-s"/>)
-      are NOT JWS. They retain a canonical-JSON signed body with a detached ECDSA P-256 signature, as
-      specified in their respective sections; this document does not convert them.</t>
+      are also JWS Compact Serialization objects, distinguished from the Tier E / Tier A proof only by
+      their protected-header <tt>typ</tt> value, their <tt>kid</tt> derivation, and their claim set, as
+      specified in their respective sections. All four tiers share one uniform compact-JWS wire format.</t>
 
       <section anchor="proof-top-level" numbered="true">
         <name>Top-Level Structure (Tier E and Tier A)</name>
@@ -766,6 +764,10 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- psea_chain_prev      ; 64-char lowercase hex
   |                        ;   (sentinel: 64 ASCII '0' for first proof)
   +-- psea_trust_state     ; "TRUSTED"
+  +-- psea_uv              ; { "verified": bool, "method": string }
+  |                        ;   user-verification claim (REQUIRED on E/A;
+  |                        ;   see Section 4.6.1). MUST NOT appear in
+  |                        ;   a Tier P PToken.
   +-- psea_proof_version   ; "2"
   +-- psea_caller_package  ; reverse-DNS app identifier
   +-- psea_sdk_version     ; Attester implementation version
@@ -816,10 +818,10 @@ persists it as the next proof's psea_chain_prev.
         (<xref target="action-binding"/>). Because a compact JWS has a single authoritative payload, the
         proof carries no envelope-level duplicates of the signed claims.</t>
 
-        <t>Tier P proofs and Tier S proofs use distinct signed-body structures, distinct endpoints, and
-        the non-JWS canonical-body-plus-detached-signature representation; see <xref target="tier-p"/>
-        (PToken, <tt>/trustAttest</tt>) and <xref target="tier-s"/> (SessionSummary,
-        <tt>/sessionBatch</tt>) respectively.</t>
+        <t>Tier P proofs and Tier S proofs use the same compact-JWS representation with distinct
+        protected-header <tt>typ</tt> values, distinct claim sets, and distinct endpoints; see
+        <xref target="tier-p"/> (PToken, <tt>/trustAttest</tt>) and <xref target="tier-s"/>
+        (SessionSummary, <tt>/sessionBatch</tt>) respectively.</t>
       </section>
 
       <section anchor="envelope-body-consistency" numbered="true">
@@ -839,10 +841,11 @@ persists it as the next proof's psea_chain_prev.
         payload. There are no pre-signature lookup copies of these values to reconcile.</t>
 
         <t>The legacy envelope-body mismatch codes <tt>TOKEN_ACTIONID_MISMATCH</tt> and
-        <tt>TOKEN_COUNTER_MISMATCH</tt> do not apply to the JWS proof format. They are retained in the
-        error-code registry (<xref target="error-code-registry"/>) only for the non-JWS tiers and for
-        legacy compatibility, where a separate envelope copy of an identifier or counter can still
-        diverge from the canonical signed body.</t>
+        <tt>TOKEN_COUNTER_MISMATCH</tt> do not apply to the compact-JWS format. Now that all four tiers
+        carry a single authoritative JWS payload with no envelope-level duplicates, these codes are
+        retained in the error-code registry (<xref target="error-code-registry"/>) only for legacy
+        compatibility with pre-JWS producers that carried a separate envelope copy of an identifier or
+        counter alongside the signed body.</t>
       </section>
 
       <section anchor="proof-schema" numbered="true">
@@ -864,8 +867,8 @@ persists it as the next proof's psea_chain_prev.
   "required": [
     "jti", "aud", "iss", "iat", "exp", "ueid", "submods",
     "psea_tier", "psea_counter", "psea_payload_hash", "psea_chain_prev",
-    "psea_trust_state", "psea_proof_version", "psea_caller_package",
-    "psea_sdk_version"
+    "psea_trust_state", "psea_uv", "psea_proof_version",
+    "psea_caller_package", "psea_sdk_version"
   ],
   "properties": {
     "jti":  { "type": "string", "minLength": 1, "maxLength": 128,
@@ -912,6 +915,23 @@ persists it as the next proof's psea_chain_prev.
               "description": "64-char lowercase hex; sentinel 64 ASCII '0'
                               for the first proof." },
     "psea_trust_state": { "type": "string", "enum": ["TRUSTED"] },
+    "psea_uv": { "type": "object",
+              "required": ["verified", "method"],
+              "properties": {
+                "verified": { "type": "boolean",
+                  "description": "Whether a contemporaneous user-
+                                  verification event gated this signature." },
+                "method": { "type": "string",
+                  "description": "User-verification method. Extensible enum;
+                                  registered baseline values include
+                                  \"biometric\", \"pin\", \"fido_uv\".
+                                  Unknown values MUST be tolerated." }
+              },
+              "description": "User-verification claim. REQUIRED on Tier E and
+                              Tier A. The Verifier MUST require verified==true
+                              and MUST cross-check it against the
+                              authenticator's attested UV-enforcement where the
+                              attestation conveys it. See Section 4.6.1." },
     "psea_proof_version": { "type": "string", "enum": ["2"] },
     "psea_caller_package": { "type": "string", "minLength": 1,
               "maxLength": 256,
@@ -940,13 +960,13 @@ persists it as the next proof's psea_chain_prev.
           <tt>integrityEvidence</tt> is the optional AttestationBlock (Section 4.5).</li>
           <li>Tier A: posted to <tt>/authorize</tt>. Identical body shape to Tier E, with an optional
           <tt>contextLock</tt> when the Relying Party supplies it.</li>
-          <li>Tier P: posted to <tt>/trustAttest</tt>. NOT a JWS. Body carries an
-          <tt>attestationBundle</tt> (the PToken -- a canonical-JSON signed body with a detached ECDSA
-          P-256 signature; see <xref target="tier-p"/>) and the integrityEvidence block; no chainEntry,
-          no payloadHash.</li>
-          <li>Tier S: posted to <tt>/sessionBatch</tt>. NOT a JWS. Body carries one or more SessionSummary
-          objects (each a canonical-JSON signed body with a detached ECDSA P-256 signature) and optional
-          event timeline entries (see <xref target="tier-s"/>).</li>
+          <li>Tier P: posted to <tt>/trustAttest</tt>. Body carries the PToken (a compact JWS with
+          <tt>typ = "psea-ptoken+jwt"</tt>; see <xref target="tier-p"/>) and the integrityEvidence block;
+          no chainEntry, no payloadHash.</li>
+          <li>Tier S: posted to <tt>/sessionBatch</tt>. Body is
+          <tt>{ "summaries": ["&lt;compact JWS&gt;", ...] }</tt>, where each entry is a SessionSummary
+          compact JWS with <tt>typ = "psea-session+jwt"</tt> (see <xref target="tier-s"/>), plus optional
+          event timeline entries.</li>
         </ul>
       </section>
 
@@ -959,6 +979,15 @@ persists it as the next proof's psea_chain_prev.
         published acknowledgement-signing key, and <tt>typ = "psea-ack+jwt"</tt>. The SDK pins the
         Verifier acknowledgement-signing key at build time and rejects an ACK whose signature does not
         verify against it.</t>
+
+        <t>The signed ACK applies only to Tiers E and A. The Tier P (<tt>/trustAttest</tt>) and Tier S
+        (<tt>/sessionBatch</tt>) responses are <strong>not</strong> signed: they are plain JSON. Tier P and
+        Tier S are device-to-server verification paths in which the server is the verifier of the
+        Attester's signed evidence, not a signer of evidence returned to the Attester; there is therefore
+        no signed acknowledgement back to the device for these tiers. A Tier P or Tier S producer
+        <bcp14>MUST NOT</bcp14> require a signed acknowledgement and <bcp14>MUST</bcp14> treat the
+        HTTP status code plus the plain-JSON body (including any registered error code from
+        <xref target="error-code-registry"/>) as the authoritative outcome.</t>
 
         <t>The ACK payload carries JWT registered claims plus PSEA-private acknowledgement claims:</t>
 
@@ -1053,17 +1082,79 @@ persists it as the next proof's psea_chain_prev.
         <t>The user-verification mechanisms that gate the signing key — for example, a platform biometric
         subsystem (fingerprint or face match), a Secure Enclave PIN entry, a hardware-token PIN, a
         smartcard with PIN, a magnetic-stripe credential combined with a PIN, or any equivalent platform
-        user-verification primitive — are out of scope of this specification. The Verifier observes only the wire-level fact
-        that a hardware-bound signature was successfully produced; the Verifier <bcp14>MUST</bcp14> trust
-        the platform's user-verification ceremony as part of the platform's overall attestation guarantee
-        appraised through the AttestationBlock (<xref target="attestation-block"/>) and the deployment's
-        Reference Values.</t>
+        user-verification primitive — are out of scope of this specification. The specific per-authenticator
+        mechanism is mechanism-agnostic; what is normative is that the signing operation cannot complete
+        without a contemporaneous user-verification event and that the proof carries an explicit
+        <tt>psea_uv</tt> claim asserting that fact (<xref target="presence-uv-claim"/>).</t>
 
-        <t>This design avoids a wire-level presence block whose fields would (a) duplicate information
-        already carried by the AttestationBlock for platforms that bundle user-verification into the
-        attestation chain, and (b) introduce a parallel attestation surface the Verifier would have to
-        appraise. The single source of cryptographic truth for "a human was present at the moment of
-        signing" is the signed body's existence + the hardware-bound-key attestation.</t>
+        <t>The Verifier <bcp14>MUST NOT</bcp14> infer presence silently from the bare existence of a
+        hardware-bound signature. For Tier E and Tier A it <bcp14>MUST</bcp14> require the explicit
+        <tt>psea_uv</tt> claim and, where the authenticator's attestation conveys a UV-enforcement
+        property, cross-check the claim against that attested property (appraised through the
+        AttestationBlock (<xref target="attestation-block"/>) and the deployment's Reference Values).
+        The detailed normative rule, and the honest statement of where this is attested versus where it
+        rests on a documented trust assumption, are given in <xref target="presence-uv-claim"/>.</t>
+
+        <t>This design uses a single, compact user-verification claim rather than a parallel wire-level
+        presence block whose other fields would duplicate information already carried by the
+        AttestationBlock for platforms that bundle user-verification into the attestation chain. The
+        cryptographic anchor for "a human was present at the moment of signing" is the <tt>psea_uv</tt>
+        claim covered by the proof signature plus the hardware-bound-key attestation against which it is
+        cross-checked.</t>
+
+        <section anchor="presence-uv-claim" numbered="true">
+          <name>User-Verification Claim (psea_uv)</name>
+
+          <t>Every Tier E and Tier A proof <bcp14>MUST</bcp14> carry a signed <tt>psea_uv</tt> claim:</t>
+          <ul>
+            <li><tt>psea_uv.verified</tt> — a boolean asserting that a contemporaneous user-verification
+            event gated the signing operation that produced this proof.</li>
+            <li><tt>psea_uv.method</tt> — a string identifying the user-verification method. The value
+            space is an extensible enumeration; registered baseline values include <tt>"biometric"</tt>,
+            <tt>"pin"</tt>, and <tt>"fido_uv"</tt>. A Verifier <bcp14>MUST</bcp14> tolerate an unknown
+            method value (treat it as an opaque label) rather than rejecting solely on the method
+            string.</li>
+          </ul>
+          <t>A Tier P PToken <bcp14>MUST NOT</bcp14> carry <tt>psea_uv</tt>; Tier P makes no
+          human-presence claim (<xref target="tier-p"/>). The claim is part of the JWS payload and is
+          therefore covered by the proof's ES256 signature, so it is tamper-evident: an intermediary
+          cannot flip <tt>verified</tt> from false to true without invalidating the signature.</t>
+
+          <t>Normative Verifier rule (Tier E and Tier A): the Verifier <bcp14>MUST</bcp14> require
+          <tt>psea_uv.verified == true</tt> and <bcp14>MUST</bcp14> reject with
+          <tt>USER_VERIFICATION_REQUIRED</tt> (<xref target="error-code-registry"/>) otherwise. The
+          Verifier <bcp14>MUST NOT</bcp14> accept <tt>psea_uv</tt> as merely self-asserted by the
+          producer: it <bcp14>MUST</bcp14> anchor the claim to the authenticator's attested
+          UV-enforcement capability. This requirement is device-agnostic — any conforming authenticator
+          emits <tt>psea_uv</tt>, and the Verifier cross-checks it against that authenticator's attested
+          UV-enforcement. Where the attestation conveys a UV-enforcement property and the
+          <tt>psea_uv</tt> claim contradicts it (for example, the claim asserts
+          <tt>verified == true</tt> but the authenticator's attested key properties show the signing key
+          is not user-auth-gated), the Verifier <bcp14>MUST</bcp14> reject with
+          <tt>UV_CROSS_CHECK_MISMATCH</tt> (<xref target="error-code-registry"/>).</t>
+
+          <t>Examples of the per-authenticator cross-check (informative, NOT normative — the specific
+          mechanism is out of scope): a phone with an attested UV-gated hardware key whose key
+          attestation conveys an auth-enforced / user-authentication-required property; a smartcard that
+          produces a PIN-verified assertion; a FIDO authenticator that sets the user-verified (UV) flag
+          in signed authenticator data. In each case the conforming authenticator emits
+          <tt>psea_uv</tt> and the Verifier cross-checks it against that authenticator's own attested
+          UV-enforcement.</t>
+
+          <t>Verification depth (known limitation — stated honestly, not overclaimed): where the
+          authenticator's platform attestation conveys UV-enforcement (for example, a hardware-key
+          attestation carrying an auth-enforced field), the Verifier cross-checks <tt>psea_uv</tt>
+          against it and the user-verification property is <strong>attested</strong>. Where the platform
+          attestation CANNOT convey UV-enforcement, conformance currently rests on a <strong>documented
+          trust assumption</strong> in the authenticator's user-verification enforcement; in that case
+          the <tt>psea_uv</tt> claim is required and signed, but it is not independently attested.
+          Authenticator-signed user-verification evidence — for example, a FIDO-style UV flag carried in
+          signed authenticator data — is the path to full verifiability and is the RECOMMENDED direction
+          for authenticators that can produce it. This document does NOT claim the property is fully
+          solved on every platform; it normatively requires the claim and the cross-check, and documents
+          the residual trust assumption where the attestation surface does not yet permit the
+          cross-check.</t>
+        </section>
       </section>
 
       <section anchor="user-id-hash" numbered="true">
@@ -1422,6 +1513,15 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         signed by a deployment-specific passive-tier key (distinct from the user-verification-gated
         trust-anchor key used for Tiers E and A) and conveys the Attester's current trust posture without
         committing to a specific action.</t>
+        <t>The PToken is a JWS Compact Serialization object (<xref target="RFC7515"/>) whose protected
+        header is <tt>{"alg":"ES256","kid":&lt;passiveKeyHash&gt;,"typ":"psea-ptoken+jwt"</tt><tt>}</tt>,
+        where <tt>kid</tt> is the standard-base64 SHA-256 of the passive-tier signing-key SPKI. Its claim
+        set carries the deployment-binding and user-binding fields (including the cross-replay binding
+        fields <tt>tier == "P"</tt> and <tt>audience == "trustAttest"</tt> of
+        <xref target="cross-replay-binding"/>) and an expiry; it carries no <tt>psea_payload_hash</tt> and
+        no <tt>psea_chain_prev</tt>, because Tier P does not bind to an action and is not part of the
+        per-action hash chain. The Verifier verifies the JWS signature over the received header.payload
+        octets against the enrolled passive-tier key selected by <tt>kid</tt>.</t>
         <t>The Verifier appraises PTokens via the <tt>/trustAttest</tt> endpoint
         (<xref target="endpoint-nonce"/> and <xref target="verifier-endpoints"/>) and returns one of the
         P-tier rejection codes (<tt>PASSIVE_KEY_NOT_ENROLLED</tt>, <tt>INVALID_PASSIVE_KEY</tt>,
@@ -1540,12 +1640,19 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
         <section anchor="tier-s-sessionsummary" numbered="true">
           <name>SessionSummary Wire Shape (Normative)</name>
-          <t>Every Tier S session terminates by producing exactly one SessionSummary object, signed by
-          the device-anchored trust-anchor key (the same hardware-bound key used for Tier E and Tier A
-          per-action proofs), and transmitted as part of a SessionBatch.</t>
+          <t>Every Tier S session terminates by producing exactly one SessionSummary, carried as a JWS
+          Compact Serialization object (<xref target="RFC7515"/>) signed by the device-anchored
+          trust-anchor key (the same hardware-bound key <tt>K_d</tt> used for Tier E and Tier A
+          per-action proofs), and transmitted inside a SessionBatch. The SessionSummary JWS protected
+          header is <tt>{"alg":"ES256","kid":&lt;deviceKeyHash&gt;,"typ":"psea-session+jwt"</tt><tt>}</tt>,
+          where <tt>kid</tt> is the standard-base64 SHA-256 of the trust-anchor key SPKI (the same
+          <tt>kid</tt> derivation as the Tier E / Tier A proof). The batch body is
+          <tt>{ "summaries": ["&lt;compact JWS&gt;", ...] }</tt> POSTed to <tt>/sessionBatch</tt>. The
+          JWS signature covers the received <tt>header.payload</tt> octets directly; there is no
+          separate detached signature field. The summary claim set is:</t>
 
           <artwork><![CDATA[
-SessionSummary =
+SessionSummary JWS payload (claim set) =
   "sessionId"          ":" string
   "startedAt"          ":" integer-epoch-ms
   "endedAt"            ":" integer-epoch-ms
@@ -1560,7 +1667,6 @@ SessionSummary =
   "tier"               ":" %s"S"
   "audience"           ":" %s"sessionBatch"
   "tenantId"           ":" string
-  "sessionSignature"   ":" base64-ecdsa-p256-der
 ]]></artwork>
 
           <t>Field semantics:</t>
@@ -1595,13 +1701,14 @@ SessionSummary =
             with <tt>TIER_MISMATCH</tt>, <tt>AUDIENCE_MISMATCH</tt>, or <tt>TENANT_BINDING_MISMATCH</tt>
             (<xref target="error-code-registry"/>) respectively if any of the three fields fails its
             byte-equality check. Comparisons <bcp14>MUST NOT</bcp14> normalize case or whitespace. All
-            three fields participate in the canonical bytes covered by <tt>sessionSignature</tt>.</dd>
-            <dt>sessionSignature</dt>
-            <dd>base64 of the ECDSA P-256 signature produced by the trust-anchor key over the canonical
-            byte sequence of the summary with the <tt>sessionSignature</tt> field stripped. Encoding is
-            standard base64 (RFC 4648 Section 4), DER-formatted signature bytes, no URL-safe substitution,
-            no padding strip.</dd>
+            three fields are claims in the JWS payload and are therefore covered by the SessionSummary
+            JWS signature.</dd>
           </dl>
+          <t>Authenticity and integrity of each SessionSummary are established by the JWS signature over
+          its received <tt>BASE64URL(header) || "." || BASE64URL(payload)</tt> octets — the same ES256
+          P1363 (R||S) signature form as the Tier E / Tier A proof. There is no separate
+          <tt>sessionSignature</tt> field; the JWS compact-serialization signature segment carries the
+          signature.</t>
         </section>
 
         <section anchor="tier-s-signature-gate" numbered="true">
@@ -1611,19 +1718,19 @@ SessionSummary =
           downstream policy evaluation:</t>
 
           <ol>
-            <li>Resolve the active enrollment record from <tt>deviceKeyHashBase64</tt> (optionally
-            narrowed by <tt>deviceIdHashBase64</tt>). If no active record is found, reject with HTTP 404
-            <tt>ENROLLMENT_NOT_FOUND</tt>.</li>
+            <li>Resolve the active enrollment record from each SessionSummary JWS protected-header
+            <tt>kid</tt> (the standard-base64 SHA-256 of the trust-anchor key SPKI). If no active record
+            is found, reject with HTTP 404 <tt>ENROLLMENT_NOT_FOUND</tt>.</li>
             <li>Extract the enrollment's stored public key in SPKI form.</li>
             <li>
-              <t>For each SessionSummary in <tt>sessions</tt> in order:</t>
+              <t>For each SessionSummary compact JWS in <tt>summaries</tt> in order:</t>
               <ol>
-                <li>If <tt>sessionSignature</tt> is absent or empty, mark the batch as failed with reason
+                <li>If the entry is not a well-formed compact JWS (three base64url segments) or its
+                signature segment is absent or empty, mark the batch as failed with reason
                 <tt>MISSING_SIGNATURE</tt> and break.</li>
-                <li>Construct the canonical byte sequence of the summary with the
-                <tt>sessionSignature</tt> field removed, per <xref target="canonical-encoding"/>.</li>
-                <li>Verify the supplied signature against the enrollment public key using ECDSA P-256 /
-                SHA-256 / DER-encoded signature bytes.</li>
+                <li>Verify the JWS signature over the received
+                <tt>BASE64URL(header) || "." || BASE64URL(payload)</tt> octets against the enrollment
+                public key using ECDSA P-256 / SHA-256.</li>
                 <li>If verification fails, mark the batch as failed with reason
                 <tt>SIGNATURE_VERIFICATION_FAILED</tt> and break.</li>
               </ol>
@@ -2129,11 +2236,11 @@ SessionSummary =
             see <xref target="counter-model"/> for the rationale.</td></tr>
           <tr><td>TOKEN_ACTIONID_MISMATCH</td><td>/verify, /authorize</td><td>body</td><td>Envelope</td>
             <td>An envelope copy of the action identifier does not match the signed body's value. Does
-            NOT apply to the JWS proof format (no envelope duplicates); retained for the non-JWS tiers
-            and legacy compatibility (<xref target="envelope-body-consistency"/>).</td></tr>
+            NOT apply to the compact-JWS format (no envelope duplicates); retained for legacy
+            compatibility with pre-JWS producers (<xref target="envelope-body-consistency"/>).</td></tr>
           <tr><td>TOKEN_COUNTER_MISMATCH</td><td>/verify, /authorize</td><td>body</td><td>Envelope</td>
             <td>An envelope copy of the counter does not match the signed body's value. Does NOT apply to
-            the JWS proof format; retained for the non-JWS tiers and legacy compatibility.</td></tr>
+            the compact-JWS format; retained for legacy compatibility with pre-JWS producers.</td></tr>
           <tr><td>CHAIN_PREV_MISSING</td><td>/verify, /authorize</td><td>HTTP 400</td><td>Hash chain</td>
             <td>The signed body lacks the "chainPrev" field (Tier E / Tier A require it;
             <xref target="chain-entry"/>).</td></tr>
@@ -2196,6 +2303,17 @@ SessionSummary =
           <tr><td>TRUST_STATE_NOT_TRUSTED</td><td>/verify, /authorize</td><td>body</td><td>State</td>
             <td>The signed body's "trustState" is not "TRUSTED"
             (<xref target="state-wire-commitment"/>).</td></tr>
+          <tr><td>USER_VERIFICATION_REQUIRED</td><td>/verify, /authorize</td><td>body</td>
+            <td>User verification</td>
+            <td>The Tier E / Tier A proof lacks the required "psea_uv" claim, or carries
+            "psea_uv.verified" != true. The Verifier <bcp14>MUST</bcp14> require a contemporaneous
+            user-verification claim (<xref target="presence-uv-claim"/>).</td></tr>
+          <tr><td>UV_CROSS_CHECK_MISMATCH</td><td>/verify, /authorize</td><td>body</td>
+            <td>User verification</td>
+            <td>The signed "psea_uv" claim contradicts the authenticator's attested UV-enforcement
+            property (e.g., "verified" == true while the attested key is not user-auth-gated).
+            Returned only where the attestation conveys a UV-enforcement property to cross-check
+            against (<xref target="presence-uv-claim"/>).</td></tr>
           <tr><td>ATTESTATION_SECURITY_LEVEL_INSUFFICIENT</td><td>/verify, /authorize</td><td>body</td>
             <td>Integrity</td>
             <td>The platform-attestation security level is below the deployment's policy floor.</td></tr>
@@ -2223,7 +2341,8 @@ SessionSummary =
           <tr><td>INVALID_PASSIVE_KEY</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
             <td>The passive-tier public key cannot be parsed as an EC P-256 SPKI.</td></tr>
           <tr><td>INVALID_PTOKEN</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
-            <td>The "tokenJson" payload is not parseable as a canonical PToken.</td></tr>
+            <td>The submitted PToken is not parseable as a well-formed compact-JWS PToken
+            (<xref target="tier-p"/>).</td></tr>
           <tr><td>PTOKEN_EXPIRED</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
             <td>The PToken's "expiresAt" is in the past.</td></tr>
           <tr><td>ACTION_REQUEST_NOT_FOUND</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
@@ -2257,7 +2376,9 @@ SessionSummary =
         </tbody>
       </table>
 
-      <t>Total: 44 wire response codes (the prior 43 plus AUDIENCE_MISMATCH added in this revision;
+      <t>Total: 46 wire response codes (the prior 44 plus USER_VERIFICATION_REQUIRED and
+      UV_CROSS_CHECK_MISMATCH added in this revision for the Tier E / Tier A user-verification claim per
+      <xref target="presence-uv-claim"/>; AUDIENCE_MISMATCH was added in the prior revision;
       TIER_MISMATCH and TENANT_BINDING_MISMATCH broadened from /trustAttest-only scope to all four
       signing-tier endpoints per <xref target="cross-replay-binding"/>; two
       reserved-for-forward-compatibility entries included).</t>
@@ -2476,22 +2597,39 @@ SessionSummary =
 
         <section anchor="open-wysiwys" numbered="true">
           <name>What-You-See-Is-What-You-Sign (WYSIWYS)</name>
-          <t>The PSEA action-binding fail-closed check (<xref target="action-binding-verifier"/>)
-          binds the signed proof to the action payload the Relying Party submitted — but it does NOT
-          bind to what the human actually saw on screen at the moment they completed the
-          user-verification ceremony. A compromised UI layer or a malicious overlay can display
+          <t>The property PSEA DOES guarantee, across all tiers, is <strong>action-binding</strong>:
+          what is signed is what the Verifier executes. The fail-closed action-binding check
+          (<xref target="action-binding-verifier"/>) ties the signed proof to the exact action payload
+          via <tt>psea_payload_hash</tt>, so the signature-to-execution binding is cryptographically
+          enforced and a captured proof cannot be replayed against a different payload.</t>
+          <t>What PSEA does NOT guarantee on a compromised device is the eye-to-signature binding —
+          that what the human actually saw on screen at the moment of the user-verification ceremony is
+          identical to what was signed. A compromised UI layer or a malicious overlay can display
           "Approve $10 transfer to Alice" while the underlying action payload submitted to the
           Verifier is "$10,000 transfer to Mallory." The hardware key signs the payload it was given,
-          not the pixels the human saw.</t>
-          <t>Why this is hard on mobile: WYSIWYS requires a trusted display path the application
+          not the pixels the human saw. PSEA binds signature to execution; it does not, by itself, bind
+          the human's perception to either.</t>
+          <t>Why this is hard on mobile: full WYSIWYS requires a trusted display path the application
           cannot influence — pixels rendered by a Trusted Execution Environment, with the
           user-verification ceremony tied to a render-of-record that the platform attests to. Some
           platforms have partial support (e.g., trusted-UI on certain TEEs), but the API surface for
           application developers to express "render THIS exact content in trusted UI before
           signing" is not generally available across iOS and Android in a way that survives platform
-          UI redesigns. This is an open problem the author is actively seeking solutions to;
-          deployments that need WYSIWYS today rely on independent transaction-confirmation channels
-          (out-of-band SMS, hardware token displays, etc.) that lie outside this protocol.</t>
+          UI redesigns. <strong>Trusted-display / secure-UI is out of scope of this specification</strong>
+          (it is platform-dependent and not universally available) and remains the open problem.</t>
+          <t>Tiered mitigation for high-consequence actions: for high-consequence tiers, deployments
+          <bcp14>SHOULD</bcp14> use a server-signed confirmation round-trip. In this RECOMMENDED pattern
+          the Verifier signs the canonical action it is about to execute and returns it to the
+          authenticator for display and a user-verification step before the action commits, giving the
+          signed content an independent, server-anchored origin rather than one chosen entirely by a
+          potentially-compromised client UI. This is a SHOULD / RECOMMENDED measure for high-consequence
+          tiers, not a universal MUST, and it reduces but does not eliminate the residual risk on a
+          fully compromised display.</t>
+          <t>Out-of-band channels vulnerable to SIM-swap or one-time-passcode interception (for example,
+          SMS OTP) are <bcp14>NOT RECOMMENDED</bcp14> as a WYSIWYS mitigation: they reintroduce exactly
+          the channel-interception and credential-replay weaknesses PSEA exists to eliminate, and a
+          deployment that layers them on does not obtain a trusted-display guarantee. This is an open
+          problem the author is actively seeking solutions to.</t>
         </section>
 
         <section anchor="open-no-identity" numbered="true">
@@ -2546,7 +2684,7 @@ SessionSummary =
       <section anchor="iana-error-code" numbered="true">
         <name>PSEA Error Code Registry</name>
         <t>Registration policy: Specification Required <xref target="RFC8126"/>.</t>
-        <t>Initial contents: the 44 codes listed in <xref target="error-code-registry"/>. Each registry
+        <t>Initial contents: the 46 codes listed in <xref target="error-code-registry"/>. Each registry
         entry consists of: Code (string), Endpoint scope, HTTP / body classification, Category,
         Semantics text. The codes are reproduced here for the IANA-managed registry:</t>
 
@@ -2567,9 +2705,10 @@ SessionSummary =
         <tt>TENANT_BINDING_MISMATCH</tt>, <tt>TIER_MISMATCH</tt>, <tt>TIERED_ACTIONS_NOT_ENABLED</tt>,
         <tt>TOKEN_ACTIONID_MISMATCH</tt>, <tt>TOKEN_COUNTER_MISMATCH</tt>, <tt>TRUST_REVOKED</tt>,
         <tt>TRUST_STATE_NOT_TRUSTED</tt>, <tt>UNSUPPORTED_ALGORITHM</tt> (Reserved),
-        <tt>UNSUPPORTED_VERSION</tt> (Reserved), <tt>USER_BINDING_MISMATCH</tt>.</t>
+        <tt>UNSUPPORTED_VERSION</tt> (Reserved), <tt>USER_BINDING_MISMATCH</tt>,
+        <tt>USER_VERIFICATION_REQUIRED</tt>, <tt>UV_CROSS_CHECK_MISMATCH</tt>.</t>
 
-        <t>Total: 44 codes.</t>
+        <t>Total: 46 codes.</t>
       </section>
 
       <section anchor="iana-media-types" numbered="true">
@@ -2577,10 +2716,13 @@ SessionSummary =
         <t>This document requests registration of the following media types with IANA:</t>
         <dl>
           <dt><tt>application/psea+jws</tt></dt>
-          <dd>JWS Compact Serialization (<xref target="RFC7515"/>) carrying a PSEA Tier E / Tier A proof
-          or a Verifier acknowledgement, per <xref target="proof-token-format"/>. The non-JWS tiers
-          (Tier P PToken, Tier S SessionSummary) use the canonical-JSON-body-plus-detached-signature
-          representation defined in their respective sections and are not covered by this media type.</dd>
+          <dd>JWS Compact Serialization (<xref target="RFC7515"/>) carrying any PSEA proof — the Tier P
+          PToken (<tt>typ = "psea-ptoken+jwt"</tt>), the Tier S SessionSummary
+          (<tt>typ = "psea-session+jwt"</tt>), the Tier E / Tier A proof
+          (<tt>typ = "psea-proof+jwt"</tt>), or the Verifier acknowledgement
+          (<tt>typ = "psea-ack+jwt"</tt>) — per <xref target="proof-token-format"/>. All four tiers and
+          the acknowledgement share this single media type; the JWS protected-header <tt>typ</tt> value
+          distinguishes them.</dd>
         </dl>
         <t>A CWT/COSE representation (RFC 8392 / <xref target="RFC9052"/>) carrying the same EAT
         (<xref target="RFC9711"/>) and <tt>psea_*</tt> claim set is future work; this revision does not
@@ -2612,13 +2754,13 @@ SessionSummary =
           <name>Post-Quantum Migration</name>
           <t>This revision does not specify a post-quantum signature suite. A future revision
           <bcp14>MAY</bcp14> add a ML-DSA-based suite (<xref target="FIPS204"/>) as an alternate or
-          successor signature algorithm. For the JWS tiers (the Tier E / Tier A proof and the Verifier
-          acknowledgement), the signature algorithm is carried in the JWS protected <tt>alg</tt> header
-          (ES256 is the mandatory-to-implement algorithm at this revision) and the protected
-          <tt>kid</tt> header provides the key-selection and key-rotation story; the non-JWS tiers
-          (Tier P, Tier S) use a fixed ES256 with no in-band algorithm negotiation. The
-          <tt>UNSUPPORTED_ALGORITHM</tt> response code (<xref target="error-code-registry"/>) is
-          reserved for a future revision that admits more than one signature algorithm.</t>
+          successor signature algorithm. All four tiers and the Verifier acknowledgement are JWS objects
+          that carry the signature algorithm in the JWS protected <tt>alg</tt> header (ES256 is the
+          mandatory-to-implement algorithm at this revision) and a protected <tt>kid</tt> header that
+          provides the key-selection and key-rotation story; there is no tier that uses a fixed
+          out-of-header algorithm. The <tt>UNSUPPORTED_ALGORITHM</tt> response code
+          (<xref target="error-code-registry"/>) is reserved for a future revision that admits more than
+          one signature algorithm.</t>
         </section>
 
         <section anchor="crypto-negotiation" numbered="true">
@@ -2809,12 +2951,12 @@ SessionSummary =
       <xref target="canonical-encoding"/>.</t>
 
       <t>Implementations SHOULD construct their own canonical-encoding test suite covering the
-      canonical-JSON inputs that PSEA signs or hashes (the action payload bound by
-      <tt>psea_payload_hash</tt>, the SessionSummary signed body, the PToken signed body, and the
-      AttestationBlock-derived deviceIdHash input) plus boundary cases for case-sensitive sort,
-      mixed-case keys, integer serialization, escape forms, and UTF-8 multi-byte sequences. The Tier E /
-      Tier A proof and the acknowledgement are JWS objects verified over their received octets and so do
-      not depend on canonical encoding for signature verification. A reference implementation
+      canonical-JSON input that PSEA hashes (the action payload bound by <tt>psea_payload_hash</tt>) plus
+      boundary cases for case-sensitive sort, mixed-case keys, integer serialization, escape forms, and
+      UTF-8 multi-byte sequences. All four tiers (the Tier P PToken, the Tier S SessionSummary, and the
+      Tier E / Tier A proof) and the acknowledgement are JWS objects verified over their received octets
+      and so do not depend on canonical encoding for signature verification; only the action-payload hash
+      is taken over canonical JSON octets. A reference implementation
       publishes machine-readable golden vectors covering these dimensions; consulting them is
       informative and not a normative requirement of this specification.</t>
 
