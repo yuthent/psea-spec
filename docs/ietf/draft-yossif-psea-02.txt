@@ -68,44 +68,44 @@ Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   5
      1.1.  The Authority Gap . . . . . . . . . . . . . . . . . . . .   5
-     1.2.  Document Scope and Status . . . . . . . . . . . . . . . .   5
+     1.2.  Document Scope and Status . . . . . . . . . . . . . . . .   6
      1.3.  Applicability . . . . . . . . . . . . . . . . . . . . . .   6
      1.4.  Requirements Language . . . . . . . . . . . . . . . . . .   6
      1.5.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   6
-   2.  PSEA Architecture . . . . . . . . . . . . . . . . . . . . . .   7
-     2.1.  Role Mapping  . . . . . . . . . . . . . . . . . . . . . .   7
-     2.2.  The Passport Model in PSEA  . . . . . . . . . . . . . . .   8
+   2.  PSEA Architecture . . . . . . . . . . . . . . . . . . . . . .   8
+     2.1.  Role Mapping  . . . . . . . . . . . . . . . . . . . . . .   8
+     2.2.  The Passport Model in PSEA  . . . . . . . . . . . . . . .   9
      2.3.  Data Flow . . . . . . . . . . . . . . . . . . . . . . . .   9
-     2.4.  Co-location of Verifier and Relying Party . . . . . . . .   9
-     2.5.  Subject Distinction . . . . . . . . . . . . . . . . . . .  10
-     2.6.  Architectural Principles  . . . . . . . . . . . . . . . .  10
-       2.6.1.  Execution-Time Proof  . . . . . . . . . . . . . . . .  10
-       2.6.2.  Human Presence Assurance  . . . . . . . . . . . . . .  10
-       2.6.3.  Device-Bound Trust  . . . . . . . . . . . . . . . . .  11
-       2.6.4.  Cryptographic Proof . . . . . . . . . . . . . . . . .  11
-       2.6.5.  Connectivity Independence . . . . . . . . . . . . . .  12
-     2.7.  What PSEA Is Not  . . . . . . . . . . . . . . . . . . . .  12
-     2.8.  Relationship to OAuth 2.0 Step-Up Authentication  . . . .  13
-       2.8.1.  Comparison  . . . . . . . . . . . . . . . . . . . . .  13
-       2.8.2.  Complementarity . . . . . . . . . . . . . . . . . . .  14
-       2.8.3.  Out of Scope for This Document  . . . . . . . . . . .  15
-   3.  Canonical Encoding of Proof Payloads  . . . . . . . . . . . .  15
-     3.1.  UTF-8 Serialization . . . . . . . . . . . . . . . . . . .  16
+     2.4.  Co-location of Verifier and Relying Party . . . . . . . .  10
+     2.5.  Subject Distinction . . . . . . . . . . . . . . . . . . .  11
+     2.6.  Architectural Principles  . . . . . . . . . . . . . . . .  11
+       2.6.1.  Execution-Time Proof  . . . . . . . . . . . . . . . .  11
+       2.6.2.  Human Presence Assurance  . . . . . . . . . . . . . .  11
+       2.6.3.  Device-Bound Trust  . . . . . . . . . . . . . . . . .  12
+       2.6.4.  Cryptographic Proof . . . . . . . . . . . . . . . . .  12
+       2.6.5.  Connectivity Independence . . . . . . . . . . . . . .  13
+     2.7.  What PSEA Is Not  . . . . . . . . . . . . . . . . . . . .  13
+     2.8.  Relationship to WebAuthn and FIDO Transaction
+           Confirmation  . . . . . . . . . . . . . . . . . . . . . .  14
+     2.9.  Relationship to OAuth 2.0 Step-Up Authentication  . . . .  15
+       2.9.1.  Comparison  . . . . . . . . . . . . . . . . . . . . .  15
+       2.9.2.  Complementarity . . . . . . . . . . . . . . . . . . .  16
+       2.9.3.  Out of Scope for This Document  . . . . . . . . . . .  17
+   3.  Canonical Encoding of Proof Payloads  . . . . . . . . . . . .  17
+     3.1.  UTF-8 Serialization . . . . . . . . . . . . . . . . . . .  18
      3.2.  Object Key Ordering (Case-Sensitive Unicode Code-Point
-           Sort) . . . . . . . . . . . . . . . . . . . . . . . . . .  16
-     3.3.  Array Ordering  . . . . . . . . . . . . . . . . . . . . .  16
-     3.4.  String Serialization  . . . . . . . . . . . . . . . . . .  17
-     3.5.  Number Serialization (Simplified Subset)  . . . . . . . .  17
-     3.6.  Boolean and Null Serialization  . . . . . . . . . . . . .  17
-     3.7.  Whitespace  . . . . . . . . . . . . . . . . . . . . . . .  17
-     3.8.  Conformance and Cross-Platform Implementer Warning  . . .  17
-   4.  Proof Token Format  . . . . . . . . . . . . . . . . . . . . .  18
-     4.1.  Top-Level Structure (Tier E and Tier A) . . . . . . . . .  19
-     4.2.  Single Authoritative Payload (No Envelope Duplicates) . .  21
-     4.3.  JWS Payload Claim Set (Tier E and Tier A) . . . . . . . .  21
-     4.4.  Wire Transport Bodies . . . . . . . . . . . . . . . . . .  23
-     4.5.  Verifier Acknowledgement (JWS)  . . . . . . . . . . . . .  24
-     4.6.  AttestationBlock  . . . . . . . . . . . . . . . . . . . .  24
+           Sort) . . . . . . . . . . . . . . . . . . . . . . . . . .  18
+     3.3.  Array Ordering  . . . . . . . . . . . . . . . . . . . . .  18
+     3.4.  String Serialization  . . . . . . . . . . . . . . . . . .  18
+     3.5.  Number Serialization (Simplified Subset)  . . . . . . . .  18
+     3.6.  Boolean and Null Serialization  . . . . . . . . . . . . .  19
+     3.7.  Whitespace  . . . . . . . . . . . . . . . . . . . . . . .  19
+     3.8.  Conformance and Cross-Platform Implementer Warning  . . .  19
+   4.  Proof Token Format  . . . . . . . . . . . . . . . . . . . . .  20
+     4.1.  Top-Level Structure (Tier E and Tier A) . . . . . . . . .  20
+     4.2.  Single Authoritative Payload (No Envelope Duplicates) . .  23
+     4.3.  JWS Payload Claim Set (Tier E and Tier A) . . . . . . . .  23
+     4.4.  Wire Transport Bodies . . . . . . . . . . . . . . . . . .  25
 
 
 
@@ -114,54 +114,54 @@ Yossif                  Expires 24 November 2026                [Page 2]
 Internet-Draft                    PSEA                          May 2026
 
 
-       4.6.1.  Verifier Appraisal  . . . . . . . . . . . . . . . . .  25
-     4.7.  Human Presence via User-Verification-Gated Signature  . .  26
-     4.8.  userIdHash  . . . . . . . . . . . . . . . . . . . . . . .  26
-     4.9.  deviceState . . . . . . . . . . . . . . . . . . . . . . .  27
-     4.10. Counter Model (Per-Risk-Level Monotonic)  . . . . . . . .  27
-     4.11. ChainEntry  . . . . . . . . . . . . . . . . . . . . . . .  28
-       4.11.1.  Formula (Length-Prefixed Concatenation)  . . . . . .  28
-       4.11.2.  Sentinel Value . . . . . . . . . . . . . . . . . . .  29
-       4.11.3.  Verifier Behavior on Mismatch  . . . . . . . . . . .  29
-       4.11.4.  Evolution of the Formula . . . . . . . . . . . . . .  30
-     4.12. Action Binding (Fail-Closed by Default) . . . . . . . . .  30
-       4.12.1.  Producer Obligations . . . . . . . . . . . . . . . .  30
+     4.5.  Verifier Acknowledgement (JWS)  . . . . . . . . . . . . .  25
+     4.6.  AttestationBlock  . . . . . . . . . . . . . . . . . . . .  26
+       4.6.1.  Verifier Appraisal  . . . . . . . . . . . . . . . . .  26
+     4.7.  Human Presence via User-Verification-Gated Signature  . .  27
+     4.8.  userIdHash  . . . . . . . . . . . . . . . . . . . . . . .  28
+     4.9.  deviceState . . . . . . . . . . . . . . . . . . . . . . .  28
+     4.10. Counter Model (Per-Risk-Level Monotonic)  . . . . . . . .  29
+     4.11. ChainEntry  . . . . . . . . . . . . . . . . . . . . . . .  30
+       4.11.1.  Formula (Length-Prefixed Concatenation)  . . . . . .  30
+       4.11.2.  Sentinel Value . . . . . . . . . . . . . . . . . . .  31
+       4.11.3.  Verifier Behavior on Mismatch  . . . . . . . . . . .  31
+       4.11.4.  Evolution of the Formula . . . . . . . . . . . . . .  31
+     4.12. Action Binding (Fail-Closed by Default) . . . . . . . . .  31
+       4.12.1.  Producer Obligations . . . . . . . . . . . . . . . .  31
        4.12.2.  Verifier Obligations: Fail-Closed Binding (Normative
-               Default)  . . . . . . . . . . . . . . . . . . . . . .  30
-       4.12.3.  Relying-Party Obligations  . . . . . . . . . . . . .  31
-       4.12.4.  Cross-Replay Binding (Tier + Audience + Tenant)  . .  31
-     4.13. Versioning  . . . . . . . . . . . . . . . . . . . . . . .  32
-   5.  Enforcement Tiers . . . . . . . . . . . . . . . . . . . . . .  33
-     5.1.  Tier Model: Primitives and Composition  . . . . . . . . .  33
-     5.2.  Tier Summary  . . . . . . . . . . . . . . . . . . . . . .  33
-     5.3.  Common Preconditions  . . . . . . . . . . . . . . . . . .  34
-     5.4.  Tier P -- Passive . . . . . . . . . . . . . . . . . . . .  34
-     5.5.  Tier E -- Explicit  . . . . . . . . . . . . . . . . . . .  34
-     5.6.  Tier A -- Authoritative . . . . . . . . . . . . . . . . .  35
-     5.7.  Tier S -- Silent (Composition)  . . . . . . . . . . . . .  35
-       5.7.1.  Semantics (Bootstrap x Maintenance) . . . . . . . . .  36
-       5.7.2.  Session Lifecycle . . . . . . . . . . . . . . . . . .  36
-       5.7.3.  SessionSummary Wire Shape (Normative) . . . . . . . .  37
+               Default)  . . . . . . . . . . . . . . . . . . . . . .  32
+       4.12.3.  Relying-Party Obligations  . . . . . . . . . . . . .  32
+       4.12.4.  Cross-Replay Binding (Tier + Audience + Tenant)  . .  33
+     4.13. Versioning  . . . . . . . . . . . . . . . . . . . . . . .  34
+   5.  Enforcement Tiers . . . . . . . . . . . . . . . . . . . . . .  34
+     5.1.  Tier Model: Primitives and Composition  . . . . . . . . .  34
+     5.2.  Tier Summary  . . . . . . . . . . . . . . . . . . . . . .  34
+     5.3.  Common Preconditions  . . . . . . . . . . . . . . . . . .  35
+     5.4.  Tier P -- Passive . . . . . . . . . . . . . . . . . . . .  35
+     5.5.  Tier E -- Explicit  . . . . . . . . . . . . . . . . . . .  36
+     5.6.  Tier A -- Authoritative . . . . . . . . . . . . . . . . .  36
+     5.7.  Tier S -- Silent (Composition)  . . . . . . . . . . . . .  37
+       5.7.1.  Semantics (Bootstrap x Maintenance) . . . . . . . . .  37
+       5.7.2.  Session Lifecycle . . . . . . . . . . . . . . . . . .  38
+       5.7.3.  SessionSummary Wire Shape (Normative) . . . . . . . .  39
        5.7.4.  Verifier Signature Gate (Fail-Closed at the Batch
-               Level)  . . . . . . . . . . . . . . . . . . . . . . .  39
-       5.7.5.  Transport Endpoint  . . . . . . . . . . . . . . . . .  40
-       5.7.6.  Preconditions . . . . . . . . . . . . . . . . . . . .  40
-     5.8.  Negotiation and Tier Mapping  . . . . . . . . . . . . . .  40
-     5.9.  Conformance Checklist . . . . . . . . . . . . . . . . . .  41
-   6.  Trust State Systems . . . . . . . . . . . . . . . . . . . . .  41
-     6.1.  Attester Local Trust State (Informative)  . . . . . . . .  42
-       6.1.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  42
-       6.1.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  43
-       6.1.3.  Action Gating per State . . . . . . . . . . . . . . .  43
-     6.2.  Verifier Enrollment Lifecycle (Normative) . . . . . . . .  44
-       6.2.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  44
-       6.2.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  44
-       6.2.3.  Proof Acceptance per Enrollment State . . . . . . . .  44
-     6.3.  Wire trustState Commitment (Normative)  . . . . . . . . .  45
-       6.3.1.  Value Space . . . . . . . . . . . . . . . . . . . . .  45
-       6.3.2.  Producer Obligations  . . . . . . . . . . . . . . . .  45
-       6.3.3.  Verifier Obligations  . . . . . . . . . . . . . . . .  46
-     6.4.  Reconciliation Across the Three Systems . . . . . . . . .  46
+               Level)  . . . . . . . . . . . . . . . . . . . . . . .  40
+       5.7.5.  Transport Endpoint  . . . . . . . . . . . . . . . . .  41
+       5.7.6.  Preconditions . . . . . . . . . . . . . . . . . . . .  41
+     5.8.  Negotiation and Tier Mapping  . . . . . . . . . . . . . .  41
+     5.9.  Conformance Checklist . . . . . . . . . . . . . . . . . .  42
+   6.  Trust State Systems . . . . . . . . . . . . . . . . . . . . .  42
+     6.1.  Attester Local Trust State (Informative)  . . . . . . . .  43
+       6.1.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  43
+       6.1.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  44
+       6.1.3.  Action Gating per State . . . . . . . . . . . . . . .  44
+     6.2.  Verifier Enrollment Lifecycle (Normative) . . . . . . . .  45
+       6.2.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  45
+       6.2.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  45
+       6.2.3.  Proof Acceptance per Enrollment State . . . . . . . .  45
+     6.3.  Wire trustState Commitment (Normative)  . . . . . . . . .  46
+       6.3.1.  Value Space . . . . . . . . . . . . . . . . . . . . .  46
+       6.3.2.  Producer Obligations  . . . . . . . . . . . . . . . .  46
 
 
 
@@ -170,54 +170,54 @@ Yossif                  Expires 24 November 2026                [Page 3]
 Internet-Draft                    PSEA                          May 2026
 
 
-       6.4.1.  Authority for Proof Acceptance  . . . . . . . . . . .  46
-       6.4.2.  Disagreement Cases  . . . . . . . . . . . . . . . . .  46
-     6.5.  Out of Scope  . . . . . . . . . . . . . . . . . . . . . .  47
-   7.  Verifier HTTP Endpoints . . . . . . . . . . . . . . . . . . .  48
-     7.1.  Overview  . . . . . . . . . . . . . . . . . . . . . . . .  48
-     7.2.  Common Request Headers  . . . . . . . . . . . . . . . . .  48
-     7.3.  POST /attest/nonce  . . . . . . . . . . . . . . . . . . .  49
-     7.4.  POST /deviceEnroll  . . . . . . . . . . . . . . . . . . .  49
-     7.5.  POST /verify  . . . . . . . . . . . . . . . . . . . . . .  49
-     7.6.  POST /authorize . . . . . . . . . . . . . . . . . . . . .  50
-     7.7.  POST /trustInvalidate . . . . . . . . . . . . . . . . . .  50
-     7.8.  Reference Schema  . . . . . . . . . . . . . . . . . . . .  50
-   8.  Error Codes . . . . . . . . . . . . . . . . . . . . . . . . .  50
-     8.1.  Audit-Side Fraud-Alert Labels (Informative) . . . . . . .  56
-   9.  Security Considerations . . . . . . . . . . . . . . . . . . .  57
-     9.1.  Scope and Method  . . . . . . . . . . . . . . . . . . . .  57
-     9.2.  Attester Assumptions  . . . . . . . . . . . . . . . . . .  57
-     9.3.  STRIDE Threats Addressed  . . . . . . . . . . . . . . . .  58
-       9.3.1.  Spoofing  . . . . . . . . . . . . . . . . . . . . . .  58
-       9.3.2.  Tampering . . . . . . . . . . . . . . . . . . . . . .  58
-       9.3.3.  Repudiation . . . . . . . . . . . . . . . . . . . . .  59
-       9.3.4.  Information Disclosure  . . . . . . . . . . . . . . .  59
-       9.3.5.  Denial of Service . . . . . . . . . . . . . . . . . .  59
-       9.3.6.  Elevation of Privilege  . . . . . . . . . . . . . . .  60
-     9.4.  Future Work: Relying Party Counter-Signature  . . . . . .  60
-     9.5.  Threats Out of Scope  . . . . . . . . . . . . . . . . . .  60
-     9.6.  Known Open Problems . . . . . . . . . . . . . . . . . . .  61
-       9.6.1.  Coercion / Duress ("Gun to the Head") . . . . . . . .  61
-       9.6.2.  What-You-See-Is-What-You-Sign (WYSIWYS) . . . . . . .  61
-       9.6.3.  Subject-Identity Limits . . . . . . . . . . . . . . .  62
-   10. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  62
-     10.1.  Summary of Requested Registries  . . . . . . . . . . . .  62
-     10.2.  PSEA Attestation Source Registry . . . . . . . . . . . .  62
-     10.3.  PSEA Error Code Registry . . . . . . . . . . . . . . . .  63
-     10.4.  Media Type Registrations . . . . . . . . . . . . . . . .  63
-   11. Algorithm Agility and Operational Defaults  . . . . . . . . .  64
-     11.1.  Cryptographic Algorithms . . . . . . . . . . . . . . . .  64
-       11.1.1.  Mandatory-to-Implement (MTI) . . . . . . . . . . . .  64
-       11.1.2.  Post-Quantum Migration . . . . . . . . . . . . . . .  64
-       11.1.3.  Algorithm Negotiation  . . . . . . . . . . . . . . .  64
-     11.2.  Operational Defaults . . . . . . . . . . . . . . . . . .  65
-   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  65
-     12.1.  Normative References . . . . . . . . . . . . . . . . . .  65
-     12.2.  Informative References . . . . . . . . . . . . . . . . .  66
-   Appendix A.  Canonical Encoding Test Vectors  . . . . . . . . . .  67
-     A.1.  Case-Sensitive Key Sort . . . . . . . . . . . . . . . . .  67
-     A.2.  Integer Serialization . . . . . . . . . . . . . . . . . .  67
-   Appendix B.  Per-tier Conformance . . . . . . . . . . . . . . . .  68
+       6.3.3.  Verifier Obligations  . . . . . . . . . . . . . . . .  47
+     6.4.  Reconciliation Across the Three Systems . . . . . . . . .  47
+       6.4.1.  Authority for Proof Acceptance  . . . . . . . . . . .  47
+       6.4.2.  Disagreement Cases  . . . . . . . . . . . . . . . . .  47
+     6.5.  Out of Scope  . . . . . . . . . . . . . . . . . . . . . .  48
+   7.  Verifier HTTP Endpoints . . . . . . . . . . . . . . . . . . .  49
+     7.1.  Overview  . . . . . . . . . . . . . . . . . . . . . . . .  49
+     7.2.  Common Request Headers  . . . . . . . . . . . . . . . . .  49
+     7.3.  POST /attest/nonce  . . . . . . . . . . . . . . . . . . .  50
+     7.4.  POST /deviceEnroll  . . . . . . . . . . . . . . . . . . .  50
+     7.5.  POST /verify  . . . . . . . . . . . . . . . . . . . . . .  50
+     7.6.  POST /authorize . . . . . . . . . . . . . . . . . . . . .  51
+     7.7.  POST /trustInvalidate . . . . . . . . . . . . . . . . . .  51
+     7.8.  Reference Schema  . . . . . . . . . . . . . . . . . . . .  51
+   8.  Error Codes . . . . . . . . . . . . . . . . . . . . . . . . .  51
+     8.1.  Audit-Side Fraud-Alert Labels (Informative) . . . . . . .  57
+   9.  Security Considerations . . . . . . . . . . . . . . . . . . .  58
+     9.1.  Scope and Method  . . . . . . . . . . . . . . . . . . . .  58
+     9.2.  Attester Assumptions  . . . . . . . . . . . . . . . . . .  58
+     9.3.  STRIDE Threats Addressed  . . . . . . . . . . . . . . . .  59
+       9.3.1.  Spoofing  . . . . . . . . . . . . . . . . . . . . . .  59
+       9.3.2.  Tampering . . . . . . . . . . . . . . . . . . . . . .  59
+       9.3.3.  Repudiation . . . . . . . . . . . . . . . . . . . . .  60
+       9.3.4.  Information Disclosure  . . . . . . . . . . . . . . .  60
+       9.3.5.  Denial of Service . . . . . . . . . . . . . . . . . .  60
+       9.3.6.  Elevation of Privilege  . . . . . . . . . . . . . . .  61
+     9.4.  Future Work: Relying Party Counter-Signature  . . . . . .  61
+     9.5.  Threats Out of Scope  . . . . . . . . . . . . . . . . . .  61
+     9.6.  Known Open Problems . . . . . . . . . . . . . . . . . . .  62
+       9.6.1.  Coercion / Duress ("Gun to the Head") . . . . . . . .  62
+       9.6.2.  What-You-See-Is-What-You-Sign (WYSIWYS) . . . . . . .  62
+       9.6.3.  Subject-Identity Limits . . . . . . . . . . . . . . .  63
+   10. IANA Considerations . . . . . . . . . . . . . . . . . . . . .  63
+     10.1.  Summary of Requested Registries  . . . . . . . . . . . .  63
+     10.2.  PSEA Attestation Source Registry . . . . . . . . . . . .  63
+     10.3.  PSEA Error Code Registry . . . . . . . . . . . . . . . .  64
+     10.4.  Media Type Registrations . . . . . . . . . . . . . . . .  64
+   11. Algorithm Agility and Operational Defaults  . . . . . . . . .  65
+     11.1.  Cryptographic Algorithms . . . . . . . . . . . . . . . .  65
+       11.1.1.  Mandatory-to-Implement (MTI) . . . . . . . . . . . .  65
+       11.1.2.  Post-Quantum Migration . . . . . . . . . . . . . . .  65
+       11.1.3.  Algorithm Negotiation  . . . . . . . . . . . . . . .  65
+     11.2.  Operational Defaults . . . . . . . . . . . . . . . . . .  66
+   12. References  . . . . . . . . . . . . . . . . . . . . . . . . .  66
+     12.1.  Normative References . . . . . . . . . . . . . . . . . .  66
+     12.2.  Informative References . . . . . . . . . . . . . . . . .  67
+   Appendix A.  Canonical Encoding Test Vectors  . . . . . . . . . .  68
+     A.1.  Case-Sensitive Key Sort . . . . . . . . . . . . . . . . .  68
 
 
 
@@ -226,16 +226,18 @@ Yossif                  Expires 24 November 2026                [Page 4]
 Internet-Draft                    PSEA                          May 2026
 
 
-     B.1.  Conformance Roles . . . . . . . . . . . . . . . . . . . .  68
-     B.2.  Attester Conformance  . . . . . . . . . . . . . . . . . .  68
-       B.2.1.  Common Requirements (All Tiers) . . . . . . . . . . .  68
-       B.2.2.  Per-tier Requirements . . . . . . . . . . . . . . . .  68
-     B.3.  Verifier Conformance  . . . . . . . . . . . . . . . . . .  69
-       B.3.1.  Common Requirements (All Tiers) . . . . . . . . . . .  69
-       B.3.2.  Per-tier Requirements . . . . . . . . . . . . . . . .  69
-     B.4.  Relying Party Conformance . . . . . . . . . . . . . . . .  69
-   Appendix C.  Citation and Reference . . . . . . . . . . . . . . .  70
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  70
+     A.2.  Integer Serialization . . . . . . . . . . . . . . . . . .  68
+   Appendix B.  Per-tier Conformance . . . . . . . . . . . . . . . .  69
+     B.1.  Conformance Roles . . . . . . . . . . . . . . . . . . . .  69
+     B.2.  Attester Conformance  . . . . . . . . . . . . . . . . . .  69
+       B.2.1.  Common Requirements (All Tiers) . . . . . . . . . . .  69
+       B.2.2.  Per-tier Requirements . . . . . . . . . . . . . . . .  69
+     B.3.  Verifier Conformance  . . . . . . . . . . . . . . . . . .  70
+       B.3.1.  Common Requirements (All Tiers) . . . . . . . . . . .  70
+       B.3.2.  Per-tier Requirements . . . . . . . . . . . . . . . .  70
+     B.4.  Relying Party Conformance . . . . . . . . . . . . . . . .  70
+   Appendix C.  Citation and Reference . . . . . . . . . . . . . . .  71
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  71
 
 1.  Introduction
 
@@ -262,6 +264,28 @@ Internet-Draft                    PSEA                          May 2026
    now?".  The gap between these two questions is where risk
    materializes, and it is the problem PSEA addresses.
 
+   Concretely: a banking session authenticated at 09:00 is still "valid"
+   at 15:00 when a high-value fund transfer is submitted -- yet session
+   validity says nothing about whether the legitimate account holder,
+   present and aware, actually approved _that_ transfer at _that_
+   moment, as opposed to a hijacked session, malware acting
+   autonomously, or an unattended unlocked device.  The same gap recurs
+   wherever a high-consequence action rides on a still-open session:
+   dispensing a controlled drug, recording a safety-critical shift
+   check-in, or escalating an administrator's privileges. _Session-
+   valid_ is not the same property as _this specific human approved this
+
+
+
+Yossif                  Expires 24 November 2026                [Page 5]
+
+Internet-Draft                    PSEA                          May 2026
+
+
+   specific action, right now_. PSEA's purpose is to produce
+   cryptographic Evidence of the latter at execution time, independent
+   of session state.
+
 1.2.  Document Scope and Status
 
    This document is Informational and is submitted through the
@@ -272,15 +296,6 @@ Internet-Draft                    PSEA                          May 2026
    formats and rules described in this document are sufficient on their
    own to build a conforming implementation; a reference implementation
    exists informatively but is not a normative dependency.
-
-
-
-
-
-Yossif                  Expires 24 November 2026                [Page 5]
-
-Internet-Draft                    PSEA                          May 2026
-
 
 1.3.  Applicability
 
@@ -314,6 +329,15 @@ Internet-Draft                    PSEA                          May 2026
       computational device; a natural person is not an Attester.
 
    Verifier  The server-side component that appraises Evidence and
+
+
+
+
+Yossif                  Expires 24 November 2026                [Page 6]
+
+Internet-Draft                    PSEA                          May 2026
+
+
       produces Attestation Results.  Per RATS, the Verifier consumes
       Evidence and applies Reference Values and Endorsements to produce
       an Attestation Result.
@@ -329,15 +353,6 @@ Internet-Draft                    PSEA                          May 2026
       action are the central properties PSEA Evidence asserts.
 
    Evidence  The signed proof token an Attester produces.  PSEA defines
-
-
-
-
-Yossif                  Expires 24 November 2026                [Page 6]
-
-Internet-Draft                    PSEA                          May 2026
-
-
       four Evidence types: ApprovalToken (Tiers E and A), PToken (Tier
       P), and SessionSummary (Tier S).  See Section 4.
 
@@ -364,6 +379,21 @@ Internet-Draft                    PSEA                          May 2026
       endpoint-determined; the integrating Relying Party selects per
       action which tier applies (see Section 5).
 
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026                [Page 7]
+
+Internet-Draft                    PSEA                          May 2026
+
+
 2.  PSEA Architecture
 
    This section borrows the vocabulary of Remote ATtestation procedureS
@@ -386,14 +416,6 @@ Internet-Draft                    PSEA                          May 2026
     | Trust-anchor device     | Attester    | Generates Evidence     |
     |                         |             | bound to actions or    |
     |                         |             | session events using a |
-
-
-
-Yossif                  Expires 24 November 2026                [Page 7]
-
-Internet-Draft                    PSEA                          May 2026
-
-
     |                         |             | hardware-backed key.   |
     +-------------------------+-------------+------------------------+
     | Verifier (server-side)  | Verifier    | Appraises Evidence;    |
@@ -420,6 +442,14 @@ Internet-Draft                    PSEA                          May 2026
     | Key Attestation root;   |             | appraise platform      |
     | Apple App Attest root)  |             | Evidence.              |
     +-------------------------+-------------+------------------------+
+
+
+
+Yossif                  Expires 24 November 2026                [Page 8]
+
+Internet-Draft                    PSEA                          May 2026
+
+
     | Expected attestation    | Reference   | The Verifier's         |
     | chain properties and    | Values      | appraisal policy       |
     | device-trust-state      |             | inputs.                |
@@ -443,13 +473,6 @@ Internet-Draft                    PSEA                          May 2026
    the normative wire shape is in Sections 4 and 7, not derived from
    RATS.
 
-
-
-Yossif                  Expires 24 November 2026                [Page 8]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    The Attester MAY relay the Attestation Result on behalf of the
    Relying Party (for example, a mobile trust-anchor device that
    delivers the Attestation Result to the application server it is
@@ -459,6 +482,29 @@ Internet-Draft                    PSEA                          May 2026
    implementations.
 
 2.3.  Data Flow
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026                [Page 9]
+
+Internet-Draft                    PSEA                          May 2026
+
 
    +-----------------+        (1) Evidence         +-----------------+
    |  Trust-anchor   | --------------------------> |    Verifier     |
@@ -496,20 +542,25 @@ Internet-Draft                    PSEA                          May 2026
    (the Verifier is operated as an independent service whose Attestation
    Results are consumed by multiple Relying Parties).
 
-
-
-
-
-
-Yossif                  Expires 24 November 2026                [Page 9]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    The Verifier MUST produce Attestation Results that are
    cryptographically integrity- protected so that a non-co-located
    Relying Party can verify their authenticity independently.  The wire
    format of the Attestation Result is defined in Section 7.
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 10]
+
+Internet-Draft                    PSEA                          May 2026
+
 
 2.5.  Subject Distinction
 
@@ -551,21 +602,21 @@ Internet-Draft                    PSEA                          May 2026
    presence Evidence at session bootstrap, cryptographically bound to
    the session signing context.
 
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 10]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    A PSEA-conformant tier that produces background attestation without
    human action approval (Tier P; see Section 5) does not require human-
    presence Evidence.  The guarantee Tier P provides is defined in
    Section 5 and does not include execution-time human authorization.
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 11]
+
+Internet-Draft                    PSEA                          May 2026
+
 
    In all cases where presence Evidence is required, presence MUST be
    demonstrated, not assumed.  Presence Evidence is distinct from
@@ -610,19 +661,19 @@ Internet-Draft                    PSEA                          May 2026
    The Tier E and Tier A proof and the Verifier acknowledgement are
    carried as JWS Compact Serialization ([RFC7515]): the signature
    covers the received BASE64URL(header) || "." || BASE64URL(payload)
-
-
-
-Yossif                  Expires 24 November 2026               [Page 11]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    octets, so peer verification is over the bytes on the wire and does
    not depend on re-canonicalization of the claim set.  Canonical
    encoding per Section 3 -- a simplified subset of the JSON
    Canonicalization Scheme ([RFC8785]) -- remains load-bearing for the
    three places where a signature or hash is taken over canonical JSON
+
+
+
+Yossif                  Expires 24 November 2026               [Page 12]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    octets: (a) the action-payload binding (the SHA-256 over the
    canonical actionPayload that the Verifier re-computes and compares
    against the signed payload-hash claim; Section 4.12), (b) the Tier P
@@ -666,18 +717,18 @@ Internet-Draft                    PSEA                          May 2026
    anomalies.  It is a monitoring and risk-scoring mechanism.  It does
    not require Evidence of authority at the moment of a specific action.
 
-
-
-
-Yossif                  Expires 24 November 2026               [Page 12]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    PSEA is not Session Hardening.  Session hardening techniques such as
    those described in [RFC6819] -- short timeouts, token rotation,
    binding to IP addresses -- reduce the window of exposure.  They do
    not verify who is executing an action within that window.
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 13]
+
+Internet-Draft                    PSEA                          May 2026
+
 
    PSEA is not Risk-Based Authentication.  Risk-based systems evaluate
    contextual signals to adjust authentication requirements dynamically.
@@ -690,7 +741,52 @@ Internet-Draft                    PSEA                          May 2026
    different problem: the absence of verified authority at the point of
    action execution, which persists even within Zero Trust environments.
 
-2.8.  Relationship to OAuth 2.0 Step-Up Authentication
+2.8.  Relationship to WebAuthn and FIDO Transaction Confirmation
+
+   WebAuthn and FIDO2 provide phishing-resistant, hardware-backed
+   authentication and are the strongest widely deployed primitives for
+   the login boundary.  A natural question is whether their transaction-
+   confirmation features already solve the execution-time authority
+   problem PSEA targets.  As a matter of deployment reality, they do
+   not.
+
+   Web Authentication Level 1 defined two transaction-confirmation
+   extensions: txAuthSimple (display a text prompt and bind the user's
+   approval of that exact text into the signed assertion) and
+   txAuthGeneric (the same for a hashed content blob).  These were the
+   mechanism by which a WebAuthn assertion could attest that the user
+   approved a specific transaction -- a What-You-See-Is-What-You-Sign
+   (WYSIWYS) binding.  No browser implemented these extensions, and they
+   were removed in Web Authentication Level 2.  A current WebAuthn
+   assertion therefore attests that an authenticator holding a given
+   credential was exercised with user presence (and optionally user
+   verification), but it does not cryptographically bind the assertion
+   to a specific application-level action or to human-readable
+   transaction content.
+
+   Consequently, the transaction-binding / WYSIWYS property -- proof
+   that a present, verified human approved a specific named action, with
+   specific content, at the moment of execution -- is not provided by
+   any deployed authentication standard today.  PSEA addresses precisely
+   this gap: a PSEA proof binds the action identity and a SHA-256 hash
+   of the action payload (the fail-closed action-binding defined later
+   in this document) into a hardware-signed Attestation produced at
+   execution time.  PSEA is complementary to WebAuthn and FIDO rather
+   than a replacement: WebAuthn and FIDO2 remain appropriate for
+   establishing the session and verifying the human's credential, while
+   PSEA supplies the per-action execution-time Evidence that the
+   transaction-confirmation extensions were intended to provide but, in
+   deployed form, do not.
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 14]
+
+Internet-Draft                    PSEA                          May 2026
+
+
+2.9.  Relationship to OAuth 2.0 Step-Up Authentication
 
    OAuth 2.0 Step-Up Authentication Challenge [RFC9470] defines a
    mechanism by which an OAuth-protected resource server signals to a
@@ -709,7 +805,7 @@ Internet-Draft                    PSEA                          May 2026
    differ in the unit of escalation and in the cryptographic properties
    of the artifact produced.
 
-2.8.1.  Comparison
+2.9.1.  Comparison
 
    +================+==========================+=======================+
    | Property       | RFC 9470 step-up         | PSEA                  |
@@ -722,14 +818,6 @@ Internet-Draft                    PSEA                          May 2026
    |                | with refreshed acr       | Section 4)            |
    |                | / auth_time claims.      | cryptographically     |
    |                |                          | bound to the specific |
-
-
-
-Yossif                  Expires 24 November 2026               [Page 13]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    |                |                          | action payload.       |
    +----------------+--------------------------+-----------------------+
    | Scope of       | Subsequent requests      | The single action     |
@@ -746,6 +834,14 @@ Internet-Draft                    PSEA                          May 2026
    |                | authorization            | (Section 5); Tier A   |
    |                | server.                  | requires synchronous  |
    |                |                          | Verifier interaction. |
+
+
+
+Yossif                  Expires 24 November 2026               [Page 15]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    +----------------+--------------------------+-----------------------+
    | Action-payload | Not defined.  The        | Required for Tiers E  |
    | binding        | new token does not       | and A.  The Evidence  |
@@ -764,7 +860,7 @@ Internet-Draft                    PSEA                          May 2026
 
                                   Table 2
 
-2.8.2.  Complementarity
+2.9.2.  Complementarity
 
    RFC 9470 step-up and PSEA MAY be composed: the first to signal that a
    per-action authority check is required; the second to produce the
@@ -776,15 +872,6 @@ Internet-Draft                    PSEA                          May 2026
 
    2.  The resource server returns HTTP 401 with a WWW-Authenticate
        challenge per [RFC9470], indicating the required step-up.
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 14]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    3.  The client drives the step-up flow on a device hosting a PSEA
        trust-anchor (Section 2.1).  The trust-anchor device produces
@@ -802,7 +889,16 @@ Internet-Draft                    PSEA                          May 2026
    PSEA supplies the per- action cryptographic authority proof.  Neither
    mechanism replaces the other.
 
-2.8.3.  Out of Scope for This Document
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 16]
+
+Internet-Draft                    PSEA                          May 2026
+
+
+2.9.3.  Out of Scope for This Document
 
    This section identifies architectural complementarity.  It does not
    define a normative integration profile between PSEA and [RFC9470].  A
@@ -833,15 +929,6 @@ Internet-Draft                    PSEA                          May 2026
 
    *  the Tier S SessionSummary signed body (Section 5.7).
 
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 15]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    For these three uses, implementations that deviate from the rules
    below will produce byte sequences that fail signature verification or
    payload-binding comparison on peer platforms.
@@ -856,6 +943,16 @@ Internet-Draft                    PSEA                          May 2026
    This document uses the verb "will" in lowercase to describe
    deterministic consequences of non-conformance, not as a BCP 14
    keyword.
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 17]
+
+Internet-Draft                    PSEA                          May 2026
+
 
 3.1.  UTF-8 Serialization
 
@@ -884,20 +981,6 @@ Internet-Draft                    PSEA                          May 2026
    order are payload-specific and are defined where applicable in
    Section 4.
 
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 16]
-
-Internet-Draft                    PSEA                          May 2026
-
-
 3.4.  String Serialization
 
    String values MUST be serialized following the encoding rules in
@@ -917,6 +1000,15 @@ Internet-Draft                    PSEA                          May 2026
    this document takes from [RFC8785]; an implementation that requires
    full RFC 8785 conformance produces output identical to the rule in
    this subsection for all payload schemas defined in this revision.
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 18]
+
+Internet-Draft                    PSEA                          May 2026
+
 
    Floating-point numbers, decimal fractions, and exponent notation MUST
    NOT appear in any PSEA payload field at this revision.  A future
@@ -946,14 +1038,6 @@ Internet-Draft                    PSEA                          May 2026
    non-conformant and will produce signed bytes that fail peer
    verification.
 
-
-
-
-Yossif                  Expires 24 November 2026               [Page 17]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    Specific implementer-warning notes on common platform pitfalls:
 
    Apple platforms  JSONSerialization with the sortedKeys option
@@ -973,6 +1057,14 @@ Internet-Draft                    PSEA                          May 2026
       code-point comparison; the standard JCS implementations in major
       libraries (Jackson, Gson) produce conformant output when
       configured for canonical mode.
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 19]
+
+Internet-Draft                    PSEA                          May 2026
+
 
    Python  The standard sorted() on strings performs case-sensitive
       Unicode code-point sort.  The json module's sort_keys=True matches
@@ -1003,13 +1095,6 @@ Internet-Draft                    PSEA                          May 2026
    actionPayload that the Verifier independently hashes and compares
    against the signed payload-hash claim.
 
-
-
-Yossif                  Expires 24 November 2026               [Page 18]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    The integrity flows are: the proof's authenticity and integrity are
    established by the JWS signature over its received octets; the action
    binding is established by the Verifier re-hashing the cleartext
@@ -1025,6 +1110,17 @@ Internet-Draft                    PSEA                          May 2026
    sections; this document does not convert them.
 
 4.1.  Top-Level Structure (Tier E and Tier A)
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 20]
+
+Internet-Draft                    PSEA                          May 2026
+
 
 JWS Compact Serialization (the value of the transport-body "proof" field)
 
@@ -1058,14 +1154,6 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- psea_tier            ; "E" | "A"
   +-- psea_counter         ; uint64, monotonic per (attester, risk level)
   +-- psea_payload_hash    ; standard base64 of SHA-256(canonical
-
-
-
-Yossif                  Expires 24 November 2026               [Page 19]
-
-Internet-Draft                    PSEA                          May 2026
-
-
   |                        ;   actionPayload) -- the action binding
   +-- psea_chain_prev      ; 64-char lowercase hex
   |                        ;   (sentinel: 64 ASCII '0' for first proof)
@@ -1082,6 +1170,13 @@ Signature
 
 Encoding split: ueid and psea_payload_hash use standard base64
 (with padding); psea_user_hash uses base64url (no padding).
+
+
+
+Yossif                  Expires 24 November 2026               [Page 21]
+
+Internet-Draft                    PSEA                          May 2026
+
 
 NOTE on chainEntry: chainEntry is NOT carried inbound. The Attester
 sends psea_chain_prev IN the signed payload (the prior proof's
@@ -1112,16 +1207,6 @@ persists it as the next proof's psea_chain_prev.
      "proofId":          "..."           // OPTIONAL opaque proof identifier
    }
 
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 20]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    The actionPayload is unsigned cleartext; the Verifier re-
    canonicalizes it (Section 3), takes its SHA-256, and compares the
    result against the signed psea_payload_hash claim.  This comparison
@@ -1133,6 +1218,21 @@ Internet-Draft                    PSEA                          May 2026
    distinct endpoints, and the non-JWS canonical-body-plus-detached-
    signature representation; see Section 5.4 (PToken, /trustAttest) and
    Section 5.7 (SessionSummary, /sessionBatch) respectively.
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 22]
+
+Internet-Draft                    PSEA                          May 2026
+
 
 4.2.  Single Authoritative Payload (No Envelope Duplicates)
 
@@ -1168,16 +1268,6 @@ Internet-Draft                    PSEA                          May 2026
    psea_user_hash are optional and, when not applicable, are omitted
    entirely rather than serialized as empty or null.
 
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 21]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    {
      "$schema": "https://json-schema.org/draft/2020-12/schema",
      "title": "PseaProofClaims",
@@ -1192,6 +1282,14 @@ Internet-Draft                    PSEA                          May 2026
      "properties": {
        "jti":  { "type": "string", "minLength": 1, "maxLength": 128,
                  "pattern": "^[A-Za-z0-9._-]+$",
+
+
+
+Yossif                  Expires 24 November 2026               [Page 23]
+
+Internet-Draft                    PSEA                          May 2026
+
+
                  "description": "Action id; also the global-uniqueness key.
                                  Alphanumeric/dot/underscore/hyphen only.
                                  UUID RECOMMENDED." },
@@ -1226,14 +1324,6 @@ Internet-Draft                    PSEA                          May 2026
                                  endpoint's expected tier." },
        "psea_counter": { "type": "integer", "minimum": 0,
                  "description": "uint64; monotonic per (attester, risk level)." },
-
-
-
-Yossif                  Expires 24 November 2026               [Page 22]
-
-Internet-Draft                    PSEA                          May 2026
-
-
        "psea_payload_hash": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$",
                  "description": "Standard base64 (with padding) of
                                  SHA-256(canonical actionPayload); the action
@@ -1248,6 +1338,14 @@ Internet-Draft                    PSEA                          May 2026
                  "description": "Reverse-DNS application identifier." },
        "psea_sdk_version": { "type": "string", "maxLength": 64 },
        "psea_user_hash": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$",
+
+
+
+Yossif                  Expires 24 November 2026               [Page 24]
+
+Internet-Draft                    PSEA                          May 2026
+
+
                  "description": "OPTIONAL. base64url (no padding) of
                                  SHA-256(subject_id); audit-attribution only.
                                  Omitted entirely when empty." }
@@ -1279,17 +1377,6 @@ Internet-Draft                    PSEA                          May 2026
       with a detached ECDSA P-256 signature) and optional event timeline
       entries (see Section 5.7).
 
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 23]
-
-Internet-Draft                    PSEA                          May 2026
-
-
 4.5.  Verifier Acknowledgement (JWS)
 
    On a successful Tier E or Tier A appraisal, the Verifier returns a
@@ -1307,6 +1394,13 @@ Internet-Draft                    PSEA                          May 2026
       identifier, issued-at (epoch seconds), and expiry (epoch seconds).
 
    psea_verdict  The Verifier's decision for the appraised proof.
+
+
+
+Yossif                  Expires 24 November 2026               [Page 25]
+
+Internet-Draft                    PSEA                          May 2026
+
 
    psea_proof_id  Identifier of the proof this ACK acknowledges.
 
@@ -1335,17 +1429,6 @@ Internet-Draft                    PSEA                          May 2026
    App Attest root, etc.).  The wire shape of the AttestationBlock is
    intentionally minimal:
 
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 24]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    {
      "provider": "<string from IANA-managed registry>",
      "token":    "<base64 or platform-defined opaque token>"
@@ -1367,6 +1450,14 @@ Internet-Draft                    PSEA                          May 2026
 
    The Verifier appraises the AttestationBlock by:
 
+
+
+
+Yossif                  Expires 24 November 2026               [Page 26]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    1.  Looking up the platform Endorsement (root certificate, public
        key, or equivalent trust anchor) for the named provider.
 
@@ -1387,20 +1478,6 @@ Internet-Draft                    PSEA                          May 2026
    each provider, and the choice of Reference Values are out of scope of
    this document; they are defined by the platform vendor's attestation
    specification and by the deployment's policy respectively.
-
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 25]
-
-Internet-Draft                    PSEA                          May 2026
-
 
 4.7.  Human Presence via User-Verification-Gated Signature
 
@@ -1429,6 +1506,14 @@ Internet-Draft                    PSEA                          May 2026
    duplicate information already carried by the AttestationBlock for
    platforms that bundle user-verification into the attestation chain,
    and (b) introduce a parallel attestation surface the Verifier would
+
+
+
+Yossif                  Expires 24 November 2026               [Page 27]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    have to appraise.  The single source of cryptographic truth for "a
    human was present at the moment of signing" is the signed body's
    existence + the hardware-bound-key attestation.
@@ -1448,15 +1533,6 @@ Internet-Draft                    PSEA                          May 2026
    the monotonic counter, and the presence Evidence (Section 4.7); the
    Attester's commitment to a subject identifier is an additional audit-
    trail property, not a security gate.
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 26]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    The per-proof userIdHash is distinct from the enrollment-bound
    userIdHash recorded at enrollment time (Section 7.4).  The
@@ -1486,6 +1562,14 @@ Internet-Draft                    PSEA                          May 2026
    Implementations SHOULD sort field keys per Section 3.2 so the signed
    canonical bytes are byte-stable across re-issuance of the same
    posture commitment.  A future revision of this document MAY define a
+
+
+
+Yossif                  Expires 24 November 2026               [Page 28]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    normative sealed commitment form; until such a revision is published,
    conforming implementations treat deviceState as an opaque deployment-
    specific object whose contents are out of scope.
@@ -1506,14 +1590,6 @@ Internet-Draft                    PSEA                          May 2026
    sign proofs while disconnected from the Verifier; if their counter
    values were drawn from one shared sequence, a Tier-E proof signed
    offline with counter N+1 would conflict on submission with a Tier-A
-
-
-
-Yossif                  Expires 24 November 2026               [Page 27]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    proof signed online (after the Tier-E proof was composed but before
    it was synced) using the same N+1.  Per-risk-level counters let each
    tier progress independently of the others.
@@ -1538,6 +1614,18 @@ Internet-Draft                    PSEA                          May 2026
    revisions that described a single per-Attester counter.  The
    deviation is documented openly here for cross-platform parity.
 
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 29]
+
+Internet-Draft                    PSEA                          May 2026
+
+
 4.11.  ChainEntry
 
    The chainEntry is a deterministic hash-chain anchor that links each
@@ -1557,18 +1645,6 @@ Internet-Draft                    PSEA                          May 2026
    regardless of whether any field contains the legacy : delimiter, NUL
    bytes, or any other character.  This is the standard cryptographic
    pattern for unambiguous hash-input encoding.
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 28]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    encode(s)  = u32_be(len(utf8(s))) || utf8(s)
 
@@ -1599,6 +1675,13 @@ Offset  Bytes                                Description
 ─────────────────────────────────────────────────────────────────────
 Total: 114 bytes → SHA-256 → 64 hex chars
 
+
+
+Yossif                  Expires 24 November 2026               [Page 30]
+
+Internet-Draft                    PSEA                          May 2026
+
+
 4.11.2.  Sentinel Value
 
    For the first proof from an Attester since enrollment (i.e., when the
@@ -1616,15 +1699,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
    chain entry for the Attester is non-empty but the signed
    psea_chain_prev is the sentinel value (or vice versa), the Verifier
    MUST reject with CHAIN_PREV_MISMATCH.
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 29]
-
-Internet-Draft                    PSEA                          May 2026
-
 
 4.11.4.  Evolution of the Formula
 
@@ -1657,6 +1731,13 @@ Internet-Draft                    PSEA                          May 2026
    device-anchored key that holds the active user-verification binding
    for the originating action.
 
+
+
+Yossif                  Expires 24 November 2026               [Page 31]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    A producer MUST NOT emit a proof whose signed psea_payload_hash claim
    is absent, empty, or computed over input other than the canonical
    encoding of the actual action payload being authorized by the human.
@@ -1673,14 +1754,6 @@ Internet-Draft                    PSEA                          May 2026
 
    2.  Compute the canonical encoding of the request's action payload
        using Section 3 and hash the result with SHA-256.
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 30]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    3.  Compare the computed hash, byte-for-byte, against the
        psea_payload_hash claim decoded from the signed proof in step 1.
@@ -1712,6 +1785,15 @@ Internet-Draft                    PSEA                          May 2026
    the Verifier's signature without performing client-side binding
    enforcement.
 
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 32]
+
+Internet-Draft                    PSEA                          May 2026
+
+
 4.12.4.  Cross-Replay Binding (Tier + Audience + Tenant)
 
    In addition to the payload binding of Section 4.12.2, every Tier P,
@@ -1730,14 +1812,6 @@ Internet-Draft                    PSEA                          May 2026
       "sessionBatch", "proofVerify", "proofAuthorize" — the endpoint
       path component (without leading slash).  The Verifier MUST reject
       any proof whose signed audience does not match the receiving
-
-
-
-Yossif                  Expires 24 November 2026               [Page 31]
-
-Internet-Draft                    PSEA                          May 2026
-
-
       endpoint's logical name, with response code AUDIENCE_MISMATCH
       (Section 8).  The logical-name form is preferred over a full URL
       so the binding remains stable across customer-configured base URLs
@@ -1762,6 +1836,20 @@ Internet-Draft                    PSEA                          May 2026
    "S" and audience == "sessionBatch" on each session summary. tenantId
    is verified identically across all four endpoints.
 
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 33]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    These three bindings together close: (a) cross-endpoint replay (a
    captured Tier-E proof posted to /authorize, or vice versa), (b)
    cross-tier downgrade (a Tier-A proof processed as Tier E), and (c)
@@ -1781,18 +1869,6 @@ Internet-Draft                    PSEA                          May 2026
    Conforming implementations at this revision emit only "2"; the
    version field is included in the signed payload so that the wire-
    version commitment is cryptographically anchored.
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 32]
-
-Internet-Draft                    PSEA                          May 2026
-
 
 5.  Enforcement Tiers
 
@@ -1822,6 +1898,14 @@ Internet-Draft                    PSEA                          May 2026
    |               |             |         |(Verifier  |               |
    |               |             |         |accepts    |               |
    |               |             |         |when       |               |
+
+
+
+Yossif                  Expires 24 November 2026               [Page 34]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    |               |             |         |reachable; |               |
    |               |             |         |produced   |               |
    |               |             |         |offline-   |               |
@@ -1842,14 +1926,6 @@ Internet-Draft                    PSEA                          May 2026
    |(Authoritative)|             |action   |required;  |(ApprovalToken)|
    |               |             |         |no offline |               |
    |               |             |         |operation  |               |
-
-
-
-Yossif                  Expires 24 November 2026               [Page 33]
-
-Internet-Draft                    PSEA                          May 2026
-
-
    +---------------+-------------+---------+-----------+---------------+
 
                                   Table 3
@@ -1878,6 +1954,14 @@ Internet-Draft                    PSEA                          May 2026
    conveys the Attester's current trust posture without committing to a
    specific action.
 
+
+
+
+Yossif                  Expires 24 November 2026               [Page 35]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    The Verifier appraises PTokens via the /trustAttest endpoint
    (Section 7.3 and Section 7) and returns one of the P-tier rejection
    codes (PASSIVE_KEY_NOT_ENROLLED, INVALID_PASSIVE_KEY, INVALID_PTOKEN,
@@ -1897,14 +1981,6 @@ Internet-Draft                    PSEA                          May 2026
    Evidence.  The Attester produces an ApprovalToken (Section 4), gated
    by a contemporaneous user- verification event (Section 4.7), and
    posts it to /verify.
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 34]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    Tier E permits deferred Verifier interaction: the Attester's local
    trust state and the user- verification ceremony at the Attester are
@@ -1934,6 +2010,14 @@ Internet-Draft                    PSEA                          May 2026
    stronger contract over Tier E is in the connectivity and synchronous-
    decision dimensions, not in the action-binding dimension.
 
+
+
+
+Yossif                  Expires 24 November 2026               [Page 36]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    Tier A inherits Tier E's runtime integrity-evidence appraisal
    obligation in full: the Verifier MUST appraise the envelope's
    integrityEvidence AttestationBlock (Section 4.6) against the
@@ -1951,16 +2035,6 @@ Internet-Draft                    PSEA                          May 2026
    processing rules.
 
 5.7.  Tier S -- Silent (Composition)
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 35]
-
-Internet-Draft                    PSEA                          May 2026
-
 
 5.7.1.  Semantics (Bootstrap x Maintenance)
 
@@ -1989,6 +2063,17 @@ Internet-Draft                    PSEA                          May 2026
 
                                   Table 4
 
+
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 37]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    The connectivity requirements of Tier S inherit from the bootstrap
    and maintenance choices, NOT from a separate Tier S primitive.  A
    producer SHOULD expose these two sub-primitives as independently-
@@ -2005,18 +2090,6 @@ Internet-Draft                    PSEA                          May 2026
 
    A session MUST end (and a SessionSummary MUST be generated and queued
    for batch sync) when any of the following triggers fires:
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 36]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    +==============+===================+===============================+
    | Trigger      | End-reason code   | Cause                         |
@@ -2047,32 +2120,22 @@ Internet-Draft                    PSEA                          May 2026
 
                                  Table 5
 
+
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 38]
+
+Internet-Draft                    PSEA                          May 2026
+
+
 5.7.3.  SessionSummary Wire Shape (Normative)
 
    Every Tier S session terminates by producing exactly one
    SessionSummary object, signed by the device-anchored trust-anchor key
    (the same hardware-bound key used for Tier E and Tier A per-action
    proofs), and transmitted as part of a SessionBatch.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 37]
-
-Internet-Draft                    PSEA                          May 2026
-
 
    SessionSummary =
      "sessionId"          ":" string
@@ -2114,6 +2177,15 @@ Internet-Draft                    PSEA                          May 2026
       across replays of the same session).
 
    userIdHash / deviceIdHash  base64 of SHA-256 over the user identifier
+
+
+
+
+Yossif                  Expires 24 November 2026               [Page 39]
+
+Internet-Draft                    PSEA                          May 2026
+
+
       and device identifier respectively.  Both fields MUST match the
       enrollment record the Verifier resolves from deviceKeyHashBase64;
       mismatch MUST be treated as a hard rejection.
@@ -2122,14 +2194,6 @@ Internet-Draft                    PSEA                          May 2026
       required on every signed body by Section 4.12.4.  For Tier S, tier
       MUST be the literal string "S"; audience MUST be the literal
       string "sessionBatch"; tenantId MUST be the deployment identifier
-
-
-
-Yossif                  Expires 24 November 2026               [Page 38]
-
-Internet-Draft                    PSEA                          May 2026
-
-
       the Attester has locally available at sign time.  The Verifier
       MUST reject the batch with TIER_MISMATCH, AUDIENCE_MISMATCH, or
       TENANT_BINDING_MISMATCH (Section 8) respectively if any of the
@@ -2170,6 +2234,14 @@ Internet-Draft                    PSEA                          May 2026
        4.  If verification fails, mark the batch as failed with reason
            SIGNATURE_VERIFICATION_FAILED and break.
 
+
+
+
+Yossif                  Expires 24 November 2026               [Page 40]
+
+Internet-Draft                    PSEA                          May 2026
+
+
    4.  If any summary failed the gate, reject the entire batch with HTTP
        401 SESSION_SIGNATURE_INVALID.  NO summary in the batch MAY be
        persisted; NO counter MAY be incremented; NO downstream policy or
@@ -2178,13 +2250,6 @@ Internet-Draft                    PSEA                          May 2026
 
    5.  Otherwise (every summary verified), proceed to persistence,
        counter increment, and policy evaluation.
-
-
-
-Yossif                  Expires 24 November 2026               [Page 39]
-
-Internet-Draft                    PSEA                          May 2026
-
 
 5.7.5.  Transport Endpoint
 
@@ -2228,16 +2293,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 24 November 2026               [Page 40]
+Yossif                  Expires 24 November 2026               [Page 41]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2293,7 +2349,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 41]
+Yossif                  Expires 24 November 2026               [Page 42]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2349,7 +2405,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 42]
+Yossif                  Expires 24 November 2026               [Page 43]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2405,7 +2461,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 43]
+Yossif                  Expires 24 November 2026               [Page 44]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2461,7 +2517,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 44]
+Yossif                  Expires 24 November 2026               [Page 45]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2517,7 +2573,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 45]
+Yossif                  Expires 24 November 2026               [Page 46]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2573,7 +2629,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 46]
+Yossif                  Expires 24 November 2026               [Page 47]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2629,7 +2685,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 47]
+Yossif                  Expires 24 November 2026               [Page 48]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2685,7 +2741,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 48]
+Yossif                  Expires 24 November 2026               [Page 49]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2741,7 +2797,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 49]
+Yossif                  Expires 24 November 2026               [Page 50]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2797,7 +2853,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 50]
+Yossif                  Expires 24 November 2026               [Page 51]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2853,7 +2909,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 51]
+Yossif                  Expires 24 November 2026               [Page 52]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2909,7 +2965,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 52]
+Yossif                  Expires 24 November 2026               [Page 53]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -2965,7 +3021,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 53]
+Yossif                  Expires 24 November 2026               [Page 54]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3021,7 +3077,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 54]
+Yossif                  Expires 24 November 2026               [Page 55]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3077,7 +3133,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 55]
+Yossif                  Expires 24 November 2026               [Page 56]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3133,7 +3189,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 56]
+Yossif                  Expires 24 November 2026               [Page 57]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3189,7 +3245,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 57]
+Yossif                  Expires 24 November 2026               [Page 58]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3245,7 +3301,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 58]
+Yossif                  Expires 24 November 2026               [Page 59]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3301,7 +3357,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 59]
+Yossif                  Expires 24 November 2026               [Page 60]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3357,7 +3413,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 60]
+Yossif                  Expires 24 November 2026               [Page 61]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3413,7 +3469,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 61]
+Yossif                  Expires 24 November 2026               [Page 62]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3469,7 +3525,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 62]
+Yossif                  Expires 24 November 2026               [Page 63]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3525,7 +3581,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 63]
+Yossif                  Expires 24 November 2026               [Page 64]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3581,7 +3637,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 64]
+Yossif                  Expires 24 November 2026               [Page 65]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3637,7 +3693,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 65]
+Yossif                  Expires 24 November 2026               [Page 66]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3693,7 +3749,7 @@ Internet-Draft                    PSEA                          May 2026
 
 
 
-Yossif                  Expires 24 November 2026               [Page 66]
+Yossif                  Expires 24 November 2026               [Page 67]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3749,7 +3805,7 @@ A.2.  Integer Serialization
 
 
 
-Yossif                  Expires 24 November 2026               [Page 67]
+Yossif                  Expires 24 November 2026               [Page 68]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3805,7 +3861,7 @@ B.2.2.  Per-tier Requirements
 
 
 
-Yossif                  Expires 24 November 2026               [Page 68]
+Yossif                  Expires 24 November 2026               [Page 69]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3861,7 +3917,7 @@ B.4.  Relying Party Conformance
 
 
 
-Yossif                  Expires 24 November 2026               [Page 69]
+Yossif                  Expires 24 November 2026               [Page 70]
 
 Internet-Draft                    PSEA                          May 2026
 
@@ -3917,4 +3973,4 @@ Author's Address
 
 
 
-Yossif                  Expires 24 November 2026               [Page 70]
+Yossif                  Expires 24 November 2026               [Page 71]

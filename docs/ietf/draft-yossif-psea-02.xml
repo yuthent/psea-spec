@@ -71,6 +71,16 @@
         "Is an authorized human, present, verified, and operating from a trusted device, approving this
         specific action right now?". The gap between these two questions is where risk materializes, and
         it is the problem PSEA addresses.</t>
+
+        <t>Concretely: a banking session authenticated at 09:00 is still "valid" at 15:00 when a
+        high-value fund transfer is submitted -- yet session validity says nothing about whether the
+        legitimate account holder, present and aware, actually approved <em>that</em> transfer at
+        <em>that</em> moment, as opposed to a hijacked session, malware acting autonomously, or an
+        unattended unlocked device. The same gap recurs wherever a high-consequence action rides on a
+        still-open session: dispensing a controlled drug, recording a safety-critical shift check-in,
+        or escalating an administrator's privileges. <em>Session-valid</em> is not the same property as
+        <em>this specific human approved this specific action, right now</em>. PSEA's purpose is to
+        produce cryptographic Evidence of the latter at execution time, independent of session state.</t>
       </section>
 
       <section anchor="document-scope" numbered="true" toc="default">
@@ -421,6 +431,35 @@
         system components and enforce verification at network and application boundaries. PSEA addresses
         a different problem: the absence of verified authority at the point of action execution, which
         persists even within Zero Trust environments.</t>
+      </section>
+
+      <section anchor="relationship-webauthn" numbered="true">
+        <name>Relationship to WebAuthn and FIDO Transaction Confirmation</name>
+
+        <t>WebAuthn and FIDO2 provide phishing-resistant, hardware-backed authentication and are the
+        strongest widely deployed primitives for the login boundary. A natural question is whether their
+        transaction-confirmation features already solve the execution-time authority problem PSEA targets.
+        As a matter of deployment reality, they do not.</t>
+
+        <t>Web Authentication Level 1 defined two transaction-confirmation extensions:
+        <tt>txAuthSimple</tt> (display a text prompt and bind the user's approval of that exact text into
+        the signed assertion) and <tt>txAuthGeneric</tt> (the same for a hashed content blob). These were
+        the mechanism by which a WebAuthn assertion could attest that the user approved a specific
+        transaction -- a What-You-See-Is-What-You-Sign (WYSIWYS) binding. No browser implemented these
+        extensions, and they were removed in Web Authentication Level 2. A current WebAuthn assertion
+        therefore attests that an authenticator holding a given credential was exercised with user presence
+        (and optionally user verification), but it does not cryptographically bind the assertion to a
+        specific application-level action or to human-readable transaction content.</t>
+
+        <t>Consequently, the transaction-binding / WYSIWYS property -- proof that a present, verified human
+        approved a specific named action, with specific content, at the moment of execution -- is not
+        provided by any deployed authentication standard today. PSEA addresses precisely this gap: a PSEA
+        proof binds the action identity and a SHA-256 hash of the action payload (the fail-closed
+        action-binding defined later in this document) into a hardware-signed Attestation produced at
+        execution time. PSEA is complementary to WebAuthn and FIDO rather than a replacement: WebAuthn and
+        FIDO2 remain appropriate for establishing the session and verifying the human's credential, while
+        PSEA supplies the per-action execution-time Evidence that the transaction-confirmation extensions
+        were intended to provide but, in deployed form, do not.</t>
       </section>
 
       <section anchor="relationship-rfc9470" numbered="true">
