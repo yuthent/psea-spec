@@ -34,7 +34,7 @@
     <keyword>WYSIWYS</keyword>
 
     <abstract>
-      <t>This document defines the PSEA Token Profile, a device-agnostic Entity Attestation Token
+      <t>This document defines the PSEA Token Profile, an Entity Attestation Token
       (EAT) profile (per RFC 9711, Section 7) for action-bound, user-verification-gated
       transaction-confirmation Evidence.  The profile specifies the canonical encoding, signed proof
       token claim set, hash-chain integrity model, action-payload binding, cross-replay binding,
@@ -47,10 +47,18 @@
       authenticator's user-verification enforcement: where the platform attestation conveys
       user-verification enforcement it is hardware-attested, and otherwise it rests on the authenticator's
       signed assertion that user verification occurred; the profile does not, by itself, prove a specific
-      human identity.  The profile is authenticator-agnostic: any authenticator capable of
-      producing a user-verification-gated ES256 signature over a canonical action payload conforms,
-      including smartphones, smartcards with PIN, FIDO security keys with user verification, and
-      embedded secure elements.  The profile fills the transaction-confirmation gap left by the
+      human identity.  The profile applies to any user-verification-gated authenticator that can
+      produce an ES256 signature over a raw digest of a canonical action payload -- for example
+      TEE- or Secure-Element-backed mobile keystores (Android Keystore keys requiring user
+      authentication, iOS Secure Enclave keys gated by a local-authentication context), PIN-gated
+      PIV-class smartcards, and programmable secure elements.  A standard FIDO2/WebAuthn security key
+      does NOT natively conform: a WebAuthn authenticator signs only its fixed assertion structure
+      (authenticator data concatenated with a hash of the client data) and cannot emit a JWS over an
+      arbitrary claims-set, so binding a FIDO assertion into this profile would require a separate
+      FIDO-assertion binding that is out of scope of this document.  Where the authenticator exposes
+      only a raw user-verification-gated signing primitive, the host software assembles the token and
+      the Attester is the composite of that host and the hardware authenticator.  The profile fills
+      the transaction-confirmation gap left by the
       removal of the WebAuthn txAuthSimple and txAuthGeneric extensions, and complements OAuth 2.0
       Step-Up Authentication (RFC 9470) by supplying the per-action, cryptographically action-bound
       Evidence that step-up flows can require.</t>
@@ -77,10 +85,31 @@
       (<xref target="RFC7519"/>) and the PSEA-private <tt>psea_*</tt> extension claims defined in
       this document.</t>
 
-      <t>The profile is authenticator-agnostic.  Any authenticator that can generate a hardware-
-      backed, user-verification-gated ES256 signature over a canonical action payload conforms,
-      including smartphones, FIDO2 security keys with user verification, smartcards with PIN, and
-      embedded secure elements.  The deployment architecture -- including any operational enforcement
+      <t>The profile applies to any authenticator that can generate a hardware-backed,
+      user-verification-gated ES256 signature over a <em>raw digest</em> the host supplies.  Conforming
+      authenticator classes include TEE- or Secure-Element-backed mobile keystores (for example Android
+      Keystore keys that require user authentication, or iOS Secure Enclave keys gated by a
+      local-authentication context), PIN-gated PIV-class smartcards that expose a
+      user-verification-gated raw ECDSA-over-digest operation, and programmable secure elements.  A
+      standard FIDO2/WebAuthn security key does NOT natively conform: a WebAuthn
+      authenticator signs only its fixed assertion structure (authenticator data concatenated with a
+      hash of the client data) and exposes no primitive to sign an arbitrary digest, so it cannot emit a
+      JWS whose payload is an arbitrary EAT-JSON claims-set.  Binding a FIDO assertion into this profile
+      would require a separate FIDO-assertion binding, which is out of scope of this document
+      (<xref target="relationship-webauthn"/>).</t>
+
+      <t>Where the authenticator exposes only a raw user-verification-gated signing primitive (the
+      typical case for keystore- and smartcard-backed keys), the host application -- the integrating
+      SDK -- assembles the JWS, computes the action-payload hash, maintains the replay counter, and
+      populates the user-verification claim; the hardware authenticator contributes only the
+      hardware-protected, user-verification-gated signature.  In this profile the term "Attester" denotes
+      the composite of that host software and the hardware authenticator.  The security properties this
+      profile claims rest on the hardware authenticator's protected key and its user-verification gating;
+      the surrounding claim assembly is performed by the host and is itself untrusted until the
+      Verifier validates the resulting signature and cross-checks the claims against the platform
+      attestation.</t>
+
+      <t>The deployment architecture -- including any operational enforcement
       model that maps applications to capability or assurance levels, the HTTP verifier endpoints, the
       attestation-evidence wrapper, the Verifier acknowledgement, and the trust-state model -- is
       deployment-specific and is out of scope of this profile.</t>
@@ -111,10 +140,16 @@
 
         <dl>
           <dt>Attester</dt>
-          <dd>The trust-anchor authenticator that generates Evidence by signing a proof token with a
-          hardware-protected, user-verification-gated key.  The Attester MAY be a smartphone, a
-          smartcard with PIN, a FIDO security key with user verification, an embedded secure element,
-          or any equivalent authenticator.  A natural person is not an Attester.</dd>
+          <dd>The entity that generates Evidence by producing a proof token signed with a
+          hardware-protected, user-verification-gated key.  Concretely the Attester is the composite of
+          (a) a hardware authenticator that holds the signing key and enforces the user-verification gate
+          -- for example a TEE- or Secure-Element-backed mobile keystore, a PIN-gated PIV-class
+          smartcard, or a programmable secure element -- and (b) the host software that assembles the
+          token claim set around that signature.  Where the hardware authenticator exposes only a raw
+          user-verification-gated signing primitive, the host computes <tt>psea_payload_hash</tt>,
+          maintains <tt>psea_counter</tt>, and populates <tt>psea_uv</tt>; the authenticator contributes
+          the signature.  A standard FIDO2/WebAuthn security key is not a conforming Attester under this
+          profile (<xref target="introduction"/>).  A natural person is not an Attester.</dd>
 
           <dt>Verifier</dt>
           <dd>The server-side component that appraises Evidence and produces Attestation Results.</dd>
@@ -317,9 +352,9 @@
       signature over its received octets; the action binding is established by the Verifier re-hashing
       the cleartext <tt>actionPayload</tt> and comparing to the signed <tt>psea_payload_hash</tt> claim
       (<xref target="action-binding"/>); the AttestationBlock carried in <tt>integrityEvidence</tt> is
-      appraised independently against the platform Endorsement; and <tt>chainEntry</tt> is computed
-      deterministically by the Verifier from signed inputs, so its integrity flows from the signature on
-      those inputs.</t>
+      appraised independently against the platform Endorsement; and, where the deployment-optional chain
+      layer is enabled (<xref target="chain-entry"/>), <tt>chainEntry</tt> is computed deterministically
+      by the Verifier from signed inputs, so its integrity flows from the signature on those inputs.</t>
 
       <t>This profile defines a single proof token type: the user-verification-gated, action-bound
       execution-authority proof. A deployment <bcp14>MAY</bcp14> define additional, lower-assurance
@@ -335,7 +370,9 @@
         whose payload is an EAT-JSON claims-set. A conforming PSEA proof
         <bcp14>MUST</bcp14> carry the <tt>eat_profile</tt> claim (<xref target="RFC9711"/>,
         Section 4.3.4) with the stable profile identifier
-        <tt>urn:ietf:params:psea:eat-profile:1</tt>. A Verifier <bcp14>MUST</bcp14> reject a
+        <tt>urn:ietf:params:psea:eat-profile:1</tt> (or the fallback identifier of
+        <xref target="iana-urn-namespace"/> if the URN registration is not granted in the publication
+        stream). A Verifier <bcp14>MUST</bcp14> reject a
         proof whose <tt>eat_profile</tt> claim is absent or carries any other value.</t>
 
         <t>The profile is composed of three claim families:</t>
@@ -353,12 +390,12 @@
           defines no registered claim: <tt>psea_payload_hash</tt> (action-binding payload hash;
           <xref target="action-binding"/>), <tt>psea_tier</tt> (capability/assurance-level binding),
           <tt>psea_counter</tt> (monotonic per-risk-level replay counter;
-          <xref target="counter-model"/>), <tt>psea_chain_prev</tt> (hash-chain anchor;
-          <xref target="chain-entry"/>), <tt>psea_uv</tt> (user-verification claim;
+          <xref target="counter-model"/>), <tt>psea_uv</tt> (user-verification claim;
           <xref target="presence-uv-claim"/>), <tt>psea_op</tt> (operation binding;
           <xref target="cross-replay-binding"/>), and <tt>psea_proof_version</tt>. The OPTIONAL extension
-          claims <tt>psea_user_hash</tt>, <tt>psea_caller_package</tt>, and <tt>psea_sdk_version</tt> MAY
-          also be present.</li>
+          claims <tt>psea_chain_prev</tt> (deployment-optional hash-chain anchor;
+          <xref target="chain-entry"/>), <tt>psea_user_hash</tt>, <tt>psea_caller_package</tt>, and
+          <tt>psea_sdk_version</tt> MAY also be present.</li>
         </ul>
 
         <t>This document does not claim that a generic EAT consumer can fully appraise a PSEA proof
@@ -452,14 +489,17 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- psea_counter         ; uint64, monotonic per (attester, risk level)
   +-- psea_payload_hash    ; standard base64 of SHA-256(canonical
   |                        ;   actionPayload) -- the action binding
-  +-- psea_chain_prev      ; 64-char lowercase hex
-  |                        ;   (sentinel: 64 ASCII '0' for first proof)
   +-- psea_op              ; operation/authority-context discriminator
   |                        ;   (REQUIRED; see cross-replay binding)
   +-- psea_uv              ; { "verified": bool, "method": string }
   |                        ;   user-verification (human-presence) claim;
   |                        ;   REQUIRED; see the psea_uv section
   +-- psea_proof_version   ; "1"
+  [+-- psea_chain_prev]    ; OPTIONAL deployment-optional hash-chain
+  |                        ;   anchor; 64-char lowercase hex
+  |                        ;   (sentinel: 64 ASCII '0' for first proof);
+  |                        ;   present only when the deployment enables
+  |                        ;   the chain layer (see ChainEntry section)
   [+-- psea_caller_package] ; OPTIONAL; reverse-DNS app identifier
   [+-- psea_sdk_version]    ; OPTIONAL; Attester implementation version
   [+-- psea_user_hash]     ; OPTIONAL; base64url no-pad; OMITTED
@@ -473,13 +513,16 @@ Encoding split: ueid uses base64url (no padding) of the 33-byte
 RAND-type UEID; psea_payload_hash uses standard base64 (with
 padding); psea_user_hash uses base64url (no padding).
 
-NOTE on chainEntry: chainEntry is NOT carried inbound. The Attester
-sends psea_chain_prev IN the signed payload (the prior proof's
-chainEntry, or the sentinel for the first proof). The Verifier
-computes this proof's chainEntry from the signed inputs (see the
-ChainEntry section) and returns it to the Attester in an
-integrity-protected acknowledgement; the Attester persists it as the
-next proof's psea_chain_prev.
+NOTE on chainEntry (deployment-optional layer): when a deployment
+enables the hash-chain tamper-evidence layer, the Attester sends
+psea_chain_prev IN the signed payload (the prior proof's chainEntry,
+or the sentinel for the first proof). chainEntry itself is NOT carried
+inbound: the Verifier recomputes this proof's chainEntry from the
+signed inputs (see the ChainEntry section). The mechanism by which the
+recomputed chainEntry is conveyed back to the Attester for use as the
+next proof's psea_chain_prev is deployment-specific and out of scope.
+Deployments that do not enable the chain layer omit psea_chain_prev
+entirely.
 ]]></artwork>
         </figure>
 
@@ -565,11 +608,24 @@ next proof's psea_chain_prev.
           key is resolved <strong>only</strong> from the enrolled record selected by the
           untrusted-until-verified <tt>kid</tt>; the Verifier <bcp14>MUST NOT</bcp14> verify a PSEA JWS
           against any key conveyed in or referenced by the token itself.</li>
+          <li>The Verifier <bcp14>MUST</bcp14> verify the protected-header <tt>typ</tt> value. A PSEA
+          proof carries <tt>typ</tt> = <tt>"psea-proof+jwt"</tt> and a Verifier acknowledgement carries
+          <tt>typ</tt> = <tt>"psea-ack+jwt"</tt>; both share the single media type
+          (<xref target="iana-media-types"/>) and are distinguished only by <tt>typ</tt>, so a consumer
+          <bcp14>MUST</bcp14> reject a JWS whose <tt>typ</tt> is not the value expected for the artifact it
+          is processing. This prevents a proof from being processed as an acknowledgement, or the
+          reverse.</li>
+          <li>The Verifier <bcp14>MUST</bcp14> reject any JWS that carries a <tt>crit</tt> header
+          parameter naming an extension this profile does not define, and <bcp14>MUST</bcp14> reject any
+          JWS that uses the unencoded-payload option (the <tt>b64</tt> header parameter set to
+          <tt>false</tt>, <xref target="RFC7797"/>). A conforming PSEA JWS uses only the base64url-encoded
+          payload form and defines no critical header extensions at this revision.</li>
         </ul>
 
         <t>These constraints close the classic JOSE downgrade and key-confusion attacks (algorithm
-        substitution, <tt>alg</tt>:"none", and attacker-supplied verification keys) at the protocol's
-        wire surface; see also <xref target="threats-spoofing"/>.</t>
+        substitution, <tt>alg</tt>:"none", attacker-supplied verification keys, cross-type confusion
+        between proof and acknowledgement, and unencoded-payload / unknown-critical-header tricks) at the
+        protocol's wire surface; see also <xref target="threats-spoofing"/>.</t>
       </section>
 
       <section anchor="proof-schema" numbered="true">
@@ -591,7 +647,7 @@ next proof's psea_chain_prev.
   "required": [
     "jti", "aud", "iss", "iat", "exp", "ueid", "eat_profile",
     "psea_tier", "psea_op", "psea_counter", "psea_payload_hash",
-    "psea_chain_prev", "psea_uv", "psea_proof_version"
+    "psea_uv", "psea_proof_version"
   ],
   "properties": {
     "jti":  { "type": "string", "minLength": 1, "maxLength": 128,
@@ -658,8 +714,11 @@ next proof's psea_chain_prev.
                               SHA-256(canonical actionPayload); the action
                               binding. See action binding." },
     "psea_chain_prev": { "type": "string", "pattern": "^[0-9a-f]{64}$",
-              "description": "64-char lowercase hex; sentinel 64 ASCII '0'
-                              for the first proof." },
+              "description": "OPTIONAL deployment-optional hash-chain anchor.
+                              64-char lowercase hex; sentinel 64 ASCII '0'
+                              for the first proof. Present only when the
+                              deployment enables the chain tamper-evidence
+                              layer. See ChainEntry." },
     "psea_uv": { "type": "object",
               "required": ["verified", "method"],
               "properties": {
@@ -707,6 +766,15 @@ next proof's psea_chain_prev.
         <tt>integrityEvidence</tt> is an OPTIONAL attestation evidence block whose contents are out of scope
         of this profile. The concrete transport (HTTP method and path) is deployment-specific and out of
         scope.</t>
+
+        <t>Of the transport-body fields, only <tt>proof</tt> is signed, and <tt>actionPayload</tt> is
+        cryptographically bound to it through <tt>psea_payload_hash</tt> (<xref target="action-binding"/>).
+        The remaining fields — <tt>integrityEvidence</tt>, <tt>requestId</tt>, <tt>signalReport</tt>, and
+        <tt>proofId</tt> — are unsigned and attacker-mutable in transit. A Verifier <bcp14>MUST NOT</bcp14>
+        use any unsigned transport-body field as an input to a security decision. <tt>integrityEvidence</tt>
+        is appraised on its own cryptographic merits against the platform Endorsement (its appraisal does
+        not trust the envelope framing); <tt>requestId</tt>, <tt>signalReport</tt>, and <tt>proofId</tt>
+        are correlation and operational hints only and confer no authority.</t>
       </section>
 
       <section anchor="presence-via-signature" numbered="true">
@@ -774,11 +842,13 @@ next proof's psea_chain_prev.
 
           <t>Examples of the per-authenticator cross-check (informative, NOT normative — the specific
           mechanism is out of scope): a phone with an attested UV-gated hardware key whose key
-          attestation conveys an auth-enforced / user-authentication-required property; a smartcard that
-          produces a PIN-verified assertion; a FIDO authenticator that sets the user-verified (UV) flag
-          in signed authenticator data. In each case the conforming authenticator emits
-          <tt>psea_uv</tt> and the Verifier cross-checks it against that authenticator's own attested
-          UV-enforcement.</t>
+          attestation conveys an auth-enforced / user-authentication-required property; a PIN-gated
+          smartcard whose attested key properties indicate a PIN-verified signing operation. In each case
+          the conforming Attester emits <tt>psea_uv</tt> and the Verifier cross-checks it against that
+          authenticator's own attested UV-enforcement. The FIDO/WebAuthn user-verified (UV) flag carried
+          in signed authenticator data is the same idea in a different envelope, but a FIDO authenticator
+          does not itself emit a PSEA proof (<xref target="introduction"/>); consuming a FIDO assertion's
+          UV signal would require the separate, out-of-scope FIDO-assertion binding.</t>
 
           <t>Verification depth (known limitation — stated honestly, not overclaimed): where the
           authenticator's platform attestation conveys UV-enforcement (for example, a hardware-key
@@ -793,37 +863,46 @@ next proof's psea_chain_prev.
           solved on every platform; it normatively requires the claim and the cross-check, and documents
           the residual trust assumption where the attestation surface does not yet permit the
           cross-check.</t>
+
+          <t>Because an unattested <tt>psea_uv</tt> is advisory only — a signed boolean the host
+          populated, with no independent cryptographic backing for the user-verification event — a
+          Verifier that cannot anchor <tt>psea_uv</tt> to an attested UV-enforcement property
+          <bcp14>MUST NOT</bcp14> treat the human-presence assurance as attested. For high-assurance
+          operations in that case the Verifier <bcp14>SHOULD</bcp14> reject the proof, or require an
+          additional independent factor, rather than rely on the unattested claim.</t>
         </section>
       </section>
 
       <section anchor="user-id-hash" numbered="true">
-        <name>userIdHash</name>
+        <name>Subject Hash (psea_user_hash)</name>
 
-        <t>The <tt>userIdHash</tt> field is an Attester-signed subject-binding commitment: the SHA-256 of
-        an opaque, deployment-issued subject identifier, encoded as base64url without padding (see
-        <xref target="canonical-encoding"/>). The field cryptographically attributes the action to a subject
-        identifier for the audit trail.</t>
+        <t>The OPTIONAL <tt>psea_user_hash</tt> claim (<xref target="proof-schema"/>) is an Attester-signed
+        subject-binding commitment: the SHA-256 of an opaque, deployment-issued subject identifier,
+        encoded as base64url without padding. The claim cryptographically attributes the action to a
+        subject identifier for the audit trail.</t>
 
         <t>A Verifier <bcp14>MUST NOT</bcp14> make an authorization decision based on the per-proof
-        <tt>userIdHash</tt> field of a PSEA proof. Subject attribution is for ledger and audit purposes
+        <tt>psea_user_hash</tt> claim of a PSEA proof. Subject attribution is for ledger and audit purposes
         only. The cryptographic chain of authorization at the Verifier rests on the device-bound signature,
         the monotonic counter, and the presence Evidence (<xref target="presence-via-signature"/>); the
         Attester's commitment to a subject identifier is an additional audit-trail property, not a security
         gate.</t>
 
-        <t>The per-proof <tt>userIdHash</tt> is distinct from any enrollment-bound subject binding a deployment
-        records at enrollment time; that binding, and its use in decision-bearing checks, is
+        <t>The per-proof <tt>psea_user_hash</tt> is distinct from any enrollment-bound subject binding a
+        deployment records at enrollment time; that binding, and its use in decision-bearing checks, is
         deployment-specific and out of scope. The per-proof signed value on the PSEA
         proof is a commitment whose role is solely audit-trail attribution.</t>
       </section>
 
       <section anchor="device-state" numbered="true">
-        <name>deviceState</name>
+        <name>Device-State Submodule (submods.psea-device-state)</name>
 
-        <t>The <tt>deviceState</tt> field carries an opaque device-posture commitment from the Attester.
-        Its contents and the Verifier's appraisal logic are out of scope of this document.</t>
+        <t>The OPTIONAL <tt>psea-device-state</tt> submodule of the EAT <tt>submods</tt> map
+        (<xref target="proof-schema"/>) carries an opaque device-posture commitment from the Attester.
+        Its contents and the Verifier's appraisal logic are out of scope of this document. An
+        authenticator that cannot produce device-state omits <tt>submods</tt> entirely.</t>
 
-        <t>On the wire, <tt>deviceState</tt> is a JSON object (or its CBOR equivalent) whose internal
+        <t>On the wire, the <tt>psea-device-state</tt> submodule is a JSON object whose internal
         structure is not constrained by this specification. The Verifier appraises the commitment as part
         of the deployment's policy evaluation; the wire surface visible to the Attester is binary -- the
         Verifier either accepts the commitment (the proof proceeds through subsequent appraisal steps)
@@ -832,12 +911,11 @@ next proof's psea_chain_prev.
         and any operator-side controls over appraisal sensitivity are deployment-specific and outside
         the scope of this specification.</t>
 
-        <t>Implementations <bcp14>SHOULD</bcp14> sort field keys per
-        <xref target="canonical-encoding-keys"/> so the signed canonical bytes are byte-stable across
-        re-issuance of the same posture commitment. A future revision of this document <bcp14>MAY</bcp14>
-        define a normative sealed commitment form; until such a revision is published, conforming
-        implementations treat <tt>deviceState</tt> as an opaque deployment-specific object whose contents
-        are out of scope.</t>
+        <t>Because the submodule travels inside the signed JWS payload, its bytes are covered by the proof
+        signature as written; a future revision of this document <bcp14>MAY</bcp14> define a normative
+        sealed commitment form for the submodule, but until such a revision is published, conforming
+        implementations treat <tt>submods.psea-device-state</tt> as an opaque deployment-specific object
+        whose contents are out of scope.</t>
       </section>
 
       <section anchor="counter-model" numbered="true">
@@ -857,12 +935,31 @@ next proof's psea_chain_prev.
         first was composed but before it was synced. Independent scopes let each progress without
         colliding.</t>
 
+        <t><strong>Scope selection (normative).</strong> When a deployment uses more than one counter
+        scope, the value that identifies the scope a proof was produced under <bcp14>MUST</bcp14> be
+        cryptographically bound to that proof — either carried as a signed claim (for example
+        <tt>psea_tier</tt>) or carried in the action payload and therefore covered by the signed
+        <tt>psea_payload_hash</tt> (<xref target="action-binding"/>). A Verifier <bcp14>MUST</bcp14> select
+        the stored counter value to compare against using only such a bound scope identifier, and
+        <bcp14>MUST NOT</bcp14> derive the scope from any field that is not covered by the signature or by
+        the action-binding hash. This closes the otherwise-exploitable case in which an attacker steers
+        the comparison toward a stale bucket by altering an unbound scope selector. Because the
+        action-binding check (<xref target="action-binding-verifier"/>) <bcp14>MUST</bcp14> run and
+        fail-closed before the counter comparison is reached, a scope identifier conveyed in the action
+        payload is fully bound at the point the Verifier selects the bucket. A deployment that maintains a
+        single counter has no scope to select and emits one monotonic sequence.</t>
+
         <t>The cross-scope replay surface that a single counter <em>would</em> defend against (a captured
         proof submitted under a different scope) is closed instead by a global action-identifier
         uniqueness check the Verifier <bcp14>MUST</bcp14> maintain (each <tt>jti</tt> action identifier
         finalizes exactly once) plus the cross-replay binding of <xref target="cross-replay-binding"/>
         (the signed <tt>psea_tier</tt> + <tt>psea_op</tt> bindings force operation-correctness independent
-        of counter scope).</t>
+        of counter scope). The Verifier <bcp14>MUST</bcp14> retain each finalized <tt>jti</tt> for at least
+        as long as a proof bearing it could still be within its <tt>exp</tt> validity window (that is, at
+        least until the maximum <tt>exp</tt> the Verifier will accept has passed); a <tt>jti</tt>
+        <bcp14>MAY</bcp14> be evicted once no proof carrying it could still pass the <tt>exp</tt> freshness
+        check. A Verifier that retains finalized <tt>jti</tt> values for less than the <tt>exp</tt> window
+        reopens the replay surface this check exists to close.</t>
 
         <t><strong>Interoperability bound (normative):</strong> Producers <bcp14>MUST</bcp14> emit
         <tt>psea_counter</tt> as a JSON integer in the range [0, 2<sup>53</sup> &#8722; 1] (inclusive) so
@@ -874,15 +971,30 @@ next proof's psea_chain_prev.
       </section>
 
       <section anchor="chain-entry" numbered="true">
-        <name>ChainEntry</name>
+        <name>ChainEntry (Deployment-Optional Tamper-Evidence Layer)</name>
 
         <t>The <tt>chainEntry</tt> is a deterministic hash-chain anchor that links each
-        proof to the prior proof from the same Attester. The Attester carries the prior proof's
-        chainEntry inbound as the signed <tt>psea_chain_prev</tt> claim; the Verifier
-        <bcp14>MUST</bcp14> compare that value against its stored prior chainEntry for the Attester, and
-        recomputes this proof's <tt>chainEntry</tt> from the signed inputs. The mechanism by which the
-        Verifier conveys the recomputed <tt>chainEntry</tt> back to the Attester (typically in an
-        integrity-protected Attestation Result) is out of scope of this profile.</t>
+        proof to the prior proof from the same Attester. It provides a per-Attester tamper-evident ledger
+        of accepted proofs <strong>in addition to</strong> the monotonic ordering already provided by
+        <tt>psea_counter</tt> (<xref target="counter-model"/>); its value is detecting after-the-fact
+        alteration or omission within a stored proof sequence, not freshness, which the counter and the
+        action-binding already supply.</t>
+
+        <t>The chain is a <strong>deployment-optional</strong> layer. A deployment <bcp14>MAY</bcp14>
+        enable it; when enabled, the Attester carries the prior proof's chainEntry inbound as the
+        <tt>psea_chain_prev</tt> claim and the Verifier behaves as specified in
+        <xref target="chain-verifier-behavior"/>. A deployment that does not enable the chain
+        <bcp14>MUST</bcp14> omit <tt>psea_chain_prev</tt> entirely (the claim is OPTIONAL in
+        <xref target="proof-schema"/>), and a Verifier that does not implement the chain ignores it.</t>
+
+        <t>Completing the chain loop requires the Verifier to convey each recomputed <tt>chainEntry</tt>
+        back to the Attester so it can serve as the next proof's <tt>psea_chain_prev</tt>. That conveyance
+        rides on the Verifier acknowledgement / Attestation Result, whose format is deployment-specific
+        and out of scope of this profile. Two independent implementations therefore interoperate on the
+        chain only after they additionally agree on that out-of-scope acknowledgement format; the chain is
+        consequently specified here as an optional deployment feature rather than a mandatory wire
+        element, and a self-contained conforming Verifier (<xref target="conformance-verifier"/>) is not
+        required to implement it.</t>
 
         <section anchor="chain-formula" numbered="true">
           <name>Formula (Length-Prefixed Concatenation)</name>
@@ -939,14 +1051,18 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
         <section anchor="chain-verifier-behavior" numbered="true">
           <name>Verifier Behavior on Mismatch</name>
-          <t>A Verifier performs a strict-equality linkage check: if the inbound signed
+          <t>A Verifier that has enabled the chain layer performs a strict-equality linkage check on every
+          proof that carries <tt>psea_chain_prev</tt>: if the inbound signed
           <tt>psea_chain_prev</tt> does not equal the chainEntry of the last proof the Verifier accepted
           for the Attester — or the sentinel of <xref target="chain-sentinel"/> when the Verifier holds no
           prior chain entry for the Attester — the Verifier <bcp14>MUST</bcp14> reject the proof. A
           Verifier <bcp14>MAY</bcp14>, as a local operational policy out of scope of this profile,
           additionally accept a bounded class of out-of-order or backfilled proofs; any such tolerance
           <bcp14>MUST</bcp14> preserve the tamper-evidence of the chain by accepting only chainEntry values
-          the Verifier has itself previously computed and accepted for that Attester.</t>
+          the Verifier has itself previously computed and accepted for that Attester. A Verifier that has
+          not enabled the chain layer ignores <tt>psea_chain_prev</tt> if present and performs no linkage
+          check; the proof's freshness and replay resistance then rest on <tt>psea_counter</tt>
+          (<xref target="counter-model"/>), the <tt>jti</tt> uniqueness check, and the action binding.</t>
         </section>
       </section>
 
@@ -1028,8 +1144,11 @@ Total: 114 bytes → SHA-256 → 64 hex chars
             being performed. This is the discriminator that prevents a proof minted for one operation from
             being accepted for another.</li>
             <li><tt>aud</tt> — the JWT audience claim (<xref target="RFC7519"/>): an identifier of the
-            intended Verifier / audience. The Verifier <bcp14>MUST</bcp14> reject any proof whose signed
-            <tt>aud</tt> does not identify it.</li>
+            intended Verifier / audience. This profile restricts <tt>aud</tt> to a single case-sensitive
+            string value; the array form that <xref target="RFC7519"/> otherwise permits is
+            non-conformant in a PSEA proof, and a Verifier <bcp14>MUST</bcp14> reject a proof whose
+            <tt>aud</tt> is an array or is absent. The Verifier <bcp14>MUST</bcp14> reject any proof whose
+            signed <tt>aud</tt> does not identify it.</li>
             <li><tt>iss</tt> — the JWT issuer claim (<xref target="RFC7519"/>): the deployment / tenant
             identifier the Attester has locally available at sign time. The Verifier
             <bcp14>MUST</bcp14> reject any proof whose signed <tt>iss</tt> does not match the deployment /
@@ -1201,8 +1320,8 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <dl>
           <dt>A1. Hardware-protected signing key</dt>
           <dd>The Attester's signing key is generated in and never leaves a hardware-protected key store
-          (for example a TEE, a Secure Enclave, a StrongBox, a smartcard secure chip, a FIDO
-          authenticator's secure element, or equivalent). The authenticator's attestation chain, verified by the Verifier against a trust
+          (for example a TEE, a Secure Enclave, a StrongBox, a smartcard secure chip, or a programmable
+          secure element). The authenticator's attestation chain, verified by the Verifier against a trust
           anchor (<xref target="attester-assumptions"/>), provides cryptographic evidence of this
           property.</dd>
 
@@ -1266,7 +1385,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <name>Repudiation</name>
           <t>R1. <em>Subject claims they did not approve an action.</em> Mitigated by the device-bound
           signature (binding to a specific physical device) plus the contemporaneous user-verification
-          ceremony (binding to a human at that moment). The per-proof <tt>userIdHash</tt> field
+          ceremony (binding to a human at that moment). The per-proof <tt>psea_user_hash</tt> claim
           (<xref target="user-id-hash"/>) provides an additional Attester commitment to subject
           identifier for audit-trail purposes; it does not affect the cryptographic non-repudiability,
           which rests on the device-bound key and the presence Evidence binding.</t>
@@ -1416,7 +1535,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <name>Subject-Identity Limits</name>
           <t>PSEA proves <em>a</em> human was present and approved this action. It does NOT identify
           <em>which</em> human, beyond the deployment-issued subject identifier the Attester commits
-          to (<tt>userIdHash</tt> — an opaque commitment, not a cryptographic identity binding).
+          to (<tt>psea_user_hash</tt> — an opaque commitment, not a cryptographic identity binding).
           Subject identity attribution — KYC, anti-money-laundering, multi-user-on-one-device
           scenarios — is the responsibility of the deployment's enrollment ceremony and out-of-band
           identity proofing. A device legitimately enrolled to user A whose user-verification
@@ -1466,6 +1585,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         one device presents a distinct, unlinkable identifier to each Relying Party within a deployment;
         this is the path to per-RP unlinkability and is RECOMMENDED as the direction for deployments with
         strong unlinkability requirements.</t>
+
+        <t>The same "hashing is not anonymization" caution that applies to <tt>psea_user_hash</tt>
+        (<xref target="privacy-hashing"/>) applies to the <tt>deviceId</tt> input of the <tt>ueid</tt>
+        derivation. If <tt>deviceId</tt> is a low-entropy or enumerable value (for example a hardware
+        serial number or other guessable platform identifier), then <tt>SHA-256(deviceId || iss)</tt> with
+        a known <tt>iss</tt> is recoverable by brute force, defeating the confinement the per-issuer
+        derivation is meant to provide. A deployment <bcp14>SHOULD</bcp14> use a high-entropy,
+        per-enrollment random value as <tt>deviceId</tt> (a value generated at enrollment and not derived
+        from a stable hardware identifier), so that the derived <tt>ueid</tt> is not recoverable from
+        guessable inputs and is not a globally stable value computable by any other party.</t>
       </section>
 
       <section anchor="privacy-hashing" numbered="true">
@@ -1521,13 +1650,49 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
       <section anchor="iana-media-types" numbered="true">
         <name>Media Type Registration</name>
-        <t>This document requests registration of one media type with IANA:</t>
+        <t>This document requests registration of the media type <tt>application/psea+jwt</tt> in the
+        "Media Types" registry, following the procedures of <xref target="RFC6838"/> and using the
+        registered <tt>+jwt</tt> structured syntax suffix (<xref target="RFC7519"/>). The subtype carries
+        a PSEA proof (protected-header <tt>typ = "psea-proof+jwt"</tt>) or a Verifier acknowledgement /
+        Attestation Result (protected-header <tt>typ = "psea-ack+jwt"</tt>) per
+        <xref target="proof-token-format"/>; both share this single media type and are distinguished by
+        the JWS protected-header <tt>typ</tt> value, which a consumer <bcp14>MUST</bcp14> verify
+        (<xref target="jose-hardening"/>).</t>
         <dl>
-          <dt><tt>application/psea+jws</tt></dt>
-          <dd>JWS Compact Serialization (<xref target="RFC7515"/>) carrying a PSEA proof
-          (<tt>typ = "psea-proof+jwt"</tt>) or the Verifier acknowledgement / Attestation Result
-          (<tt>typ = "psea-ack+jwt"</tt>) — per <xref target="proof-token-format"/>. Both share this
-          single media type; the JWS protected-header <tt>typ</tt> value distinguishes them.</dd>
+          <dt>Type name</dt><dd>application</dd>
+          <dt>Subtype name</dt><dd>psea+jwt</dd>
+          <dt>Required parameters</dt><dd>N/A</dd>
+          <dt>Optional parameters</dt><dd>N/A</dd>
+          <dt>Encoding considerations</dt>
+          <dd>8bit; a PSEA token is a JWS Compact Serialization (<xref target="RFC7515"/>): a series of
+          base64url-encoded values separated by period (".") characters.</dd>
+          <dt>Security considerations</dt>
+          <dd>See <xref target="security-considerations"/> of this document and the Security
+          Considerations of <xref target="RFC7515"/> and <xref target="RFC7519"/>. In particular, a
+          consumer MUST apply the JOSE header hardening of <xref target="jose-hardening"/> (ES256 only;
+          reject <tt>alg</tt>:"none"; ignore <tt>jwk</tt>/<tt>jku</tt>/<tt>x5u</tt>; verify <tt>typ</tt>;
+          reject unknown <tt>crit</tt> parameters and the unencoded-payload option).</dd>
+          <dt>Interoperability considerations</dt>
+          <dd>See <xref target="proof-token-format"/> and <xref target="canonical-encoding"/>.</dd>
+          <dt>Published specification</dt><dd>This document.</dd>
+          <dt>Applications that use this media type</dt>
+          <dd>PSEA Attesters, Verifiers, and Relying Parties exchanging action-bound,
+          user-verification-gated execution-authority Evidence and the corresponding Attestation
+          Results.</dd>
+          <dt>Fragment identifier considerations</dt><dd>N/A</dd>
+          <dt>Additional information</dt>
+          <dd>
+            Deprecated alias names for this type: N/A;
+            Magic number(s): N/A;
+            File extension(s): N/A;
+            Macintosh file type code(s): N/A.
+          </dd>
+          <dt>Person &amp; email address to contact for further information</dt>
+          <dd>Mohamad Khalil Yossif &lt;mohamad@yuthent.com&gt;</dd>
+          <dt>Intended usage</dt><dd>COMMON</dd>
+          <dt>Restrictions on usage</dt><dd>None</dd>
+          <dt>Author</dt><dd>Mohamad Khalil Yossif</dd>
+          <dt>Change controller</dt><dd>IETF</dd>
         </dl>
         <t>A CWT/COSE representation (<xref target="RFC9052"/>) carrying the same EAT
         (<xref target="RFC9711"/>) and <tt>psea_*</tt> claim set is future work; this revision does not
@@ -1555,6 +1720,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           by Specification Required <xref target="RFC8126"/>. The initial assignment is
           <tt>urn:ietf:params:psea:eat-profile:1</tt>.</dd>
         </dl>
+        <t>The <tt>urn:ietf:params</tt> hierarchy is managed conservatively and its sub-namespace
+        registrations are normally associated with the IETF document stream. If this document is published
+        on a stream for which a <tt>urn:ietf:params:psea</tt> sub-namespace registration is not granted, or
+        if the registration is otherwise not completed, the profile identifier
+        <bcp14>MUST</bcp14> fall back to the stable HTTPS URI
+        <tt>https://yuthent.com/psea/eat-profile/1</tt>, under a namespace the author controls, carrying
+        identical semantics. Conforming implementations <bcp14>MUST</bcp14> treat whichever single value
+        this document's final published form fixes as the canonical <tt>eat_profile</tt> value; the two
+        forms are not interchangeable on the wire within one deployment. The remainder of this document
+        uses the <tt>urn:ietf:params:psea:eat-profile:1</tt> form as the requested primary identifier.</t>
       </section>
     </section>
     <section anchor="algorithm-agility" numbered="true" toc="default">
@@ -1653,6 +1828,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <seriesInfo name="RFC" value="3553"/>
         </reference>
 
+        <reference anchor="RFC6838" target="https://www.rfc-editor.org/info/rfc6838">
+          <front><title>Media Type Specifications and Registration Procedures</title>
+            <author fullname="N. Freed" initials="N." surname="Freed"/>
+            <author fullname="J. Klensin" initials="J." surname="Klensin"/>
+            <author fullname="T. Hansen" initials="T." surname="Hansen"/>
+            <date year="2013" month="January"/></front>
+          <seriesInfo name="BCP" value="13"/>
+          <seriesInfo name="RFC" value="6838"/>
+        </reference>
+
         <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515">
           <front><title>JSON Web Signature (JWS)</title>
             <author fullname="M. Jones" initials="M." surname="Jones"/>
@@ -1676,6 +1861,13 @@ Total: 114 bytes → SHA-256 → 64 hex chars
             <author fullname="N. Sakimura" initials="N." surname="Sakimura"/>
             <date year="2015" month="May"/></front>
           <seriesInfo name="RFC" value="7519"/>
+        </reference>
+
+        <reference anchor="RFC7797" target="https://www.rfc-editor.org/info/rfc7797">
+          <front><title>JSON Web Signature (JWS) Unencoded Payload Option</title>
+            <author fullname="M. Jones" initials="M." surname="Jones"/>
+            <date year="2016" month="February"/></front>
+          <seriesInfo name="RFC" value="7797"/>
         </reference>
 
         <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126">
@@ -1861,18 +2053,59 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
         <section anchor="conformance-verifier-common" numbered="true">
           <name>Requirements</name>
-          <t>A conforming Verifier:</t>
+          <t>A conforming Verifier MUST perform every check below. The list is the authoritative
+          enumeration of the Verifier obligations stated normatively in the body; an implementation that
+          omits any item is non-conforming. Where ordering matters it is stated; in all cases the
+          signature MUST be verified before any claim is trusted, and all binding/freshness checks MUST
+          complete before any state mutation (counter advance, ledger write, acknowledgement signing).</t>
           <ul>
-            <li>MUST implement the canonical encoding and produce byte-identical output for the
-            appendix test vectors.</li>
-            <li>MUST verify ECDSA P-256 / SHA-256 signatures against the enrolled public key.</li>
-            <li>MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended, revoked)
-            as the trust gate.</li>
+            <li>MUST apply the JOSE header hardening of <xref target="jose-hardening"/> before trusting any
+            claim: accept only <tt>alg</tt> = <tt>"ES256"</tt>, reject <tt>alg</tt> = <tt>"none"</tt>,
+            ignore any <tt>jwk</tt> / <tt>jku</tt> / <tt>x5u</tt> header key material, resolve the
+            verification key only from the enrolled record selected by <tt>kid</tt>, verify the
+            protected-header <tt>typ</tt> equals <tt>"psea-proof+jwt"</tt>, and reject any unrecognized
+            <tt>crit</tt> header parameter or an unencoded-payload (<xref target="RFC7797"/>
+            <tt>b64</tt>:false) header.</li>
+            <li>MUST verify the ECDSA P-256 / SHA-256 signature against the enrolled public key, and
+            thereafter read claims only from the verified payload.</li>
+            <li>MUST reject a proof whose <tt>eat_profile</tt> claim is absent or is not
+            <tt>urn:ietf:params:psea:eat-profile:1</tt> (<xref target="eat-profile"/>), and a proof whose
+            <tt>psea_proof_version</tt> is an unknown value (<xref target="proof-versioning"/>).</li>
+            <li>MUST validate freshness: reject a proof whose <tt>exp</tt> is in the past or whose
+            <tt>iat</tt> is implausibly in the future, applying only a small bounded clock-skew tolerance
+            (RECOMMENDED no more than 60 seconds) and a bounded maximum proof lifetime
+            (<xref target="operational-defaults"/>).</li>
+            <li>MUST, when it issued a challenge, reject a proof whose <tt>eat_nonce</tt> is absent or does
+            not equal the issued value (<xref target="eat-profile-definition"/>).</li>
+            <li>MUST require <tt>psea_uv.verified == true</tt> and reject otherwise, and MUST anchor the
+            <tt>psea_uv</tt> claim to the authenticator's attested UV-enforcement where the attestation
+            conveys it; where it cannot, MUST NOT treat human presence as attested and SHOULD reject for
+            high-assurance operations (<xref target="presence-uv-claim"/>).</li>
             <li>MUST implement the fail-closed action-binding check of
-            <xref target="action-binding-verifier"/> and reject on mismatch.</li>
+            <xref target="action-binding-verifier"/>: re-canonicalize the <tt>actionPayload</tt>, hash it
+            with SHA-256, byte-compare against <tt>psea_payload_hash</tt>, and reject on mismatch or on a
+            missing payload, before producing any approval-bearing response. This check MUST precede the
+            counter comparison.</li>
             <li>MUST verify the cross-replay binding of <xref target="cross-replay-binding"/>
-            (<tt>psea_tier</tt>, <tt>psea_op</tt>, <tt>aud</tt>, <tt>iss</tt>) after signature
-            verification and before any state mutation.</li>
+            (<tt>psea_tier</tt>, <tt>psea_op</tt>, <tt>aud</tt>, <tt>iss</tt>) by case- and
+            whitespace-exact comparison, after signature verification and before any state mutation.</li>
+            <li>MUST enforce the monotonic <tt>psea_counter</tt> (<xref target="counter-model"/>): select
+            the comparison bucket using only a cryptographically bound scope identifier, reject a value
+            not strictly greater than the stored value for that scope, and treat the claim as a 64-bit
+            unsigned integer.</li>
+            <li>MUST maintain the global <tt>jti</tt> uniqueness check (<xref target="counter-model"/>),
+            finalizing each <tt>jti</tt> exactly once and retaining finalized <tt>jti</tt> values for at
+            least the <tt>exp</tt> validity window.</li>
+            <li>MUST, when the deployment-optional chain layer (<xref target="chain-entry"/>) is enabled,
+            perform the strict-equality <tt>psea_chain_prev</tt> linkage check of
+            <xref target="chain-verifier-behavior"/>; a Verifier that does not enable the chain layer
+            is not required to implement it.</li>
+            <li>MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended,
+            revoked) as the trust gate, and MUST reject proofs from a suspended or revoked enrollment
+            (<xref target="threats-elevation"/>).</li>
+            <li>MUST NOT use any unsigned transport-body field (for example <tt>requestId</tt>,
+            <tt>proofId</tt>, <tt>signalReport</tt>) as an input to any security decision
+            (<xref target="envelope-schemas"/>).</li>
             <li>MUST reject non-conforming proofs; the concrete rejection vocabulary is
             deployment-specific.</li>
             <li>MUST produce integrity-protected Attestation Results for non-co-located Relying
