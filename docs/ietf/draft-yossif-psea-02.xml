@@ -37,8 +37,11 @@
     <abstract>
       <t>Session-based authentication establishes identity at login but does not preserve evidence of human
       authorization at the moment a specific action is executed. Post-Session Execution Assurance (PSEA) is a
-      security model that requires cryptographic proof of human presence, device integrity, and execution
-      authority at the moment of action, independent of prior session state. This document specifies the
+      security model that requires, at the moment of action and independent of prior session state, a
+      hardware-signed, action-bound proof carrying an attested human-presence property: where the platform
+      attestation conveys user-verification enforcement the presence property is attested, and where it does
+      not the proof carries a signed (forge-proof) user-verification assertion that rests on a documented
+      trust assumption rather than a hardware-rooted proof. This document specifies the
       PSEA wire protocol -- canonical encoding, proof token formats, four enforcement tiers (Passive, Silent,
       Explicit, Authoritative), trust state systems, verifier endpoints, error code registry, and security
       considerations -- for Informational status via the Independent Submission Stream.</t>
@@ -120,7 +123,8 @@
 
         <t>This document uses the following terms with the meanings defined here. Cross-references to the
         Remote ATtestation procedureS (RATS) Architecture <xref target="RFC9334"/> are provided where
-        applicable; the role mapping in <xref target="psea-architecture"/> is normative.</t>
+        applicable; the RATS role mapping in <xref target="psea-architecture"/> is informative. The
+        normative wire shape is defined in Sections 3 through 8.</t>
 
         <dl>
           <dt>Attester</dt>
@@ -693,11 +697,10 @@
           matches this section's rule for keys composed entirely of ASCII characters.</dd>
         </dl>
 
-        <t>The most common bug surfaced by the 2026-05-18 cross-platform verification effort was an Apple
-        <tt>sortedKeys</tt> case-insensitive sort silently producing canonical bytes that diverged from the
-        backend (which used JavaScript's case-sensitive default sort) -- causing every iOS-signed session
-        batch to fail signature verification. This is the failure mode the implementer-warning here is
-        specifically designed to prevent.</t>
+        <t>The most consequential pitfall is an Apple <tt>sortedKeys</tt> case-insensitive sort silently
+        producing canonical bytes that diverge from a peer using a case-sensitive sort, causing
+        cross-platform signature-verification failures. This is the failure mode the implementer-warning
+        here is specifically designed to prevent.</t>
       </section>
     </section>
 
@@ -763,7 +766,9 @@
           <tt>psea_counter</tt> (monotonic per-risk-level replay counter;
           <xref target="counter-model"/>), <tt>psea_chain_prev</tt> (hash-chain anchor;
           <xref target="chain-entry"/>), <tt>psea_uv</tt> (user-verification claim;
-          <xref target="presence-uv-claim"/>), and the descriptive
+          <xref target="presence-uv-claim"/>), the chain-gap-tolerance claims
+          <tt>psea_chain_pending</tt> and <tt>psea_last_confirmed_head</tt>
+          (<xref target="chain-gap-tolerance"/>), and the descriptive
           claims <tt>psea_proof_version</tt>, <tt>psea_caller_package</tt>, <tt>psea_sdk_version</tt>,
           and the OPTIONAL <tt>psea_user_hash</tt>.</li>
         </ul>
@@ -819,6 +824,18 @@ Payload (the claim set; base64url-encoded, no padding)
   |                        ;   actionPayload) -- the action binding
   +-- psea_chain_prev      ; 64-char lowercase hex
   |                        ;   (sentinel: 64 ASCII '0' for first proof)
+  +-- psea_chain_pending   ; integer >= 0; count of locally-advanced
+  |                        ;   chain entries not yet server-confirmed
+  |                        ;   (un-synced offline-queue depth at sign
+  |                        ;   time). Profile-extension; enables the
+  |                        ;   forward-pending accept branch (chain
+  |                        ;   gap-tolerance section).
+  |                        ;   ALWAYS on E/A; ABSENT on Tier P / Tier S.
+  +-- psea_last_confirmed_head ; 64-char lowercase hex; last server-
+  |                        ;   confirmed chainEntry the device has
+  |                        ;   observed (from the ACK psea_chain_entry),
+  |                        ;   or the 64-zero sentinel when none yet
+  |                        ;   confirmed. ALWAYS on E/A; ABSENT on P / S.
   +-- psea_uv              ; { "verified": bool, "method": string }
   |                        ;   user-verification claim (REQUIRED on E/A;
   |                        ;   see Section 4.6.1). MUST NOT appear in
@@ -904,6 +921,35 @@ persists it as the next proof's psea_chain_prev.
         nothing to reconcile against a separate envelope copy.</t>
       </section>
 
+      <section anchor="jose-hardening" numbered="true">
+        <name>JOSE Header Hardening (Normative)</name>
+
+        <t>Because a JWS protected header is attacker-influenceable until the signature is verified, a
+        Verifier <bcp14>MUST</bcp14> apply the following constraints to every PSEA JWS (the Tier P PToken,
+        the Tier S SessionSummary, the Tier E / Tier A proof, and — at the SDK consuming it — the Verifier
+        acknowledgement) before trusting any claim:</t>
+
+        <ul>
+          <li>The Verifier <bcp14>MUST</bcp14> reject any JWS whose protected-header <tt>alg</tt> is not
+          <tt>"ES256"</tt>. ES256 is the only mandatory-to-implement algorithm at this revision
+          (<xref target="crypto-mti"/>); a Verifier that does not implement algorithm negotiation
+          (<xref target="crypto-negotiation"/>) <bcp14>MUST NOT</bcp14> accept any other
+          <tt>alg</tt> value.</li>
+          <li>The Verifier <bcp14>MUST</bcp14> reject any JWS whose protected-header <tt>alg</tt> is
+          <tt>"none"</tt>. An unsigned token <bcp14>MUST NOT</bcp14> be accepted under any
+          circumstance.</li>
+          <li>The Verifier <bcp14>MUST</bcp14> ignore any key material embedded in the JWS header,
+          including the <tt>jwk</tt>, <tt>jku</tt>, and <tt>x5u</tt> header parameters. The verification
+          key is resolved <strong>only</strong> from the enrolled record selected by the
+          untrusted-until-verified <tt>kid</tt>; the Verifier <bcp14>MUST NOT</bcp14> verify a PSEA JWS
+          against any key conveyed in or referenced by the token itself.</li>
+        </ul>
+
+        <t>These constraints close the classic JOSE downgrade and key-confusion attacks (algorithm
+        substitution, <tt>alg</tt>:"none", and attacker-supplied verification keys) at the protocol's
+        wire surface; see also <xref target="threats-spoofing"/>.</t>
+      </section>
+
       <section anchor="proof-schema" numbered="true">
         <name>JWS Payload Claim Set (Tier E and Tier A)</name>
 
@@ -923,6 +969,7 @@ persists it as the next proof's psea_chain_prev.
   "required": [
     "jti", "aud", "iss", "iat", "exp", "ueid", "submods", "eat_profile",
     "psea_tier", "psea_counter", "psea_payload_hash", "psea_chain_prev",
+    "psea_chain_pending", "psea_last_confirmed_head",
     "psea_uv", "psea_proof_version",
     "psea_caller_package", "psea_sdk_version"
   ],
@@ -977,6 +1024,23 @@ persists it as the next proof's psea_chain_prev.
     "psea_chain_prev": { "type": "string", "pattern": "^[0-9a-f]{64}$",
               "description": "64-char lowercase hex; sentinel 64 ASCII '0'
                               for the first proof." },
+    "psea_chain_pending": { "type": "integer", "minimum": 0,
+              "description": "Count of locally-advanced chain entries the
+                              device has not yet seen server-confirm (its
+                              un-synced offline-queue depth at sign time).
+                              Profile-extension; server-OPTIONAL. Enables the
+                              forward-pending accept branch. See the chain
+                              gap-tolerance section.
+                              Present on Tier E / Tier A; absent on Tier P and
+                              Tier S." },
+    "psea_last_confirmed_head": { "type": "string", "pattern": "^[0-9a-f]{64}$",
+              "description": "64-char lowercase hex: the last server-confirmed
+                              chainEntry the device has observed (from the ACK
+                              psea_chain_entry), or the 64-zero sentinel when
+                              none confirmed yet. Profile-extension;
+                              server-OPTIONAL. See the chain gap-tolerance
+                              section. Present on
+                              Tier E / Tier A; absent on Tier P and Tier S." },
     "psea_uv": { "type": "object",
               "required": ["verified", "method"],
               "properties": {
@@ -1075,7 +1139,22 @@ persists it as the next proof's psea_chain_prev.
           <dd>The deployment policy evaluation result for this action.</dd>
           <dt><tt>psea_ack_version</tt></dt>
           <dd>Acknowledgement format version.</dd>
+          <dt><tt>degraded</tt> (implementation-private)</dt>
+          <dd>Boolean. Indicates the Verifier produced this ACK on a degraded appraisal path (for example,
+          a fail-open on an unreachable auxiliary input). Present in the reference implementation's signed
+          ACK.</dd>
+          <dt><tt>degraded_reason</tt> (implementation-private)</dt>
+          <dd>String or <tt>null</tt>. A short machine-readable reason accompanying <tt>degraded</tt>;
+          <tt>null</tt> when not degraded.</dd>
+          <dt><tt>psea_reason</tt> (implementation-private)</dt>
+          <dd>String. A short reason label present on some reject ACKs to disambiguate the verdict.</dd>
+          <dt><tt>externalApproved</tt> (OPTIONAL, implementation-private)</dt>
+          <dd>Boolean. Present when the deployment consulted an external approval authority; conveys that
+          authority's decision.</dd>
         </dl>
+        <t>The fields marked implementation-private above are emitted by the reference implementation's
+        signed ACK and are documented here for completeness; a Verifier <bcp14>MAY</bcp14> emit them and a
+        consumer that does not recognize them <bcp14>MUST</bcp14> tolerate them.</t>
       </section>
 
       <section anchor="attestation-block" numbered="true">
@@ -1253,7 +1332,8 @@ persists it as the next proof's psea_chain_prev.
         structure is not constrained by this specification. The Verifier appraises the commitment as part
         of the deployment's policy evaluation; the wire surface visible to the Attester is binary -- the
         Verifier either accepts the commitment (the proof proceeds through subsequent appraisal steps)
-        or rejects with <tt>POSTURE_REJECTED</tt> (see <xref target="error-code-registry"/>). The
+        or rejects the proof through the deployment policy verdict carried in the acknowledgement
+        (<xref target="ack-format"/>). The
         appraisal mechanism the Verifier applies, the categorical properties the commitment may carry,
         and any operator-side controls over appraisal sensitivity are deployment-specific and outside
         the scope of this specification.</t>
@@ -1299,9 +1379,9 @@ persists it as the next proof's psea_chain_prev.
         counter exists because the SDK reference implementation issues PTokens on its own cadence,
         not strictly bound to a host-initiated LOW-risk action).</t>
 
-        <t>The five-counter design is an intentional deviation from earlier PSEA revisions that
-        described a single per-Attester counter. The deviation is documented openly here for
-        cross-platform parity.</t>
+        <t>The five-counter design is intentional: it scopes the monotonic replay anchor per risk level
+        rather than using a single per-Attester counter, which is what preserves independent offline
+        progress across tiers (see the rationale above).</t>
       </section>
 
       <section anchor="chain-entry" numbered="true">
@@ -1368,26 +1448,131 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         </section>
 
         <section anchor="chain-verifier-behavior" numbered="true">
-          <name>Verifier Behavior on Mismatch</name>
-          <t>If the inbound signed <tt>psea_chain_prev</tt> does not match the Verifier's stored prior
-          chainEntry for the Attester, the Verifier <bcp14>MUST</bcp14> reject with
-          <tt>CHAIN_PREV_MISMATCH</tt> (<xref target="error-code-registry"/>). If the Verifier's stored
-          prior chain entry for the Attester is non-empty but the signed <tt>psea_chain_prev</tt> is the
-          sentinel value (or vice versa), the Verifier <bcp14>MUST</bcp14> reject with
-          <tt>CHAIN_PREV_MISMATCH</tt>.</t>
+          <name>Verifier Behavior on Mismatch (Windowed Linkage)</name>
+          <t>A Verifier that does not implement chain gap-tolerance
+          (<xref target="chain-gap-tolerance"/>) performs a strict-equality linkage check: if the inbound
+          signed <tt>psea_chain_prev</tt> does not match the Verifier's stored prior chainEntry for the
+          Attester, the Verifier <bcp14>MUST</bcp14> reject with <tt>CHAIN_PREV_MISMATCH</tt>
+          (<xref target="error-code-registry"/>); and if the Verifier's stored prior chain entry for the
+          Attester is non-empty but the signed <tt>psea_chain_prev</tt> is the sentinel value (or vice
+          versa), the Verifier <bcp14>MUST</bcp14> reject with <tt>CHAIN_PREV_MISMATCH</tt>.</t>
+          <t>A Verifier that implements chain gap-tolerance replaces this strict-equality test for Tier E
+          and Tier A with the windowed-linkage accept semantics defined in
+          <xref target="chain-gap-tolerance"/>. The strict-equality behavior in the preceding paragraph is
+          the <tt>windowSize == 0</tt> special case of the windowed check (any gap escalates).</t>
+        </section>
+      </section>
+
+      <section anchor="chain-gap-tolerance" numbered="true">
+        <name>Chain Gap-Tolerance (Windowed Linkage)</name>
+
+        <t>An Attester operating offline-first (<xref target="connectivity-independence"/>) may advance its
+        local chain (signing successive Tier E / Tier A proofs) faster than it syncs them to the Verifier,
+        and proofs may arrive at the Verifier out of order. A strict-equality linkage check
+        (<xref target="chain-verifier-behavior"/>) rejects such legitimately-late or out-of-order proofs.
+        Chain gap-tolerance is an OPTIONAL Verifier capability that accepts a bounded class of these gaps
+        while preserving the chain's tamper-evidence, escalating only genuinely unexplained or
+        over-window gaps. It is used for Tier E and Tier A; Tier P does not chain and Tier S carries no
+        chain anchor.</t>
+
+        <section anchor="chain-gap-claims" numbered="true">
+          <name>Profile-Extension Claims</name>
+          <t>Two profile-extension claims carry the device's local chain-sync state inside the
+          ES256-signed proof payload. Both are emitted ALWAYS on Tier E and Tier A and are ABSENT on the
+          Tier P PToken and the Tier S SessionSummary. They are server-OPTIONAL: a proof that omits them
+          still verifies, and the Verifier reads them ONLY from the signature-verified claim set, never
+          from any unsigned field. They enable, but are not required for, the forward-pending accept
+          branch.</t>
+          <ul>
+            <li><tt>psea_chain_pending</tt> — a JSON integer greater than or equal to 0: the count of
+            locally-advanced chain entries the device has not yet seen the Verifier confirm (its un-synced
+            offline-queue depth at sign time).</li>
+            <li><tt>psea_last_confirmed_head</tt> — a JSON string, 64-char lowercase hex: the last
+            server-confirmed chainEntry the device has observed (carried back in the ACK's
+            <tt>psea_chain_entry</tt>; <xref target="ack-format"/>), or the 64-zero sentinel when none has
+            been confirmed yet.</li>
+          </ul>
+          <t>Because both claims are inside the JWS-signed payload, the pending-state is forge-proof: an
+          intermediary cannot fabricate or inflate <tt>psea_chain_pending</tt> or substitute
+          <tt>psea_last_confirmed_head</tt> without invalidating the signature. Within the canonical key
+          order (<xref target="canonical-encoding-keys"/>), these claims sort as
+          <tt>psea_caller_package</tt> &lt; <tt>psea_chain_pending</tt> &lt; <tt>psea_chain_prev</tt>
+          &lt; <tt>psea_counter</tt> &lt; <tt>psea_last_confirmed_head</tt> &lt;
+          <tt>psea_payload_hash</tt>.</t>
         </section>
 
-        <section anchor="chain-deviation" numbered="true">
-          <name>Evolution of the Formula</name>
-          <t>Earlier revisions of this draft specified two prior formulations: (a) a full-body JCS form
-          <tt>SHA-256(chainPrev || canonical(body))</tt>, and (b) a simplified colon-delimited form
-          <tt>SHA-256(actionId || ":" || decimal(counter) || ":" || chainPrev)</tt>. The colon-delimited
-          form had a hash-input domain-separation weakness: while in practice the schema constraints on
-          <tt>counter</tt> (digit-only) and <tt>chainPrev</tt> (hex64) prevented exploitation by a
-          standards-conforming client, the underlying cryptographic principle (unambiguous encoding)
-          was violated. The length-prefixed form in <xref target="chain-formula"/> closes this principle
-          violation independently of any field-content constraint. Implementations conforming to this
-          revision <bcp14>MUST</bcp14> use the length-prefixed formula.</t>
+        <section anchor="chain-gap-ring" numbered="true">
+          <name>Server-Side recentChainEntries Ring</name>
+          <t>A gap-tolerant Verifier maintains, alongside the Attester's stored chain head
+          (<tt>lastChainEntry</tt>, the sentinel when null), a bounded ring of recently-accepted chain
+          entries, <tt>recentChainEntries</tt>: an array of <tt>{ entry, ts }</tt> pairs, newest last,
+          pruned to a server hard cap of 100 entries. The ring is populated ONLY with the Verifier's own
+          <tt>computeChainEntry(actionId, counter, chainPrev)</tt> output
+          (<xref target="chain-formula"/>) on the accept path, in the same transaction that advances
+          <tt>lastChainEntry</tt>. Ring entries are therefore server-computed, post-verification values;
+          the Verifier <bcp14>MUST NOT</bcp14> populate the ring with any client-asserted value.</t>
+        </section>
+
+        <section anchor="chain-gap-accept" numbered="true">
+          <name>Windowed Accept Semantics</name>
+          <t>Given the inbound signature-verified <tt>psea_chain_prev</tt>, the server head
+          (<tt>lastChainEntry</tt>, sentinel when null), the <tt>recentChainEntries</tt> ring, and the
+          effective per-tenant <tt>chainTolerance</tt> policy (<xref target="chain-gap-policy"/>) supplying
+          <tt>windowSize</tt> and <tt>maxAge</tt>, a gap-tolerant Verifier evaluates the linkage of a
+          Tier E or Tier A proof as follows:</t>
+          <ul>
+            <li><strong>ACCEPT (head)</strong> — <tt>psea_chain_prev</tt> equals the server head. This is
+            the in-order case and is accepted with NO age bound.</li>
+            <li><strong>ACCEPT (backfill)</strong> — <tt>psea_chain_prev</tt> matches one of the newest
+            <tt>windowSize</tt> entries in the ring AND that entry's age is at most <tt>maxAge</tt>. This
+            is a legitimately out-of-order or late-arriving proof.</li>
+            <li><strong>ACCEPT (forward-pending)</strong> — <tt>psea_chain_prev</tt> is neither the head
+            nor present in the ring, BUT the signed <tt>psea_chain_pending</tt> is an integer in the range
+            [1, <tt>windowSize</tt>] AND the signed <tt>psea_last_confirmed_head</tt> equals the server
+            head (or a recent ring entry within <tt>maxAge</tt>). The pending state is read ONLY from the
+            signature-verified claims.</li>
+            <li><strong>ESCALATE</strong> — otherwise (the gap is unexplained, over-window, or stale). The
+            Verifier routes the Attester into the trust lifecycle per
+            <xref target="chain-gap-escalation"/>.</li>
+          </ul>
+        </section>
+
+        <section anchor="chain-gap-escalation" numbered="true">
+          <name>Escalation (Device-Trust, Not a Per-Action Fraud Reject)</name>
+          <t>An ESCALATE outcome is a device-trust transition, NOT a per-action fraud rejection. On
+          ESCALATE the Verifier routes the Attester's enrollment into the trust lifecycle
+          (<xref target="state-verifier-lifecycle"/>) per the tenant policy's <tt>onExceeded</tt> verb:</t>
+          <ul>
+            <li><tt>"REVOKE"</tt> — the enrollment transitions to <tt>REVOKED</tt> (terminal; the Attester
+            must re-enroll). The wire response is HTTP 403 <tt>TRUST_REVOKED</tt>
+            (<xref target="error-code-registry"/>).</li>
+            <li><tt>"SUSPEND"</tt> — the enrollment transitions to <tt>SUSPENDED</tt> (operator-reversible).
+            The wire response reuses the existing HTTP 401 <tt>CHAIN_PREV_MISMATCH</tt> code; this
+            revision defines NO dedicated SUSPEND wire code, and the Verifier emits
+            <tt>CHAIN_PREV_MISMATCH</tt> for the SUSPEND case.</li>
+          </ul>
+          <t>The default <tt>onExceeded</tt> verb is <tt>"SUSPEND"</tt> (reversible). On ESCALATE the
+          Verifier <bcp14>SHOULD</bcp14> write a fraud-alert record for forensics. Actions already accepted
+          as pending are NOT retroactively voided — the Attester is escalated forward from the point of the
+          unexplained gap.</t>
+        </section>
+
+        <section anchor="chain-gap-policy" numbered="true">
+          <name>Per-Tenant chainTolerance Policy</name>
+          <t>Chain gap-tolerance is governed by a per-tenant <tt>chainTolerance</tt> policy object, read at
+          the Verifier's chain-check step at action time:</t>
+          <artwork><![CDATA[
+chainTolerance = {
+  windowSize?:   integer,   // ring-match depth; 0 = strict (any gap escalates)
+  maxAgeHours?:  integer,   // max backfill/forward-pending entry age
+  onExceeded?:   "SUSPEND" | "REVOKE"   // escalation verb
+}
+]]></artwork>
+          <t>Conservative built-in defaults apply when a field is absent: <tt>windowSize</tt> 5,
+          <tt>maxAgeHours</tt> 48, <tt>onExceeded</tt> <tt>"SUSPEND"</tt>. The Verifier enforces a hard cap
+          that a tenant cannot exceed, clamped at read time: <tt>windowSize</tt> at most 100,
+          <tt>maxAgeHours</tt> at most 168. A <tt>windowSize</tt> of 0 selects strict linkage (any gap
+          escalates), i.e. the strict-equality behavior of <xref target="chain-verifier-behavior"/>.</t>
         </section>
       </section>
 
@@ -1489,12 +1674,11 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <t>Tier E (<tt>/verify</tt>) expects <tt>psea_tier == "E"</tt> and
           <tt>aud == "proofVerify"</tt>. Tier A (<tt>/authorize</tt>) expects
           <tt>psea_tier == "A"</tt> and <tt>aud == "proofAuthorize"</tt>. The Tier P PToken and Tier S
-          SessionSummary carry the equivalent authority-level, endpoint, and deployment bindings under
-          the field names defined in their respective sections (<xref target="tier-p"/>,
-          <xref target="tier-s"/>): the Tier P PToken commits to <tt>tier == "P"</tt> /
-          <tt>audience == "trustAttest"</tt>, and each Tier S SessionSummary commits to
-          <tt>tier == "S"</tt> / <tt>audience == "sessionBatch"</tt>; the deployment identifier is
-          verified identically across all four endpoints.</t>
+          SessionSummary carry the same three binding claims under the same claim names
+          (<xref target="tier-p"/>, <xref target="tier-s"/>): the Tier P PToken commits to
+          <tt>psea_tier == "P"</tt> / <tt>aud == "trustAttest"</tt>, and each Tier S SessionSummary commits
+          to <tt>psea_tier == "S"</tt> / <tt>aud == "sessionBatch"</tt>; the deployment identifier
+          (<tt>iss</tt>) is verified identically across all four endpoints.</t>
 
           <t>These three bindings together close: (a) cross-endpoint replay (a captured Tier-E proof
           posted to <tt>/authorize</tt>, or vice versa), (b) cross-tier downgrade (a Tier-A proof
@@ -1584,16 +1768,21 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <t>The PToken is a JWS Compact Serialization object (<xref target="RFC7515"/>) whose protected
         header is <tt>{"alg":"ES256","kid":&lt;passiveKeyHash&gt;,"typ":"psea-ptoken+jwt"</tt><tt>}</tt>,
         where <tt>kid</tt> is the standard-base64 SHA-256 of the passive-tier signing-key SPKI. Its claim
-        set carries the deployment-binding and user-binding fields (including the cross-replay binding
-        fields <tt>tier == "P"</tt> and <tt>audience == "trustAttest"</tt> of
-        <xref target="cross-replay-binding"/>) and an expiry; it carries no <tt>psea_payload_hash</tt> and
-        no <tt>psea_chain_prev</tt>, because Tier P does not bind to an action and is not part of the
-        per-action hash chain. The Verifier verifies the JWS signature over the received header.payload
-        octets against the enrolled passive-tier key selected by <tt>kid</tt>.</t>
+        set is: the JWT registered claims <tt>jti</tt>, <tt>aud</tt>, <tt>iss</tt>, <tt>iat</tt>, and
+        <tt>exp</tt>; the EAT claim <tt>ueid</tt>; and the PSEA-private claims <tt>psea_counter</tt>,
+        <tt>psea_tier</tt>, and <tt>psea_user_hash</tt> (omitted when blank), plus the OPTIONAL
+        <tt>psea_action_context_hash</tt>, <tt>psea_device_state_hash</tt>, and <tt>eat_nonce</tt>. The
+        cross-replay binding (<xref target="cross-replay-binding"/>) is carried as <tt>psea_tier == "P"</tt>
+        (authority level), <tt>aud == "trustAttest"</tt> (endpoint), and <tt>iss</tt> (deployment / tenant
+        identifier). The PToken carries no <tt>psea_payload_hash</tt> and no <tt>psea_chain_prev</tt>
+        (Tier P does not bind to an action and is not part of the per-action hash chain), and carries no
+        <tt>eat_profile</tt> and no <tt>psea_uv</tt> (Tier P is not the EAT-profile execution-authority
+        proof and makes no user-presence claim). The Verifier verifies the JWS signature over the received
+        header.payload octets against the enrolled passive-tier key selected by <tt>kid</tt>.</t>
         <t>The Verifier appraises PTokens via the <tt>/trustAttest</tt> endpoint
         (<xref target="endpoint-nonce"/> and <xref target="verifier-endpoints"/>) and returns one of the
-        P-tier rejection codes (<tt>PASSIVE_KEY_NOT_ENROLLED</tt>, <tt>INVALID_PASSIVE_KEY</tt>,
-        <tt>INVALID_PTOKEN</tt>, <tt>PTOKEN_EXPIRED</tt>, <tt>ACTION_REQUEST_NOT_FOUND</tt>,
+        P-tier rejection codes (<tt>PASSIVE_KEY_NOT_ENROLLED</tt>, <tt>MALFORMED_PTOKEN</tt>,
+        <tt>WRONG_TIER</tt>, <tt>PTOKEN_EXPIRED</tt>, <tt>ACTION_REQUEST_NOT_FOUND</tt>,
         <tt>USER_BINDING_MISMATCH</tt>, <tt>TENANT_BINDING_MISMATCH</tt>; see
         <xref target="error-code-registry"/>) on failure, or signs an Attestation Result indicating
         acceptance on success.</t>
@@ -1699,7 +1888,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
                 <tt>idleTimeout</tt>.</td></tr>
               <tr><td>Trigger event</td><td><tt>TriggerEventFired</tt></td>
                 <td>A host-application-supplied event matching the Verifier's configured trigger list
-                fires. The session summary MUST carry a sibling <tt>triggerEventName</tt> field.</td></tr>
+                fires. The session summary MUST carry a <tt>psea_trigger_event_name</tt> claim.</td></tr>
               <tr><td>Manual invalidate</td><td><tt>ManualInvalidate</tt></td>
                 <td>The host application explicitly invokes the session-invalidate API.</td></tr>
             </tbody>
@@ -1721,57 +1910,83 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
           <artwork><![CDATA[
 SessionSummary JWS payload (claim set) =
-  "sessionId"          ":" string
-  "startedAt"          ":" integer-epoch-ms
-  "endedAt"            ":" integer-epoch-ms
-  "endReason"          ":" %s"TtlExpired" / %s"MaxActionsReached"
-                           / %s"IdleTimeout" / %s"ManualInvalidate"
-                           / %s"TriggerEventFired"
-  ["triggerEventName"  ":" string]
-  "actionCount"        ":" non-negative-integer
-  "rollingHash"        ":" base64-sha256
-  "userIdHash"         ":" base64-sha256
-  "deviceIdHash"       ":" base64-sha256
-  "tier"               ":" %s"S"
-  "audience"           ":" %s"sessionBatch"
-  "tenantId"           ":" string
+  JWT registered claims (RFC 7519)
+  "jti"                     ":" string         ; session id
+  "aud"                     ":" %s"sessionBatch"
+  "iss"                     ":" string         ; tenant id
+  "iat"                     ":" integer-epoch-seconds
+  EAT claim (RFC 9711)
+  "ueid"                    ":" string         ; RAND-type UEID,
+                                               ;   base64url(0x01||sha256(
+                                               ;   deviceId)); same as E/A
+  PSEA-private extension claims
+  "psea_tier"               ":" %s"S"
+  "psea_user_hash"          ":" string         ; base64url no-pad; ALWAYS
+                                               ;   present; "" when no user id
+  "psea_session_started_at" ":" integer-epoch-seconds
+  "psea_session_ended_at"   ":" integer-epoch-seconds
+  "psea_end_reason"         ":" %s"TtlExpired" / %s"MaxActionsReached"
+                                / %s"IdleTimeout" / %s"ManualInvalidate"
+                                / %s"TriggerEventFired"
+  "psea_action_count"       ":" non-negative-integer
+  "psea_rolling_hash"       ":" base64-sha256
+  ["psea_trigger_event_name" ":" string]       ; IFF psea_end_reason ==
+                                               ;   "TriggerEventFired"
 ]]></artwork>
 
           <t>Field semantics:</t>
           <dl>
-            <dt>sessionId</dt>
-            <dd>Opaque session identifier, unique per producer-side session, chosen by the producer.</dd>
-            <dt>startedAt / endedAt</dt>
-            <dd>Wall-clock timestamps in milliseconds since Unix epoch. <tt>endedAt - startedAt</tt> MUST
-            be less than or equal to the Verifier-supplied <tt>ttl</tt> plus a small grace window
-            (RECOMMENDED &lt;= 30 seconds).</dd>
-            <dt>endReason</dt>
-            <dd>One of the five normative codes from <xref target="tier-s-lifecycle"/>.</dd>
-            <dt>triggerEventName</dt>
-            <dd>REQUIRED iff <tt>endReason == "TriggerEventFired"</tt>. MUST NOT be present for any other
-            end reason.</dd>
-            <dt>actionCount</dt>
+            <dt>jti</dt>
+            <dd>Session identifier (the JWT <tt>jti</tt> claim, <xref target="RFC7519"/>), unique per
+            producer-side session, chosen by the producer.</dd>
+            <dt>aud</dt>
+            <dd>The JWT audience claim (<xref target="RFC7519"/>). For Tier S it <bcp14>MUST</bcp14> be
+            the literal string <tt>"sessionBatch"</tt> — the endpoint binding of
+            <xref target="cross-replay-binding"/>.</dd>
+            <dt>iss</dt>
+            <dd>The JWT issuer claim (<xref target="RFC7519"/>): the deployment / tenant identifier the
+            Attester has locally available at sign time — the deployment binding of
+            <xref target="cross-replay-binding"/>.</dd>
+            <dt>iat</dt>
+            <dd>Issued-at, NumericDate in epoch SECONDS (<xref target="RFC7519"/>).</dd>
+            <dt>ueid</dt>
+            <dd>The RAND-type EAT UEID (<xref target="RFC9711"/>, Section 4.2.1):
+            <tt>base64url(0x01 || SHA-256(deviceId))</tt>, base64url without padding — the same encoding
+            and value as on the Tier E / Tier A proof (<xref target="proof-top-level"/>).</dd>
+            <dt>psea_tier</dt>
+            <dd>The authority-level binding of <xref target="cross-replay-binding"/>. For Tier S it
+            <bcp14>MUST</bcp14> be the literal string <tt>"S"</tt>.</dd>
+            <dt>psea_user_hash</dt>
+            <dd>base64url (no padding) of SHA-256 over the subject identifier; audit attribution only.
+            ALWAYS present on the SessionSummary — the empty string when the session has no associated
+            user identifier.</dd>
+            <dt>psea_session_started_at / psea_session_ended_at</dt>
+            <dd>Wall-clock timestamps in epoch SECONDS.
+            <tt>psea_session_ended_at - psea_session_started_at</tt> MUST be less than or equal to the
+            Verifier-supplied <tt>ttl</tt> plus a small grace window (RECOMMENDED &lt;= 30 seconds).</dd>
+            <dt>psea_end_reason</dt>
+            <dd>One of the five normative codes from <xref target="tier-s-lifecycle"/>:
+            <tt>TtlExpired</tt>, <tt>MaxActionsReached</tt>, <tt>IdleTimeout</tt>,
+            <tt>ManualInvalidate</tt>, <tt>TriggerEventFired</tt>.</dd>
+            <dt>psea_action_count</dt>
             <dd>Total number of in-session actions performed before end. MUST be a non-negative
             integer.</dd>
-            <dt>rollingHash</dt>
+            <dt>psea_rolling_hash</dt>
             <dd>base64 of SHA-256 over a canonical concatenation of action identifiers (producer-defined,
             but MUST be deterministic across replays of the same session).</dd>
-            <dt>userIdHash / deviceIdHash</dt>
-            <dd>base64 of SHA-256 over the user identifier and device identifier respectively. Both fields
-            MUST match the enrollment record the Verifier resolves from <tt>deviceKeyHashBase64</tt>;
-            mismatch MUST be treated as a hard rejection.</dd>
-            <dt>tier / audience / tenantId</dt>
-            <dd>The three cross-replay binding fields required on every signed body by
-            <xref target="cross-replay-binding"/>. For Tier S, <tt>tier</tt> <bcp14>MUST</bcp14> be the
-            literal string <tt>"S"</tt>; <tt>audience</tt> <bcp14>MUST</bcp14> be the literal string
-            <tt>"sessionBatch"</tt>; <tt>tenantId</tt> <bcp14>MUST</bcp14> be the deployment identifier the
-            Attester has locally available at sign time. The Verifier <bcp14>MUST</bcp14> reject the batch
-            with <tt>TIER_MISMATCH</tt>, <tt>AUDIENCE_MISMATCH</tt>, or <tt>TENANT_BINDING_MISMATCH</tt>
-            (<xref target="error-code-registry"/>) respectively if any of the three fields fails its
-            byte-equality check. Comparisons <bcp14>MUST NOT</bcp14> normalize case or whitespace. All
-            three fields are claims in the JWS payload and are therefore covered by the SessionSummary
-            JWS signature.</dd>
+            <dt>psea_trigger_event_name</dt>
+            <dd>REQUIRED iff <tt>psea_end_reason == "TriggerEventFired"</tt>. MUST NOT be present for any
+            other end reason.</dd>
           </dl>
+
+          <t>The three cross-replay binding properties (<xref target="cross-replay-binding"/>) are carried
+          on the SessionSummary as the <tt>psea_tier</tt> (authority level), <tt>aud</tt> (endpoint), and
+          <tt>iss</tt> (deployment) claims. The Verifier <bcp14>MUST</bcp14> reject the batch with
+          <tt>TIER_MISMATCH</tt>, <tt>AUDIENCE_MISMATCH</tt>, or <tt>TENANT_BINDING_MISMATCH</tt>
+          (<xref target="error-code-registry"/>) respectively if any of the three fails its byte-equality
+          check; comparisons <bcp14>MUST NOT</bcp14> normalize case or whitespace. All three are claims in
+          the JWS payload and are therefore covered by the SessionSummary JWS signature. Note that all
+          timestamp claims on the SessionSummary are epoch SECONDS.</t>
           <t>Authenticity and integrity of each SessionSummary are established by the JWS signature over
           its received <tt>BASE64URL(header) || "." || BASE64URL(payload)</tt> octets — the same ES256
           P1363 (R||S) signature form as the Tier E / Tier A proof. There is no separate
@@ -1875,8 +2090,8 @@ SessionSummary JWS payload (claim set) =
     <section anchor="state-systems" numbered="true" toc="default">
       <name>Trust State Systems</name>
 
-      <t>PSEA defines three concurrent state systems that together govern whether a given proof is accepted
-      at the Verifier. The three systems are distinct in their owner, persistence, and cardinality, and
+      <t>PSEA defines two concurrent state systems that together govern whether a given proof is accepted
+      at the Verifier. The two systems are distinct in their owner, persistence, and cardinality, and
       they reconcile through the wire protocol rather than through a shared mutable representation.</t>
 
       <ul>
@@ -2162,8 +2377,7 @@ SessionSummary JWS payload (claim set) =
           <li><tt>X-API-Key</tt>: the deployment-issued API key authenticating the Relying Party (for
           operator-facing endpoints) or the Attester (for Attester-facing endpoints).</li>
           <li><tt>Content-Type</tt>: <tt>application/json</tt> for JSON-encoded bodies;
-          <tt>application/jose+json</tt> for JWS-encoded bodies; <tt>application/cose</tt> for COSE_Sign1
-          binary bodies.</li>
+          <tt>application/jose+json</tt> for JWS-encoded bodies.</li>
           <li><tt>X-Request-Id</tt>: an opaque client-issued correlation identifier (RECOMMENDED).</li>
         </ul>
       </section>
@@ -2291,9 +2505,14 @@ SessionSummary JWS payload (claim set) =
           <tr><td>CHAIN_PREV_MISSING</td><td>/verify, /authorize</td><td>HTTP 400</td><td>Hash chain</td>
             <td>The signed body lacks the <tt>psea_chain_prev</tt> claim (Tier E / Tier A require it;
             <xref target="chain-entry"/>).</td></tr>
-          <tr><td>CHAIN_PREV_MISMATCH</td><td>/verify, /authorize</td><td>body</td><td>Hash chain</td>
-            <td>The signed <tt>psea_chain_prev</tt> does not match the Verifier's stored prior chain
-            entry for this Attester.</td></tr>
+          <tr><td>CHAIN_PREV_MISMATCH</td><td>/verify, /authorize</td><td>HTTP 401 / body</td>
+            <td>Hash chain</td>
+            <td>The signed <tt>psea_chain_prev</tt> does not link to the Verifier's stored chain state
+            (strict-equality mismatch; <xref target="chain-verifier-behavior"/>). This code is also reused
+            for the SUSPEND escalation outcome of chain gap-tolerance
+            (<xref target="chain-gap-escalation"/>): a gap-tolerant Verifier whose tenant policy sets
+            <tt>onExceeded == "SUSPEND"</tt> returns HTTP 401 <tt>CHAIN_PREV_MISMATCH</tt> on ESCALATE.
+            There is no dedicated SUSPEND wire code.</td></tr>
           <tr><td>NONCE_EXPIRED</td><td>/verify, /authorize, /trustAttest</td><td>body</td>
             <td>Challenge</td>
             <td>The Verifier-issued nonce embedded in the proof has expired.</td></tr>
@@ -2333,25 +2552,23 @@ SessionSummary JWS payload (claim set) =
           <tr><td>TIER_MISMATCH</td>
             <td>/trustAttest, /sessionBatch, /verify, /authorize</td><td>body / HTTP 403</td>
             <td>Cross-replay binding</td>
-            <td>The signed authority-level binding (<tt>psea_tier</tt> on a Tier E / Tier A proof; the
-            PToken / SessionSummary <tt>tier</tt> field for Tier P / Tier S) does not match the receiving
+            <td>The signed authority-level binding <tt>psea_tier</tt> (carried on all four tiers) does not
+            match the receiving
             endpoint's expected tier
             (/trustAttest expects "P"; /sessionBatch expects "S"; /verify expects "E"; /authorize
             expects "A"). See <xref target="cross-replay-binding"/>.</td></tr>
           <tr><td>AUDIENCE_MISMATCH</td>
             <td>/trustAttest, /sessionBatch, /verify, /authorize</td><td>HTTP 403</td>
             <td>Cross-replay binding</td>
-            <td>The signed endpoint binding (<tt>aud</tt> on a Tier E / Tier A proof; the PToken /
-            SessionSummary <tt>audience</tt> field for Tier P / Tier S) does not match the receiving
-            endpoint's logical
+            <td>The signed endpoint binding <tt>aud</tt> (carried on all four tiers) does not match the
+            receiving endpoint's logical
             name (e.g., signed <tt>aud</tt>="proofAuthorize" submitted to /verify). See
             <xref target="cross-replay-binding"/>.</td></tr>
           <tr><td>TENANT_BINDING_MISMATCH</td>
             <td>/trustAttest, /sessionBatch, /verify, /authorize</td><td>HTTP 403</td>
             <td>Cross-replay binding</td>
-            <td>The signed deployment binding (<tt>iss</tt> on a Tier E / Tier A proof; the PToken /
-            SessionSummary <tt>tenantId</tt> field for Tier P / Tier S) does not match the tenant the
-            Verifier resolves
+            <td>The signed deployment binding <tt>iss</tt> (carried on all four tiers) does not match the
+            tenant the Verifier resolves
             from the request's API key (cross-deployment replay). See
             <xref target="cross-replay-binding"/>.</td></tr>
           <tr><td>EAT_PROFILE_MISMATCH</td>
@@ -2388,26 +2605,32 @@ SessionSummary JWS payload (claim set) =
             (<xref target="iana-attestation-source"/>).</td></tr>
           <tr><td>INTEGRITY_PROVIDER_INSUFFICIENT</td><td>/verify, /authorize</td><td>body</td><td>Integrity</td>
             <td>The provider is supported but does not meet the deployment's policy floor.</td></tr>
-          <tr><td>POSTURE_REJECTED</td><td>/verify</td><td>body</td><td>Posture</td>
-            <td>The Verifier rejected the proof on grounds related to the "deviceState" posture
-            commitment (<xref target="device-state"/>). The Verifier's appraisal logic and the specific
-            posture properties are out of scope of this document.</td></tr>
+          <tr><td>SIGNATURE_VERIFICATION_FAILED</td><td>/verify, /authorize</td><td>body</td>
+            <td>Cryptographic</td>
+            <td>The JWS signature over the received <tt>header.payload</tt> octets does not verify against
+            the enrolled device key. Emitted on the Tier E / Tier A proof path.</td></tr>
+          <tr><td>STATE_DRIFT_REJECTED</td><td>/verify</td><td>body</td><td>State</td>
+            <td>The Verifier rejected the Tier E proof because the Attester's reported state diverged from
+            the Verifier's record beyond the tolerated drift.</td></tr>
           <tr><td>PASSIVE_KEY_NOT_ENROLLED</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
             <td>The Attester has no passive-tier key enrolled. Re-enrollment with passive-key
             registration is required.</td></tr>
-          <tr><td>INVALID_PASSIVE_KEY</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
-            <td>The passive-tier public key cannot be parsed as an EC P-256 SPKI.</td></tr>
-          <tr><td>INVALID_PTOKEN</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
+          <tr><td>MALFORMED_PTOKEN</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
             <td>The submitted PToken is not parseable as a well-formed compact-JWS PToken
             (<xref target="tier-p"/>).</td></tr>
+          <tr><td>WRONG_TIER</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
+            <td>A token submitted to <tt>/trustAttest</tt> does not carry <tt>psea_tier == "P"</tt>.</td></tr>
           <tr><td>PTOKEN_EXPIRED</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
-            <td>The PToken's "expiresAt" is in the past.</td></tr>
+            <td>The PToken's <tt>exp</tt> claim is in the past.</td></tr>
           <tr><td>ACTION_REQUEST_NOT_FOUND</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
             <td>The proof references a push-initiated action_request that does not exist.</td></tr>
           <tr><td>USER_BINDING_MISMATCH</td><td>/trustAttest</td><td>body</td><td>P-tier</td>
             <td>The PToken's "userIdHash" does not match the enrollment-bound userIdHash.</td></tr>
           <tr><td>INVALID_SESSION</td><td>/sessionBatch</td><td>HTTP 400</td><td>S-tier</td>
             <td>A SessionSummary in the batch is missing required fields.</td></tr>
+          <tr><td>MISSING_ROLLING_HASH</td><td>/sessionBatch</td><td>HTTP 400</td><td>S-tier</td>
+            <td>A SessionSummary in the batch lacks the required <tt>psea_rolling_hash</tt> claim
+            (<xref target="tier-s-sessionsummary"/>).</td></tr>
           <tr><td>SESSION_SIGNATURE_INVALID</td><td>/sessionBatch</td><td>HTTP 401</td><td>S-tier</td>
             <td>One or more SessionSummary entries in the batch carry an invalid or missing signature;
             the entire batch is rejected (<xref target="tier-s-signature-gate"/>).</td></tr>
@@ -2429,14 +2652,19 @@ SessionSummary JWS payload (claim set) =
         </tbody>
       </table>
 
-      <t>Total: 43 wire response codes. In this revision <tt>MALFORMED_UEID</tt> was added for the
+      <t>Total: 45 wire response codes. In this revision <tt>MALFORMED_UEID</tt> was added for the
       RAND-type <tt>ueid</tt> validation (<xref target="proof-top-level"/>); <tt>EAT_PROFILE_MISMATCH</tt>
       was added for the <tt>eat_profile</tt> claim requirement (<xref target="eat-profile"/>);
-      <tt>TRUST_STATE_NOT_TRUSTED</tt> was removed with the self-asserted wire trust-state field (the
-      authoritative trust gate is the Verifier's own enrollment-status / revocation check); and the dead
-      envelope-body codes <tt>TOKEN_ACTIONID_MISMATCH</tt> and <tt>TOKEN_COUNTER_MISMATCH</tt> were
-      removed, as the compact-JWS single-payload format has no envelope-versus-body duplicates
-      (<xref target="envelope-body-consistency"/>). USER_VERIFICATION_REQUIRED and
+      <tt>SIGNATURE_VERIFICATION_FAILED</tt>, <tt>STATE_DRIFT_REJECTED</tt>, <tt>MISSING_ROLLING_HASH</tt>,
+      <tt>WRONG_TIER</tt>, and <tt>MALFORMED_PTOKEN</tt> were added to register codes the Verifier already
+      emits; the dead codes <tt>POSTURE_REJECTED</tt>, <tt>INVALID_PASSIVE_KEY</tt>, and
+      <tt>INVALID_PTOKEN</tt> (the last superseded by <tt>MALFORMED_PTOKEN</tt>) were removed because the
+      Verifier does not emit them; <tt>TRUST_STATE_NOT_TRUSTED</tt> was removed with the self-asserted wire
+      trust-state field (the authoritative trust gate is the Verifier's own enrollment-status / revocation
+      check); and the dead envelope-body codes <tt>TOKEN_ACTIONID_MISMATCH</tt> and
+      <tt>TOKEN_COUNTER_MISMATCH</tt> were removed, as the compact-JWS single-payload format has no
+      envelope-versus-body duplicates (<xref target="envelope-body-consistency"/>).
+      USER_VERIFICATION_REQUIRED and
       UV_CROSS_CHECK_MISMATCH cover the Tier E / Tier A user-verification claim per
       <xref target="presence-uv-claim"/>; TIER_MISMATCH and TENANT_BINDING_MISMATCH apply across all four
       signing-tier endpoints per <xref target="cross-replay-binding"/>; two
@@ -2527,7 +2755,11 @@ SessionSummary JWS payload (claim set) =
           <t>S1. <em>Attacker forging Evidence on behalf of an Attester.</em> Mitigated by hardware-bound
           signing keys (A1) and the Verifier's appraisal of the attestation chain
           (<xref target="attestation-block"/>). An attacker without access to the hardware key store
-          cannot produce a valid signature; the Verifier rejects with <tt>INVALID_SIGNATURE</tt>.</t>
+          cannot produce a valid signature; the Verifier rejects with <tt>INVALID_SIGNATURE</tt>. The
+          JOSE header hardening of <xref target="jose-hardening"/> additionally closes algorithm-
+          substitution, <tt>alg</tt>:"none", and attacker-supplied-key (<tt>jwk</tt> / <tt>jku</tt> /
+          <tt>x5u</tt>) forgery vectors: the Verifier accepts only ES256 and resolves the verification key
+          solely from the enrolled record selected by <tt>kid</tt>.</t>
           <t>S2. <em>Attacker presenting a recorded user-verification artifact.</em> Mitigated by
           contemporaneous gating (A2): the platform user-verification ceremony is required at the moment
           of signing. The Attester delegates user-verification to platform mechanisms; the attestation
@@ -2806,12 +3038,14 @@ SessionSummary JWS payload (claim set) =
 
       <section anchor="iana-registries-overview" numbered="true">
         <name>Summary of Requested Registries</name>
-        <t>This document requests IANA to establish two new registries plus media-type
-        registrations:</t>
+        <t>This document requests IANA to establish two new registries, register one media type, and
+        register a URN sub-namespace:</t>
         <ul>
           <li>The PSEA Attestation Source Registry (<xref target="iana-attestation-source"/>).</li>
           <li>The PSEA Error Code Registry (<xref target="iana-error-code"/>).</li>
-          <li>Two media-type registrations (<xref target="iana-media-types"/>).</li>
+          <li>One media-type registration (<xref target="iana-media-types"/>).</li>
+          <li>Registration of the <tt>urn:ietf:params:psea</tt> URN sub-namespace
+          (<xref target="iana-urn-namespace"/>).</li>
         </ul>
       </section>
 
@@ -2833,7 +3067,7 @@ SessionSummary JWS payload (claim set) =
       <section anchor="iana-error-code" numbered="true">
         <name>PSEA Error Code Registry</name>
         <t>Registration policy: Specification Required <xref target="RFC8126"/>.</t>
-        <t>Initial contents: the 43 codes listed in <xref target="error-code-registry"/>. Each registry
+        <t>Initial contents: the 45 codes listed in <xref target="error-code-registry"/>. Each registry
         entry consists of: Code (string), Endpoint scope, HTTP / body classification, Category,
         Semantics text. The codes are reproduced here for the IANA-managed registry:</t>
 
@@ -2846,24 +3080,25 @@ SessionSummary JWS payload (claim set) =
         <tt>ENROLLMENT_NOT_ATTESTED</tt>, <tt>ENROLLMENT_NOT_FOUND</tt>, <tt>GRACE_WINDOW_EXPIRED</tt>,
         <tt>INTEGRITY_EVIDENCE_REQUIRED</tt>, <tt>INTEGRITY_PROVIDER_INSUFFICIENT</tt>,
         <tt>INTEGRITY_PROVIDER_UNSUPPORTED</tt>, <tt>INTEGRITY_VERIFICATION_FAILED</tt>,
-        <tt>INTEGRITY_VERIFICATION_UNAVAILABLE</tt>, <tt>INVALID_PASSIVE_KEY</tt>,
-        <tt>INVALID_PTOKEN</tt>, <tt>INVALID_SESSION</tt>, <tt>INVALID_SIGNATURE</tt>,
-        <tt>MALFORMED_UEID</tt>, <tt>MISSING_CALLER_PACKAGE</tt>, <tt>NONCE_EXPIRED</tt>,
+        <tt>INTEGRITY_VERIFICATION_UNAVAILABLE</tt>, <tt>INVALID_SESSION</tt>, <tt>INVALID_SIGNATURE</tt>,
+        <tt>MALFORMED_PTOKEN</tt>, <tt>MALFORMED_UEID</tt>, <tt>MISSING_CALLER_PACKAGE</tt>,
+        <tt>MISSING_ROLLING_HASH</tt>, <tt>NONCE_EXPIRED</tt>,
         <tt>NONCE_MISMATCH</tt>,
         <tt>NONCE_REQUIRED</tt>, <tt>OFFLINE_AUTHORITATIVE_BLOCKED</tt>,
-        <tt>PASSIVE_KEY_NOT_ENROLLED</tt>, <tt>POSTURE_REJECTED</tt>, <tt>PTOKEN_EXPIRED</tt>,
-        <tt>RATE_LIMIT_EXCEEDED</tt>, <tt>SESSION_SIGNATURE_INVALID</tt>, <tt>STIER_NOT_ALLOWED</tt>,
+        <tt>PASSIVE_KEY_NOT_ENROLLED</tt>, <tt>PTOKEN_EXPIRED</tt>,
+        <tt>RATE_LIMIT_EXCEEDED</tt>, <tt>SESSION_SIGNATURE_INVALID</tt>,
+        <tt>SIGNATURE_VERIFICATION_FAILED</tt>, <tt>STATE_DRIFT_REJECTED</tt>, <tt>STIER_NOT_ALLOWED</tt>,
         <tt>TENANT_BINDING_MISMATCH</tt>, <tt>TIER_MISMATCH</tt>, <tt>TRUST_REVOKED</tt>,
         <tt>UNSUPPORTED_ALGORITHM</tt> (Reserved),
         <tt>UNSUPPORTED_VERSION</tt> (Reserved), <tt>USER_BINDING_MISMATCH</tt>,
-        <tt>USER_VERIFICATION_REQUIRED</tt>, <tt>UV_CROSS_CHECK_MISMATCH</tt>.</t>
+        <tt>USER_VERIFICATION_REQUIRED</tt>, <tt>UV_CROSS_CHECK_MISMATCH</tt>, <tt>WRONG_TIER</tt>.</t>
 
-        <t>Total: 43 codes.</t>
+        <t>Total: 45 codes.</t>
       </section>
 
       <section anchor="iana-media-types" numbered="true">
-        <name>Media Type Registrations</name>
-        <t>This document requests registration of the following media types with IANA:</t>
+        <name>Media Type Registration</name>
+        <t>This document requests registration of one media type with IANA:</t>
         <dl>
           <dt><tt>application/psea+jws</tt></dt>
           <dd>JWS Compact Serialization (<xref target="RFC7515"/>) carrying any PSEA proof — the Tier P
@@ -2874,9 +3109,33 @@ SessionSummary JWS payload (claim set) =
           the acknowledgement share this single media type; the JWS protected-header <tt>typ</tt> value
           distinguishes them.</dd>
         </dl>
-        <t>A CWT/COSE representation (RFC 8392 / <xref target="RFC9052"/>) carrying the same EAT
+        <t>A CWT/COSE representation (<xref target="RFC9052"/>) carrying the same EAT
         (<xref target="RFC9711"/>) and <tt>psea_*</tt> claim set is future work; this revision does not
         register a <tt>+cose</tt> media type.</t>
+      </section>
+
+      <section anchor="iana-urn-namespace" numbered="true">
+        <name>URN Sub-namespace Registration (urn:ietf:params:psea)</name>
+        <t>This document requests that IANA register the <tt>psea</tt> sub-namespace within the
+        <tt>urn:ietf:params</tt> hierarchy, per the procedures of <xref target="RFC3553"/> (BCP 73). The
+        registration enables stable, IANA-managed identifiers under <tt>urn:ietf:params:psea</tt>, of
+        which the EAT profile identifier <tt>urn:ietf:params:psea:eat-profile:1</tt>
+        (<xref target="eat-profile"/>) is the first assignment.</t>
+        <t>The registration template (per <xref target="RFC3553"/>, Section 4.3) is:</t>
+        <dl>
+          <dt>Registry name</dt>
+          <dd>PSEA (Post-Session Execution Assurance)</dd>
+          <dt>Specification</dt>
+          <dd>This document.</dd>
+          <dt>Repository</dt>
+          <dd>The PSEA Error Code Registry (<xref target="iana-error-code"/>) and the PSEA Attestation
+          Source Registry (<xref target="iana-attestation-source"/>), plus identifier strings assigned
+          under <tt>urn:ietf:params:psea</tt> by this and future PSEA documents.</dd>
+          <dt>Index value</dt>
+          <dd>Sub-strings of the form <tt>urn:ietf:params:psea:&lt;class&gt;:&lt;id&gt;</tt> are assigned
+          by Specification Required <xref target="RFC8126"/>. The initial assignment is
+          <tt>urn:ietf:params:psea:eat-profile:1</tt>.</dd>
+        </dl>
       </section>
     </section>
 
@@ -2962,6 +3221,17 @@ SessionSummary JWS payload (claim set) =
             <author fullname="F. Yergeau" initials="F." surname="Yergeau"/>
             <date year="2003" month="November"/></front>
           <seriesInfo name="RFC" value="3629"/>
+        </reference>
+
+        <reference anchor="RFC3553" target="https://www.rfc-editor.org/info/rfc3553">
+          <front><title>An IETF URN Sub-namespace for Registered Protocol Parameters</title>
+            <author fullname="M. Mealling" initials="M." surname="Mealling"/>
+            <author fullname="L. Masinter" initials="L." surname="Masinter"/>
+            <author fullname="T. Hardie" initials="T." surname="Hardie"/>
+            <author fullname="G. Klyne" initials="G." surname="Klyne"/>
+            <date year="2003" month="June"/></front>
+          <seriesInfo name="BCP" value="73"/>
+          <seriesInfo name="RFC" value="3553"/>
         </reference>
 
         <reference anchor="RFC7515" target="https://www.rfc-editor.org/info/rfc7515">
