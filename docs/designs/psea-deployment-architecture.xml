@@ -1631,7 +1631,7 @@ SessionSummary JWS payload (claim set) =
             </author>
             <date year="2026" month="May"/>
           </front>
-          <seriesInfo name="Internet-Draft" value="draft-yossif-psea-token-profile-00"/>
+          <seriesInfo name="Internet-Draft" value="draft-yossif-psea-02"/>
         </reference>
 
         <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
