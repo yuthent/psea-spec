@@ -2257,22 +2257,19 @@ SessionSummary JWS payload (claim set) =
       </section>
 
       <section anchor="state-wire-commitment" numbered="true">
-        <name>Removal of the Wire trustState Commitment</name>
+        <name>Absence of a Wire trustState Commitment</name>
 
-        <t>Earlier revisions of this document required every Tier E and Tier A proof body to carry a
-        signed <tt>trustState</tt> field whose sole defined value was <tt>"TRUSTED"</tt>, and required
-        the Verifier to reject any other value. This revision removes that field. The
-        commitment was a single-value self-assertion by the Attester — an Attester that should not emit a
+        <t>A PSEA proof body carries no self-asserted <tt>trustState</tt> field. Such a field would be a
+        single-value self-assertion by the Attester — an Attester that should not emit a
         proof simply does not sign one (<xref target="state-attester-local-gating"/>), so a signed proof
-        body always implied the Attester considered itself trusted; the field carried no information the
-        signature did not already imply. The authoritative trust gate is the Verifier's own enrollment
+        body already implies the Attester considered itself trusted; the field would carry no information the
+        signature does not already imply. The authoritative trust gate is the Verifier's own enrollment
         lifecycle (<xref target="state-verifier-lifecycle"/>), not a value the Attester asserts about
         itself.</t>
 
-        <t>A conforming Tier E / Tier A proof at this revision <bcp14>MUST NOT</bcp14> carry a
-        <tt>trustState</tt> claim, and a Verifier <bcp14>MUST NOT</bcp14> require one. The
-        <tt>TRUST_STATE_NOT_TRUSTED</tt> error code is correspondingly removed from the registry
-        (<xref target="error-code-registry"/>).</t>
+        <t>A conforming Tier E / Tier A proof <bcp14>MUST NOT</bcp14> carry a
+        <tt>trustState</tt> claim, and a Verifier <bcp14>MUST NOT</bcp14> require one. The error-code
+        registry (<xref target="error-code-registry"/>) defines no trust-state rejection code.</t>
       </section>
 
       <section anchor="state-reconciliation" numbered="true">
@@ -2652,18 +2649,10 @@ SessionSummary JWS payload (claim set) =
         </tbody>
       </table>
 
-      <t>Total: 45 wire response codes. In this revision <tt>MALFORMED_UEID</tt> was added for the
-      RAND-type <tt>ueid</tt> validation (<xref target="proof-top-level"/>); <tt>EAT_PROFILE_MISMATCH</tt>
-      was added for the <tt>eat_profile</tt> claim requirement (<xref target="eat-profile"/>);
-      <tt>SIGNATURE_VERIFICATION_FAILED</tt>, <tt>STATE_DRIFT_REJECTED</tt>, <tt>MISSING_ROLLING_HASH</tt>,
-      <tt>WRONG_TIER</tt>, and <tt>MALFORMED_PTOKEN</tt> were added to register codes the Verifier already
-      emits; the dead codes <tt>POSTURE_REJECTED</tt>, <tt>INVALID_PASSIVE_KEY</tt>, and
-      <tt>INVALID_PTOKEN</tt> (the last superseded by <tt>MALFORMED_PTOKEN</tt>) were removed because the
-      Verifier does not emit them; <tt>TRUST_STATE_NOT_TRUSTED</tt> was removed with the self-asserted wire
-      trust-state field (the authoritative trust gate is the Verifier's own enrollment-status / revocation
-      check); and the dead envelope-body codes <tt>TOKEN_ACTIONID_MISMATCH</tt> and
-      <tt>TOKEN_COUNTER_MISMATCH</tt> were removed, as the compact-JWS single-payload format has no
-      envelope-versus-body duplicates (<xref target="envelope-body-consistency"/>).
+      <t>Total: 45 wire response codes. The compact-JWS single-payload format carries no
+      envelope-versus-body duplication, so no token/body consistency codes are defined
+      (<xref target="envelope-body-consistency"/>); the authoritative trust gate is the Verifier's own
+      enrollment-status / revocation check rather than any self-asserted wire trust-state field.
       USER_VERIFICATION_REQUIRED and
       UV_CROSS_CHECK_MISMATCH cover the Tier E / Tier A user-verification claim per
       <xref target="presence-uv-claim"/>; TIER_MISMATCH and TENANT_BINDING_MISMATCH apply across all four

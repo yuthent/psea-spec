@@ -1618,7 +1618,7 @@ li > p:last-of-type:only-child {
                 </ul>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.3">
-                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-removal-of-the-wire-trustst" class="internal xref">Removal of the Wire trustState Commitment</a></p>
+                <p id="section-toc.1-1.6.2.3.1"><a href="#section-6.3" class="auto internal xref">6.3</a>.  <a href="#name-absence-of-a-wire-truststat" class="internal xref">Absence of a Wire trustState Commitment</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.6.2.4">
                 <p id="section-toc.1-1.6.2.4.1"><a href="#section-6.4" class="auto internal xref">6.4</a>.  <a href="#name-reconciliation-across-the-t" class="internal xref">Reconciliation Across the Two Systems</a></p>
@@ -4516,22 +4516,19 @@ SessionSummary JWS payload (claim set) =
 </div>
 <div id="state-wire-commitment">
 <section id="section-6.3">
-        <h3 id="name-removal-of-the-wire-trustst">
-<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-removal-of-the-wire-trustst" class="section-name selfRef">Removal of the Wire trustState Commitment</a>
+        <h3 id="name-absence-of-a-wire-truststat">
+<a href="#section-6.3" class="section-number selfRef">6.3. </a><a href="#name-absence-of-a-wire-truststat" class="section-name selfRef">Absence of a Wire trustState Commitment</a>
         </h3>
-<p id="section-6.3-1">Earlier revisions of this document required every Tier E and Tier A proof body to carry a
-        signed <code>trustState</code> field whose sole defined value was <code>"TRUSTED"</code>, and required
-        the Verifier to reject any other value. This revision removes that field. The
-        commitment was a single-value self-assertion by the Attester — an Attester that should not emit a
+<p id="section-6.3-1">A PSEA proof body carries no self-asserted <code>trustState</code> field. Such a field would be a
+        single-value self-assertion by the Attester — an Attester that should not emit a
         proof simply does not sign one (<a href="#state-attester-local-gating" class="auto internal xref">Section 6.1.3</a>), so a signed proof
-        body always implied the Attester considered itself trusted; the field carried no information the
-        signature did not already imply. The authoritative trust gate is the Verifier's own enrollment
+        body already implies the Attester considered itself trusted; the field would carry no information the
+        signature does not already imply. The authoritative trust gate is the Verifier's own enrollment
         lifecycle (<a href="#state-verifier-lifecycle" class="auto internal xref">Section 6.2</a>), not a value the Attester asserts about
         itself.<a href="#section-6.3-1" class="pilcrow">¶</a></p>
-<p id="section-6.3-2">A conforming Tier E / Tier A proof at this revision <span class="bcp14">MUST NOT</span> carry a
-        <code>trustState</code> claim, and a Verifier <span class="bcp14">MUST NOT</span> require one. The
-        <code>TRUST_STATE_NOT_TRUSTED</code> error code is correspondingly removed from the registry
-        (<a href="#error-code-registry" class="auto internal xref">Section 8</a>).<a href="#section-6.3-2" class="pilcrow">¶</a></p>
+<p id="section-6.3-2">A conforming Tier E / Tier A proof <span class="bcp14">MUST NOT</span> carry a
+        <code>trustState</code> claim, and a Verifier <span class="bcp14">MUST NOT</span> require one. The error-code
+        registry (<a href="#error-code-registry" class="auto internal xref">Section 8</a>) defines no trust-state rejection code.<a href="#section-6.3-2" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="state-reconciliation">
@@ -5219,18 +5216,10 @@ SessionSummary JWS payload (claim set) =
         </tbody>
       </table>
 </div>
-<p id="section-8-4">Total: 45 wire response codes. In this revision <code>MALFORMED_UEID</code> was added for the
-      RAND-type <code>ueid</code> validation (<a href="#proof-top-level" class="auto internal xref">Section 4.2</a>); <code>EAT_PROFILE_MISMATCH</code>
-      was added for the <code>eat_profile</code> claim requirement (<a href="#eat-profile" class="auto internal xref">Section 4.1</a>);
-      <code>SIGNATURE_VERIFICATION_FAILED</code>, <code>STATE_DRIFT_REJECTED</code>, <code>MISSING_ROLLING_HASH</code>,
-      <code>WRONG_TIER</code>, and <code>MALFORMED_PTOKEN</code> were added to register codes the Verifier already
-      emits; the dead codes <code>POSTURE_REJECTED</code>, <code>INVALID_PASSIVE_KEY</code>, and
-      <code>INVALID_PTOKEN</code> (the last superseded by <code>MALFORMED_PTOKEN</code>) were removed because the
-      Verifier does not emit them; <code>TRUST_STATE_NOT_TRUSTED</code> was removed with the self-asserted wire
-      trust-state field (the authoritative trust gate is the Verifier's own enrollment-status / revocation
-      check); and the dead envelope-body codes <code>TOKEN_ACTIONID_MISMATCH</code> and
-      <code>TOKEN_COUNTER_MISMATCH</code> were removed, as the compact-JWS single-payload format has no
-      envelope-versus-body duplicates (<a href="#envelope-body-consistency" class="auto internal xref">Section 4.3</a>).
+<p id="section-8-4">Total: 45 wire response codes. The compact-JWS single-payload format carries no
+      envelope-versus-body duplication, so no token/body consistency codes are defined
+      (<a href="#envelope-body-consistency" class="auto internal xref">Section 4.3</a>); the authoritative trust gate is the Verifier's own
+      enrollment-status / revocation check rather than any self-asserted wire trust-state field.
       USER_VERIFICATION_REQUIRED and
       UV_CROSS_CHECK_MISMATCH cover the Tier E / Tier A user-verification claim per
       <a href="#presence-uv-claim" class="auto internal xref">Section 4.9.1</a>; TIER_MISMATCH and TENANT_BINDING_MISMATCH apply across all four

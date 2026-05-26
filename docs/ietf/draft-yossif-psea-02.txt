@@ -181,8 +181,8 @@ Internet-Draft                    PSEA                          May 2026
        6.2.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  54
        6.2.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  55
        6.2.3.  Proof Acceptance per Enrollment State . . . . . . . .  55
-     6.3.  Removal of the Wire trustState Commitment . . . . . . . .  55
-     6.4.  Reconciliation Across the Two Systems . . . . . . . . . .  56
+     6.3.  Absence of a Wire trustState Commitment . . . . . . . . .  55
+     6.4.  Reconciliation Across the Two Systems . . . . . . . . . .  55
        6.4.1.  Authority for Proof Acceptance  . . . . . . . . . . .  56
        6.4.2.  Disagreement Cases  . . . . . . . . . . . . . . . . .  56
      6.5.  Out of Scope  . . . . . . . . . . . . . . . . . . . . . .  57
@@ -208,7 +208,7 @@ Internet-Draft                    PSEA                          May 2026
        9.3.5.  Denial of Service . . . . . . . . . . . . . . . . . .  70
        9.3.6.  Elevation of Privilege  . . . . . . . . . . . . . . .  70
      9.4.  Future Work: Relying Party Counter-Signature  . . . . . .  70
-     9.5.  Threats Out of Scope  . . . . . . . . . . . . . . . . . .  71
+     9.5.  Threats Out of Scope  . . . . . . . . . . . . . . . . . .  70
      9.6.  Known Open Problems . . . . . . . . . . . . . . . . . . .  71
        9.6.1.  Coercion / Duress ("Gun to the Head") . . . . . . . .  71
        9.6.2.  What-You-See-Is-What-You-Sign (WYSIWYS) . . . . . . .  72
@@ -3054,24 +3054,24 @@ Internet-Draft                    PSEA                          May 2026
    4.  If the matched enrollment record's state is ACTIVE, the Verifier
        proceeds to the per-tier evaluation pipeline.
 
-6.3.  Removal of the Wire trustState Commitment
+6.3.  Absence of a Wire trustState Commitment
 
-   Earlier revisions of this document required every Tier E and Tier A
-   proof body to carry a signed trustState field whose sole defined
-   value was "TRUSTED", and required the Verifier to reject any other
-   value.  This revision removes that field.  The commitment was a
-   single-value self-assertion by the Attester — an Attester that should
-   not emit a proof simply does not sign one (Section 6.1.3), so a
-   signed proof body always implied the Attester considered itself
-   trusted; the field carried no information the signature did not
-   already imply.  The authoritative trust gate is the Verifier's own
-   enrollment lifecycle (Section 6.2), not a value the Attester asserts
-   about itself.
+   A PSEA proof body carries no self-asserted trustState field.  Such a
+   field would be a single-value self-assertion by the Attester — an
+   Attester that should not emit a proof simply does not sign one
+   (Section 6.1.3), so a signed proof body already implies the Attester
+   considered itself trusted; the field would carry no information the
+   signature does not already imply.  The authoritative trust gate is
+   the Verifier's own enrollment lifecycle (Section 6.2), not a value
+   the Attester asserts about itself.
 
-   A conforming Tier E / Tier A proof at this revision MUST NOT carry a
-   trustState claim, and a Verifier MUST NOT require one.  The
-   TRUST_STATE_NOT_TRUSTED error code is correspondingly removed from
-   the registry (Section 8).
+   A conforming Tier E / Tier A proof MUST NOT carry a trustState claim,
+   and a Verifier MUST NOT require one.  The error-code registry
+   (Section 8) defines no trust-state rejection code.
+
+6.4.  Reconciliation Across the Two Systems
+
+
 
 
 
@@ -3081,8 +3081,6 @@ Yossif                  Expires 24 November 2026               [Page 55]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-6.4.  Reconciliation Across the Two Systems
 
 6.4.1.  Authority for Proof Acceptance
 
@@ -3129,7 +3127,9 @@ Internet-Draft                    PSEA                          May 2026
 
                                   Table 8
 
-
+   The REVOKED row is the canonical wire-driven Attester-to-Verifier
+   reconciliation event: the Attester does not poll the Verifier for the
+   enrollment state; instead, the Attester discovers a Verifier-side
 
 
 
@@ -3138,9 +3138,6 @@ Yossif                  Expires 24 November 2026               [Page 56]
 Internet-Draft                    PSEA                          May 2026
 
 
-   The REVOKED row is the canonical wire-driven Attester-to-Verifier
-   reconciliation event: the Attester does not poll the Verifier for the
-   enrollment state; instead, the Attester discovers a Verifier-side
    revocation only when its next proof submission is rejected with
    TRUST_REVOKED.  This is by design -- it keeps the wire footprint
    minimal in the steady state while guaranteeing eventual
@@ -3186,6 +3183,9 @@ Internet-Draft                    PSEA                          May 2026
    | /trustAttest     |             | background attestation.          |
    +------------------+-------------+----------------------------------+
    | POST             | S           | Submit one or more Tier S        |
+   | /sessionBatch    |             | SessionSummary objects at        |
+   |                  |             | session end.                     |
+   +------------------+-------------+----------------------------------+
 
 
 
@@ -3194,9 +3194,6 @@ Yossif                  Expires 24 November 2026               [Page 57]
 Internet-Draft                    PSEA                          May 2026
 
 
-   | /sessionBatch    |             | SessionSummary objects at        |
-   |                  |             | session end.                     |
-   +------------------+-------------+----------------------------------+
    | POST /verify     | E           | Submit a Tier E                  |
    |                  |             | ApprovalToken for                |
    |                  |             | asynchronous verification.       |
@@ -3242,6 +3239,9 @@ Internet-Draft                    PSEA                          May 2026
    store, and the deployment-specific subject and tenant identifiers.
    The Verifier appraises the attestation token against the platform
    Endorsement (see Section 4.8) and, on success, creates an enrollment
+   record in state ACTIVE.
+
+
 
 
 
@@ -3249,8 +3249,6 @@ Yossif                  Expires 24 November 2026               [Page 58]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-   record in state ACTIVE.
 
    Enrollment-specific rejection codes: ENROLLMENT_NOT_ATTESTED,
    APP_PACKAGE_MISMATCH, ATTESTATION_SECURITY_LEVEL_INSUFFICIENT,
@@ -3296,6 +3294,8 @@ Internet-Draft                    PSEA                          May 2026
    as OpenAPI contracts and machine-readable test vectors are
    normatively unnecessary for conformance; if available from an
    implementation, they are informative.
+
+
 
 
 
@@ -3672,24 +3672,24 @@ Internet-Draft                    PSEA                          May 2026
 
                                   Table 10
 
-   Total: 45 wire response codes.  In this revision MALFORMED_UEID was
-   added for the RAND-type ueid validation (Section 4.2);
-   EAT_PROFILE_MISMATCH was added for the eat_profile claim requirement
-   (Section 4.1); SIGNATURE_VERIFICATION_FAILED, STATE_DRIFT_REJECTED,
-   MISSING_ROLLING_HASH, WRONG_TIER, and MALFORMED_PTOKEN were added to
-   register codes the Verifier already emits; the dead codes
-   POSTURE_REJECTED, INVALID_PASSIVE_KEY, and INVALID_PTOKEN (the last
-   superseded by MALFORMED_PTOKEN) were removed because the Verifier
-   does not emit them; TRUST_STATE_NOT_TRUSTED was removed with the
-   self-asserted wire trust-state field (the authoritative trust gate is
-   the Verifier's own enrollment-status / revocation check); and the
-   dead envelope-body codes TOKEN_ACTIONID_MISMATCH and
-   TOKEN_COUNTER_MISMATCH were removed, as the compact-JWS single-
-   payload format has no envelope-versus-body duplicates (Section 4.3).
+   Total: 45 wire response codes.  The compact-JWS single-payload format
+   carries no envelope-versus-body duplication, so no token/body
+   consistency codes are defined (Section 4.3); the authoritative trust
+   gate is the Verifier's own enrollment-status / revocation check
+   rather than any self-asserted wire trust-state field.
    USER_VERIFICATION_REQUIRED and UV_CROSS_CHECK_MISMATCH cover the Tier
    E / Tier A user-verification claim per Section 4.9.1; TIER_MISMATCH
    and TENANT_BINDING_MISMATCH apply across all four signing-tier
    endpoints per Section 4.15.4; two reserved-for-forward-compatibility
+   entries are included.  Deployment-level licensing and quota
+   rejections (for example, an exhausted monthly action quota or a
+   tiered-actions feature that is not enabled for the deployment) are
+   implementation-specific and out of scope for this protocol; they are
+   not assigned PSEA wire response codes.
+
+
+
+
 
 
 
@@ -3697,12 +3697,6 @@ Yossif                  Expires 24 November 2026               [Page 66]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-   entries are included.  Deployment-level licensing and quota
-   rejections (for example, an exhausted monthly action quota or a
-   tiered-actions feature that is not enabled for the deployment) are
-   implementation-specific and out of scope for this protocol; they are
-   not assigned PSEA wire response codes.
 
 8.1.  Audit-Side Fraud-Alert Labels (Informative)
 
@@ -3746,6 +3740,12 @@ Internet-Draft                    PSEA                          May 2026
    assumptions about a conforming Attester:
 
    A1.  Hardware-protected signing key  The Attester's signing key is
+      generated in and never leaves a hardware-protected key store (for
+      example a TEE, a Secure Enclave, a StrongBox, a smartcard secure
+      chip, a FIDO authenticator's secure element, or equivalent).  The
+      authenticator's attestation chain (verified via Section 4.8)
+      provides the Verifier with cryptographic evidence of this
+      property.
 
 
 
@@ -3753,13 +3753,6 @@ Yossif                  Expires 24 November 2026               [Page 67]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-      generated in and never leaves a hardware-protected key store (for
-      example a TEE, a Secure Enclave, a StrongBox, a smartcard secure
-      chip, a FIDO authenticator's secure element, or equivalent).  The
-      authenticator's attestation chain (verified via Section 4.8)
-      provides the Verifier with cryptographic evidence of this
-      property.
 
    A2.  Contemporaneous user-verification gating  The Attester's signing
       key is gated by a platform user-verification ceremony such that
@@ -3802,6 +3795,13 @@ Internet-Draft                    PSEA                          May 2026
    Mitigated by contemporaneous gating (A2): the platform user-
    verification ceremony is required at the moment of signing.  The
    Attester delegates user-verification to platform mechanisms; the
+   attestation chain proves the gating is in place.  Residual risk:
+   bounded by the platform's user-verification anti-spoofing capability
+   (e.g., presentation-attack detection in biometric subsystems, tamper
+   resistance of hardware-token / smartcard readers, PIN-shoulder-
+   surfing mitigations).
+
+
 
 
 
@@ -3809,12 +3809,6 @@ Yossif                  Expires 24 November 2026               [Page 68]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-   attestation chain proves the gating is in place.  Residual risk:
-   bounded by the platform's user-verification anti-spoofing capability
-   (e.g., presentation-attack detection in biometric subsystems, tamper
-   resistance of hardware-token / smartcard readers, PIN-shoulder-
-   surfing mitigations).
 
 9.3.2.  Tampering
 
@@ -3858,6 +3852,12 @@ Internet-Draft                    PSEA                          May 2026
    See Section 10.2 for the honest treatment and the salt / pairwise-
    derivation mitigations.
 
+   I3. _Wire-protocol leak via verbose error responses._ Mitigated by
+   the curated error code registry (Section 8) which constrains response
+   content to a fixed set of codes without leaking deployment-internal
+   diagnostic detail to the Attester.
+
+
 
 
 
@@ -3865,11 +3865,6 @@ Yossif                  Expires 24 November 2026               [Page 69]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-   I3. _Wire-protocol leak via verbose error responses._ Mitigated by
-   the curated error code registry (Section 8) which constrains response
-   content to a fixed set of codes without leaking deployment-internal
-   diagnostic detail to the Attester.
 
 9.3.5.  Denial of Service
 
@@ -3915,17 +3910,17 @@ Internet-Draft                    PSEA                          May 2026
    informative-only at this revision; a normative specification is
    deferred to a future document.
 
+9.5.  Threats Out of Scope
+
+   The following threats are acknowledged but are out of scope of the
+   wire protocol:
+
 
 
 Yossif                  Expires 24 November 2026               [Page 70]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-9.5.  Threats Out of Scope
-
-   The following threats are acknowledged but are out of scope of the
-   wire protocol:
 
    O1.  Platform user-verification subsystem compromise  Compromise of
       the platform user-verification subsystem (biometric subsystem,
@@ -3970,6 +3965,11 @@ Internet-Draft                    PSEA                          May 2026
    appeared distressed.  The Attester sees only a binary "verification
    succeeded."  A duress-code scheme (e.g., a specific finger reserved
    for duress, a specific PIN suffix) would require either (a) platform-
+   level API changes to surface which credential was used so the
+   Attester can interpret it, or (b) the application binding distinct
+   credentials to distinct server-side meanings — but on face-based
+   verification this is effectively impossible because there is no way
+   to enroll a "duress face."  This is an open problem the author is
 
 
 
@@ -3978,11 +3978,6 @@ Yossif                  Expires 24 November 2026               [Page 71]
 Internet-Draft                    PSEA                          May 2026
 
 
-   level API changes to surface which credential was used so the
-   Attester can interpret it, or (b) the application binding distinct
-   credentials to distinct server-side meanings — but on face-based
-   verification this is effectively impossible because there is no way
-   to enroll a "duress face."  This is an open problem the author is
    actively seeking solutions to; deployments that require duress
    detection today rely on out-of-band mechanisms (transaction-
    monitoring rules, behavioral analytics, secondary channels) that lie
@@ -4026,6 +4021,11 @@ Internet-Draft                    PSEA                          May 2026
    action it is about to execute and returns it to the authenticator for
    display and a user-verification step before the action commits,
    giving the signed content an independent, server-anchored origin
+   rather than one chosen entirely by a potentially-compromised client
+   UI.  This is a SHOULD / RECOMMENDED measure for high-consequence
+   tiers, not a universal MUST, and it reduces but does not eliminate
+   the residual risk on a fully compromised display.
+
 
 
 
@@ -4033,11 +4033,6 @@ Yossif                  Expires 24 November 2026               [Page 72]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-   rather than one chosen entirely by a potentially-compromised client
-   UI.  This is a SHOULD / RECOMMENDED measure for high-consequence
-   tiers, not a universal MUST, and it reduces but does not eliminate
-   the residual risk on a fully compromised display.
 
    Out-of-band channels vulnerable to SIM-swap or one-time-passcode
    interception (for example, SMS OTP) are NOT RECOMMENDED as a WYSIWYS
@@ -4082,6 +4077,11 @@ Internet-Draft                    PSEA                          May 2026
    Relying Party that shares the device-id-hash input, so the device's
    actions are also linkable _across_ Relying Parties.  This is an
    inherent property of a device-bound attestation identifier, not an
+   implementation defect; PSEA's security model depends on the Verifier
+   being able to bind successive proofs to one enrollment.
+
+
+
 
 
 
@@ -4089,9 +4089,6 @@ Yossif                  Expires 24 November 2026               [Page 73]
 
 Internet-Draft                    PSEA                          May 2026
 
-
-   implementation defect; PSEA's security model depends on the Verifier
-   being able to bind successive proofs to one enrollment.
 
    A deployment that needs to limit cross-deployment linkability SHOULD
    scope the device-id-hash input per deployment (for example, by mixing
@@ -4137,6 +4134,9 @@ Internet-Draft                    PSEA                          May 2026
    is non-identifying.  The minimization PSEA does provide is that the
    _raw_ identifier and the biometric template never transit the wire
    (Section 9.3.4); that is a reduction in exposure, not anonymization.
+
+
+
 
 
 
