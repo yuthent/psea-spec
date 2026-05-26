@@ -1,16 +1,17 @@
 cff-version: 1.2.0
-message: "If you use this specification, please cite it as below."
-title: "Post-Session Execution Assurance (PSEA): Reference Specification"
+message: "If you reference this work, please cite the Internet-Draft as below."
+title: "PSEA Token Profile: An EAT Profile for Action-Bound, User-Verification-Gated Transaction-Confirmation Evidence"
 abstract: >
-  Reference specification for the PSEA security model — cryptographic proof
-  of authority at the moment of action, independent of session state.
-  Companion to IETF Internet-Draft draft-yossif-psea-01.
+  An Entity Attestation Token (EAT, RFC 9711) profile for action-bound,
+  user-verification-gated transaction-confirmation evidence: a What-You-Sign-Is-
+  What-You-Execute proof that a present, user-verified human approved a specific
+  named action at the moment of execution. Self-contained and device-agnostic;
+  conformance is buildable from the draft alone, with no bilateral agreement or
+  vendor registry required.
 type: software
-version: "1.0.0"
-date-released: 2026-05-04
-license: MIT
-url: "https://github.com/yuthent/psea-spec"
 repository-code: "https://github.com/yuthent/psea-spec"
+url: "https://datatracker.ietf.org/doc/draft-yossif-psea/"
+license: MIT
 authors:
   - family-names: Yossif
     given-names: Mohamad
@@ -19,33 +20,23 @@ authors:
     email: mohamad@yuthent.com
 keywords:
   - PSEA
-  - post-session
-  - execution assurance
-  - authority verification
-  - cryptographic proof
-  - device attestation
-  - biometric
-  - hash chain
-references:
-  - type: report
-    title: "Post-Session Execution Assurance (PSEA): A Security Model for Verifying Authority at the Moment of Action"
-    authors:
-      - family-names: Yossif
-        given-names: Mohamad
-        name-particle: Khalil
-    institution:
-      name: "Internet Engineering Task Force"
-    date-released: 2026-02-07
-    url: "https://datatracker.ietf.org/doc/draft-yossif-psea/"
-    notes: "Internet-Draft draft-yossif-psea-01 (informational, individual submission)."
+  - EAT
+  - RFC 9711
+  - JWS
+  - transaction confirmation
+  - user verification
+  - action binding
+  - step-up authentication
 preferred-citation:
   type: report
-  title: "Post-Session Execution Assurance (PSEA): A Security Model for Verifying Authority at the Moment of Action"
+  title: "PSEA Token Profile: An EAT Profile for Action-Bound, User-Verification-Gated Transaction-Confirmation Evidence"
   authors:
     - family-names: Yossif
       given-names: Mohamad
       name-particle: Khalil
   institution:
-    name: "Yuthent"
+    name: "Internet Engineering Task Force"
   year: 2026
-  url: "https://yuthent.com/psea"
+  month: 5
+  url: "https://datatracker.ietf.org/doc/draft-yossif-psea/"
+  notes: "Internet-Draft draft-yossif-psea-02 (intended status: Standards Track; individual submission, work in progress)."

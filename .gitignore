@@ -1,0 +1,24 @@
+# This is the PUBLIC PSEA specification repository.
+# Internal working notes, investigation scratch, and tooling logs MUST NOT
+# be published here. The patterns below keep them out of version control.
+
+# Internal investigation / analysis scratch
+gemini_investigation/
+docs/audits/
+
+# Scratch logs and tracker output
+*.log
+tracker.log
+docs/ietf/tracker.log
+
+# git-filter-repo / history-rewrite scratch
+mailmap-fix.txt
+strip-trailers.txt
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*~
+.idea/
+.vscode/
