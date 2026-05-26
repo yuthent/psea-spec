@@ -1,0 +1,2464 @@
+
+
+
+
+Independent Submission                                      M. K. Yossif
+Internet-Draft                                                   Yuthent
+Intended status: Informational                               26 May 2026
+Expires: 27 November 2026
+
+
+ Post-Session Execution Assurance (PSEA): A Deployment Architecture for
+                         the PSEA Token Profile
+                   draft-yossif-psea-architecture-00
+
+Abstract
+
+   This document is Informational and describes a concrete deployment
+   architecture for the PSEA Token Profile [PSEA-TOKEN-PROFILE].  The
+   architecture defines the four-tier P/S/E/A enforcement model
+   (Passive, Silent, Explicit, Authoritative), the HTTP Verifier
+   endpoints used to submit Evidence, the AttestationBlock wrapper for
+   platform attestation tokens, the Verifier Acknowledgement (ACK)
+   format, the error-code registry, and the operational trust-state
+   model.  All token-level definitions -- canonical encoding, proof
+   claim sets, hash-chain model, action-payload binding, EAT profile
+   declaration, security and privacy considerations, and algorithm
+   agility -- are normatively defined in [PSEA-TOKEN-PROFILE]; this
+   document references those definitions and describes how they are
+   operationalized in a conforming deployment.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 27 November 2026.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 1]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+     1.1.  The Authority Gap . . . . . . . . . . . . . . . . . . . .   4
+     1.2.  Document Scope and Status . . . . . . . . . . . . . . . .   4
+     1.3.  Applicability . . . . . . . . . . . . . . . . . . . . . .   5
+     1.4.  Requirements Language . . . . . . . . . . . . . . . . . .   5
+     1.5.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   5
+   2.  PSEA Architecture . . . . . . . . . . . . . . . . . . . . . .   6
+     2.1.  Role Mapping  . . . . . . . . . . . . . . . . . . . . . .   7
+     2.2.  The Passport Model in PSEA  . . . . . . . . . . . . . . .   8
+     2.3.  Data Flow . . . . . . . . . . . . . . . . . . . . . . . .   8
+     2.4.  Co-location of Verifier and Relying Party . . . . . . . .   9
+     2.5.  Subject Distinction . . . . . . . . . . . . . . . . . . .   9
+     2.6.  Architectural Principles  . . . . . . . . . . . . . . . .   9
+       2.6.1.  Execution-Time Proof  . . . . . . . . . . . . . . . .   9
+       2.6.2.  Human Presence Assurance  . . . . . . . . . . . . . .  10
+       2.6.3.  Device-Bound Trust  . . . . . . . . . . . . . . . . .  10
+       2.6.4.  Cryptographic Proof . . . . . . . . . . . . . . . . .  11
+       2.6.5.  Connectivity Independence . . . . . . . . . . . . . .  11
+     2.7.  What PSEA Is Not  . . . . . . . . . . . . . . . . . . . .  12
+   3.  Verifier Acknowledgement (JWS)  . . . . . . . . . . . . . . .  12
+   4.  AttestationBlock  . . . . . . . . . . . . . . . . . . . . . .  14
+     4.1.  Verifier Appraisal  . . . . . . . . . . . . . . . . . . .  15
+   5.  Enforcement Tiers . . . . . . . . . . . . . . . . . . . . . .  15
+     5.1.  Tier Model: Primitives and Composition  . . . . . . . . .  15
+     5.2.  Tier Summary  . . . . . . . . . . . . . . . . . . . . . .  16
+     5.3.  Common Preconditions  . . . . . . . . . . . . . . . . . .  16
+     5.4.  Tier P -- Passive . . . . . . . . . . . . . . . . . . . .  17
+     5.5.  Tier E -- Explicit  . . . . . . . . . . . . . . . . . . .  17
+     5.6.  Tier A -- Authoritative . . . . . . . . . . . . . . . . .  18
+     5.7.  Tier S -- Silent (Composition)  . . . . . . . . . . . . .  18
+       5.7.1.  Semantics (Bootstrap x Maintenance) . . . . . . . . .  19
+       5.7.2.  Session Lifecycle . . . . . . . . . . . . . . . . . .  19
+       5.7.3.  SessionSummary Wire Shape (Normative) . . . . . . . .  20
+       5.7.4.  Verifier Signature Gate (Fail-Closed at the Batch
+               Level)  . . . . . . . . . . . . . . . . . . . . . . .  23
+       5.7.5.  Transport Endpoint  . . . . . . . . . . . . . . . . .  24
+       5.7.6.  Preconditions . . . . . . . . . . . . . . . . . . . .  24
+
+
+
+Yossif                  Expires 27 November 2026                [Page 2]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+     5.8.  Negotiation and Tier Mapping  . . . . . . . . . . . . . .  24
+     5.9.  Conformance Checklist . . . . . . . . . . . . . . . . . .  25
+   6.  Trust State Systems . . . . . . . . . . . . . . . . . . . . .  25
+     6.1.  Attester Local Trust State (Informative)  . . . . . . . .  26
+       6.1.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  26
+       6.1.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  27
+       6.1.3.  Action Gating per State . . . . . . . . . . . . . . .  28
+     6.2.  Verifier Enrollment Lifecycle (Normative) . . . . . . . .  28
+       6.2.1.  States  . . . . . . . . . . . . . . . . . . . . . . .  28
+       6.2.2.  Transitions . . . . . . . . . . . . . . . . . . . . .  29
+       6.2.3.  Proof Acceptance per Enrollment State . . . . . . . .  29
+     6.3.  Absence of a Wire trustState Commitment . . . . . . . . .  29
+     6.4.  Reconciliation Across the Two Systems . . . . . . . . . .  29
+       6.4.1.  Authority for Proof Acceptance  . . . . . . . . . . .  30
+       6.4.2.  Disagreement Cases  . . . . . . . . . . . . . . . . .  30
+     6.5.  Out of Scope  . . . . . . . . . . . . . . . . . . . . . .  31
+   7.  Verifier HTTP Endpoints . . . . . . . . . . . . . . . . . . .  31
+     7.1.  Overview  . . . . . . . . . . . . . . . . . . . . . . . .  31
+     7.2.  Common Request Headers  . . . . . . . . . . . . . . . . .  32
+     7.3.  POST /attest/nonce  . . . . . . . . . . . . . . . . . . .  32
+     7.4.  POST /deviceEnroll  . . . . . . . . . . . . . . . . . . .  32
+     7.5.  POST /verify  . . . . . . . . . . . . . . . . . . . . . .  33
+     7.6.  POST /authorize . . . . . . . . . . . . . . . . . . . . .  33
+     7.7.  POST /trustInvalidate . . . . . . . . . . . . . . . . . .  33
+     7.8.  Reference Schema  . . . . . . . . . . . . . . . . . . . .  33
+   8.  Error Codes . . . . . . . . . . . . . . . . . . . . . . . . .  34
+     8.1.  Audit-Side Fraud-Alert Labels (Informative) . . . . . . .  41
+   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  41
+     9.1.  Summary of Requested Registries . . . . . . . . . . . . .  41
+     9.2.  PSEA Error Code Registry  . . . . . . . . . . . . . . . .  42
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  42
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .  42
+     10.2.  Informative References . . . . . . . . . . . . . . . . .  43
+   Appendix A.  Citation and Reference . . . . . . . . . . . . . . .  43
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  44
+
+1.  Introduction
+
+   This document specifies Post-Session Execution Assurance (PSEA), a
+   wire protocol for verifying human authority at the moment a sensitive
+   action is executed.  PSEA does not replace authentication; it
+   requires cryptographic proof of authority at the moment of execution,
+   independent of prior session state.
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 3]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+1.1.  The Authority Gap
+
+   For decades, session-based security has operated on the assumption
+   that a successful authentication event at login time represents the
+   user's identity and authority for the duration of the session.  In
+   modern systems, where actions occur long after the initial
+   authentication event and context drifts continuously, this assumption
+   is no longer reasonable: a session authenticated by a legitimate user
+   at 09:00 carries identical authority at 15:00, even if the device has
+   been compromised, the user has stepped away, or an automated process
+   has assumed control of the session.  Authentication answers "Did this
+   entity present valid credentials at some point in time?"; execution
+   authority answers "Is an authorized human, present, verified, and
+   operating from a trusted device, approving this specific action right
+   now?".  The gap between these two questions is where risk
+   materializes, and it is the problem PSEA addresses.
+
+   Concretely: a banking session authenticated at 09:00 is still "valid"
+   at 15:00 when a high-value fund transfer is submitted -- yet session
+   validity says nothing about whether the legitimate account holder,
+   present and aware, actually approved _that_ transfer at _that_
+   moment, as opposed to a hijacked session, malware acting
+   autonomously, or an unattended unlocked device.  The same gap recurs
+   wherever a high-consequence action rides on a still-open session:
+   dispensing a controlled drug, recording a safety-critical shift
+   check-in, or escalating an administrator's privileges. _Session-
+   valid_ is not the same property as _this specific human approved this
+   specific action, right now_. PSEA's purpose is to produce
+   cryptographic Evidence of the latter at execution time, independent
+   of session state.
+
+1.2.  Document Scope and Status
+
+   This document is Informational and is submitted through the
+   Independent Submission Stream [RFC4846].  It defines the PSEA wire
+   protocol: canonical encoding, proof token formats, the four
+   enforcement tiers, trust state systems, verifier endpoints, error
+   response codes, and accompanying security considerations.  The wire
+   formats and rules described in this document are sufficient on their
+   own to build a conforming implementation; a reference implementation
+   exists informatively but is not a normative dependency.
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 4]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+1.3.  Applicability
+
+   PSEA is applicable to any deployment that needs an after-the-fact
+   cryptographic record showing that a human user was present at a
+   specific device at a specific moment and approved a specific action.
+   The wire protocol is domain-neutral; this document does not enumerate
+   or endorse particular industries or regulatory regimes, and does not
+   claim compliance with any external compliance framework.  Deployers
+   are responsible for any compliance mapping they choose to claim
+   against their own regulatory environment.
+
+1.4.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.
+
+1.5.  Terminology
+
+   This document uses the following terms with the meanings defined
+   here.  Cross-references to the Remote ATtestation procedureS (RATS)
+   Architecture [RFC9334] are provided where applicable; the RATS role
+   mapping in Section 2 is informative.  The normative wire shape is
+   defined in [PSEA-TOKEN-PROFILE].
+
+   Attester  The trust-anchor authenticator that generates Evidence by
+      signing a proof token with a hardware-protected, user-
+      verification-gated key.  Per RATS, the Attester is the producer of
+      Evidence.  In PSEA, the Attester is a computational authenticator
+      — it MAY be a smartphone, a smartcard with PIN, a FIDO security
+      key with user verification, an embedded secure element, or any
+      equivalent authenticator holding such a key; a natural person is
+      not an Attester.
+
+   Verifier  The server-side component that appraises Evidence and
+      produces Attestation Results.  Per RATS, the Verifier consumes
+      Evidence and applies Reference Values and Endorsements to produce
+      an Attestation Result.
+
+   Relying Party  The application server that gates the action.  The
+      Relying Party consumes the Attestation Result and decides whether
+      to permit the action.  The Relying Party MAY be co-located with
+      the Verifier or operated as a separate service.
+
+   Subject (of Evidence)  The natural person whom the Attester's
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 5]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+      Evidence makes claims about.  The Subject is not itself an
+      Attester.  Presence and intent of the Subject at the moment of
+      action are the central properties PSEA Evidence asserts.
+
+   Evidence  The signed proof token an Attester produces.  PSEA defines
+      four Evidence types: ApprovalToken (Tiers E and A), PToken (Tier
+      P), and SessionSummary (Tier S).  See [PSEA-TOKEN-PROFILE].
+
+   Attestation Result  The integrity-protected artifact the Verifier
+      produces and returns to the Relying Party, conveying the
+      Verifier's appraisal of submitted Evidence.
+
+   Endorsement  A trust anchor a Verifier uses to appraise Evidence (for
+      example, a platform attestation root such as the Android Key
+      Attestation root or the Apple App Attest root).
+
+   Reference Values  Verifier-side appraisal policy inputs (expected
+      attestation chain properties, device-state posture criteria, etc.)
+      against which Evidence is appraised.
+
+   action / action payload  The specific operation the Subject approves
+      (a wire transfer, a drug dispense, an administrative configuration
+      change, an agent action).  The canonical encoding of the action
+      payload is hashed and the hash is included in the signed body of
+      the Evidence (see [PSEA-TOKEN-PROFILE]).
+
+   tier  One of the four PSEA enforcement levels: Passive (P), Silent
+      (S), Explicit (E), Authoritative (A).  The tier of an action is
+      endpoint-determined; the integrating Relying Party selects per
+      action which tier applies (see Section 5).
+
+2.  PSEA Architecture
+
+   This section borrows the vocabulary of Remote ATtestation procedureS
+   (RATS) [RFC9334] for conceptual alignment with the IETF security
+   community.  The terminology is used informatively only: PSEA is NOT a
+   RATS profile and does not claim format-level RATS or CWT conformance.
+   The Tier E / Tier A proof is an EAT profile ([RFC9711], Section 7):
+   the token is an EAT-JSON claims-set carried inside a compact JWS
+   ([PSEA-TOKEN-PROFILE]).  It uses the registered EAT claims ueid,
+   eat_nonce, submods, and eat_profile ([RFC9711]) for device-state
+   conveyance, alongside the registered JWT claims ([RFC7519]) and the
+   profile's psea_* extension claims ([PSEA-TOKEN-PROFILE]).  The role
+   mapping below is a descriptive analogy; the normative wire shape is
+   defined in Sections 3 through 8 of this document.
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 6]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+2.1.  Role Mapping
+
+    +============================+=============+======================+
+    | PSEA term                  | RATS role   | Description          |
+    |                            | [RFC9334]   |                      |
+    +============================+=============+======================+
+    | Trust-anchor device        | Attester    | Generates Evidence   |
+    |                            |             | bound to actions or  |
+    |                            |             | session events using |
+    |                            |             | a hardware-backed    |
+    |                            |             | key.                 |
+    +----------------------------+-------------+----------------------+
+    | Verifier (server-side)     | Verifier    | Appraises Evidence;  |
+    |                            |             | produces Attestation |
+    |                            |             | Results.             |
+    +----------------------------+-------------+----------------------+
+    | Application server gating  | Relying     | Consumes Attestation |
+    | the action                 | Party       | Results; permits or  |
+    |                            |             | denies the action.   |
+    +----------------------------+-------------+----------------------+
+    | Signed proof token         | Evidence    | The artifact the     |
+    | (ApprovalToken, PToken,    |             | Attester produces    |
+    | SessionSummary; see        |             | and the Verifier     |
+    | [PSEA-TOKEN-PROFILE])      |             | appraises.           |
+    +----------------------------+-------------+----------------------+
+    | Verifier-signed appraisal  | Attestation | Conveys the          |
+    | returned to the Relying    | Result      | Verifier's appraisal |
+    | Party                      |             | to the Relying       |
+    |                            |             | Party.  MUST be      |
+    |                            |             | cryptographically    |
+    |                            |             | integrity-protected. |
+    +----------------------------+-------------+----------------------+
+    | Authenticator attestation  | Endorsement | Trust anchors the    |
+    | trust roots (for example   |             | Verifier uses to     |
+    | an Android Key Attestation |             | appraise an          |
+    | root, an Apple App Attest  |             | authenticator's      |
+    | root, a FIDO authenticator |             | Evidence.            |
+    | vendor root, or a          |             |                      |
+    | smartcard issuer root)     |             |                      |
+    +----------------------------+-------------+----------------------+
+    | Expected attestation chain | Reference   | The Verifier's       |
+    | properties and device-     | Values      | appraisal policy     |
+    | trust-state criteria       |             | inputs.              |
+    +----------------------------+-------------+----------------------+
+    | Human user                 | Subject of  | Not an Attester.     |
+    |                            | Evidence    | The human is the     |
+    |                            |             | subject the          |
+    |                            |             | Attester's Evidence  |
+
+
+
+Yossif                  Expires 27 November 2026                [Page 7]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+    |                            |             | makes claims about.  |
+    +----------------------------+-------------+----------------------+
+
+                                  Table 1
+
+2.2.  The Passport Model in PSEA
+
+   PSEA's data flow resembles the passport model described in [RFC9334],
+   Section 5.1: the Attester transmits Evidence to the Verifier; the
+   Verifier appraises the Evidence and produces an Attestation Result
+   that the Relying Party consumes.  This resemblance is informative;
+   the normative wire shape is in [PSEA-TOKEN-PROFILE] and in this
+   document, not derived from RATS.
+
+   The Attester MAY relay the Attestation Result on behalf of the
+   Relying Party (for example, an authenticator that delivers the
+   Attestation Result to the application server it is acting on behalf
+   of), but the appraisal authority remains with the Verifier.  The
+   background- check model defined in [RFC9334], Section 5.2 is not used
+   by PSEA and SHOULD NOT be assumed by implementations.
+
+2.3.  Data Flow
+
+   +-----------------+        (1) Evidence         +-----------------+
+   |  Trust-anchor   | --------------------------> |    Verifier     |
+   |     device      |    (signed proof token)     |                 |
+   |   (Attester)    |                             +-----------------+
+   +-----------------+                                       |
+            ^                                                |
+            |  user-verification event                       | (2) Attestation
+            |  (out of scope; see Section 2.6.2)             |     Result
+            |                                                v
+   +-----------------+                             +-----------------+
+   |  Human user     |                             |  Relying Party  |
+   |  (Subject of    |                             |  (action gate)  |
+   |   Evidence)     |                             +-----------------+
+   +-----------------+
+
+   Auxiliary inputs to the Verifier (per RATS):
+     - Endorsements:     platform attestation trust roots
+     - Reference Values: expected attestation chain properties,
+                         expected device-trust-state criteria
+
+       Figure 1: PSEA roles and data flow, in RATS terminology.
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 8]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   Arrow (1) carries Evidence: the signed proof token defined in
+   [PSEA-TOKEN-PROFILE].  Arrow (2) carries the Attestation Result,
+   integrity-protected by the Verifier.  The user-verification event at
+   the device is the subject of [PSEA-TOKEN-PROFILE]; the mechanism is
+   out of scope of this specification.
+
+2.4.  Co-location of Verifier and Relying Party
+
+   A PSEA implementation MAY co-locate the Verifier and the Relying
+   Party in a single deployment (the Relying Party's backend both
+   appraises Evidence and gates the action).  It MAY also separate them
+   (the Verifier is operated as an independent service whose Attestation
+   Results are consumed by multiple Relying Parties).
+
+   The Verifier MUST produce Attestation Results that are
+   cryptographically integrity- protected so that a non-co-located
+   Relying Party can verify their authenticity independently.  The wire
+   format of the Attestation Result is defined in Section 7.
+
+2.5.  Subject Distinction
+
+   The trust-anchor device is the sole Attester in a PSEA deployment.
+   Natural persons are not Attesters, in the sense of [RFC9334],
+   Section 3.1: the Attester role is restricted to computational devices
+   capable of generating Evidence.  The human is the subject of the
+   Evidence the Attester produces.  [PSEA-TOKEN-PROFILE] states the
+   normative requirement that the Attester's Evidence include a
+   cryptographic binding to a user-verification event at the moment (or,
+   for Tier S, at the bootstrap) of the action being attested.
+
+2.6.  Architectural Principles
+
+   The following five principles are normative for PSEA-conformant
+   deployments.  They map directly to the wire-protocol requirements in
+   [PSEA-TOKEN-PROFILE], Section 5, and Section 7.
+
+2.6.1.  Execution-Time Proof
+
+   Evidence MUST be generated at the moment a sensitive action is
+   approved, not in advance and not in arrears.  Pre-generated or
+   session-cached evidence does not satisfy this requirement (Tier S is
+   the explicit exception, in which the bootstrap evidence is generated
+   at session start and the session-cached maintenance evidence is
+   permitted within bounded conditions; see Section 5.7).
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026                [Page 9]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+2.6.2.  Human Presence Assurance
+
+   A PSEA-conformant tier that approves a specific action with
+   execution-time human authorization (Tier E and Tier A; see Section 5)
+   MUST include, in the proof of approval, Evidence that a human user
+   was actively present at the trust-anchor device at the moment of
+   approval.  The presence Evidence MUST be cryptographically bound to
+   the signing operation that produced the approval.
+
+   A PSEA-conformant tier that establishes session-scoped human
+   authorization (Tier S; see Section 5) MUST require equivalent
+   presence Evidence at session bootstrap, cryptographically bound to
+   the session signing context.
+
+   A PSEA-conformant tier that produces background attestation without
+   human action approval (Tier P; see Section 5) does not require human-
+   presence Evidence.  The guarantee Tier P provides is defined in
+   Section 5 and does not include execution-time human authorization.
+
+   In all cases where presence Evidence is required, presence MUST be
+   demonstrated, not assumed.  Presence Evidence is distinct from
+   identity recall, in which a system infers human presence from a prior
+   authentication event such as login.
+
+   The trust-anchor device is the Attester and the human user is the
+   subject of the Evidence the Attester produces.  The human is not a
+   separate Attester.  PSEA proves that _a_ human was present and
+   approved this specific action; it does NOT identify which human —
+   identity attribution is the deployment's responsibility and is out of
+   scope of this specification.  The mechanism by which the trust-anchor
+   device verifies human presence is equally out of scope.  Examples of
+   valid mechanisms include (but are not limited to): a platform
+   biometric subsystem (face or fingerprint match), a hardware token PIN
+   entry, a magnetic-stripe card swipe combined with a PIN, a smartcard
+   with PIN, a WebAuthn-style authenticator with user verification, or
+   any other platform-provided user-verification primitive.  The
+   normative requirement is that _some_ contemporaneous user-
+   verification event gated the signing operation; PSEA is mechanism-
+   agnostic about which.
+
+2.6.3.  Device-Bound Trust
+
+   Trust is anchored in the specific physical authenticator that
+   performed the user-verification event.  The Attester's signing key
+   MUST be hardware-protected (for example, in a Trusted Execution
+   Environment, a Secure Enclave, a StrongBox, a smartcard secure chip,
+   a FIDO authenticator's secure element, or equivalent), MUST NOT be
+   extractable from the authenticator, and MUST be invalidated by the
+
+
+
+Yossif                  Expires 27 November 2026               [Page 10]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   platform on revocation events (factory reset, re-enrollment of the
+   platform user-verification credential set if the implementation binds
+   the key to that set, etc.).  Cross-device transferable signing
+   material does not satisfy this requirement.
+
+2.6.4.  Cryptographic Proof
+
+   Trust is established through cryptographic mechanisms, not inferred
+   from session tokens, cookies, or bearer credentials.  The Evidence
+   MUST be independently verifiable and resistant to replay, forgery,
+   and delegation.
+
+   All four PSEA tiers and the Verifier acknowledgement are carried as
+   JWS Compact Serialization ([RFC7515]): the Tier E / Tier A proof, the
+   Tier P PToken, the Tier S SessionSummary, and the Tier E / Tier A
+   acknowledgement are each a compact JWS whose signature covers the
+   received BASE64URL(header) || "." || BASE64URL(payload) octets, so
+   peer verification is over the bytes on the wire and does not depend
+   on re-canonicalization of the claim set.  Canonical encoding per
+   [PSEA-TOKEN-PROFILE] -- a simplified subset of the JSON
+   Canonicalization Scheme ([RFC8785]) -- remains load-bearing for
+   exactly one place where a hash is taken over canonical JSON octets:
+   the action-payload binding (the SHA-256 over the canonical
+   actionPayload that the Verifier re-computes and compares against the
+   signed psea_payload_hash claim; [PSEA-TOKEN-PROFILE]).  The
+   simplification -- integer-only numeric serialization -- is documented
+   in [PSEA-TOKEN-PROFILE]; an implementation that requires full
+   [RFC8785] conformance produces output identical to
+   [PSEA-TOKEN-PROFILE] for that action-payload hash.
+
+2.6.5.  Connectivity Independence
+
+   A PSEA-conformant tier MAY require Verifier reachability for action
+   approval, or MAY operate with deferred Verifier interaction,
+   depending on the tier's security model.
+
+   Tiers P, S, and E (see Section 5) MUST be capable of generating
+   Evidence offline; Verifier-side appraisal MAY be deferred.  Tier A
+   (Section 5.6) requires synchronous Verifier authorization and MUST
+   NOT proceed without Verifier reachability; the Attester MUST surface
+   OFFLINE_AUTHORITATIVE_BLOCKED (Section 8) when the Verifier is
+   unreachable.
+
+   In all cases, Evidence MUST be generated at the moment of action
+   approval, not in advance and not in arrears.  Deferred verification
+   MUST NOT permit admission of stale Evidence or Evidence whose
+   cryptographic binding to the action being approved cannot be
+   established.
+
+
+
+Yossif                  Expires 27 November 2026               [Page 11]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+2.7.  What PSEA Is Not
+
+   Clarity about the boundaries of PSEA is essential to prevent
+   conflation with existing security paradigms.
+
+   PSEA is not Multi-Factor Authentication.  MFA strengthens the login
+   boundary by requiring multiple credential types.  It does not address
+   authority at execution time.  Once MFA is completed, the resulting
+   session carries the same inherited trust as any other session.
+
+   PSEA is not Continuous Authentication.  Continuous authentication
+   monitors behavioral or other signals throughout a session to detect
+   anomalies.  It is a monitoring and risk-scoring mechanism.  It does
+   not require Evidence of authority at the moment of a specific action.
+
+   PSEA is not Session Hardening.  Session hardening techniques such as
+   those described in [RFC6819] -- short timeouts, token rotation,
+   binding to IP addresses -- reduce the window of exposure.  They do
+   not verify who is executing an action within that window.
+
+   PSEA is not Risk-Based Authentication.  Risk-based systems evaluate
+   contextual signals to adjust authentication requirements dynamically.
+   They operate at or near the login boundary.  They do not provide
+   execution-time Evidence.
+
+   PSEA is not a rebranding of Zero Trust.  Zero Trust architectures
+   reduce implicit trust between system components and enforce
+   verification at network and application boundaries.  PSEA addresses a
+   different problem: the absence of verified authority at the point of
+   action execution, which persists even within Zero Trust environments.
+
+3.  Verifier Acknowledgement (JWS)
+
+   On a successful Tier E or Tier A appraisal, the Verifier returns a
+   signed Attestation Result as a JWS Compact Serialization object
+   ([RFC7515]) — the acknowledgement, or ACK.  Its protected header
+   carries alg = "ES256", a kid selecting the Verifier's published
+   acknowledgement-signing key, and typ = "psea-ack+jwt".  The SDK pins
+   the Verifier acknowledgement-signing key at build time and rejects an
+   ACK whose signature does not verify against it.
+
+   The signed ACK applies only to Tiers E and A.  The Tier P
+   (/trustAttest) and Tier S (/sessionBatch) responses are *not* signed:
+   they are plain JSON.  Tier P and Tier S are device-to-server
+   verification paths in which the server is the verifier of the
+   Attester's signed evidence, not a signer of evidence returned to the
+   Attester; there is therefore no signed acknowledgement back to the
+   device for these tiers.  A Tier P or Tier S producer MUST NOT require
+
+
+
+Yossif                  Expires 27 November 2026               [Page 12]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   a signed acknowledgement and MUST treat the HTTP status code plus the
+   plain-JSON body (including any registered error code from Section 8)
+   as the authoritative outcome.
+
+   The ACK payload carries JWT registered claims plus PSEA-private
+   acknowledgement claims:
+
+   jti, iat, exp  JWT registered claims ([RFC7519]): acknowledgement
+      identifier, issued-at (epoch seconds), and expiry (epoch seconds).
+
+   psea_verdict  The Verifier's decision for the appraised proof.  MUST
+      be the fixed string literal "ACK".  A signed ACK always carries
+      psea_verdict == "ACK"; rejection responses use a different non-ACK
+      response path and do not carry this payload.  Implementations MUST
+      reject any ACK token whose psea_verdict is absent or is any value
+      other than "ACK".
+
+   psea_proof_id  Identifier of the proof this ACK acknowledges.
+
+   psea_enrollment_id  Identifier of the enrollment the proof was
+      verified against.
+
+   psea_counter  The accepted monotonic counter value.
+
+   psea_chain_entry  The Verifier-computed chainEntry
+      ([PSEA-TOKEN-PROFILE]) for this proof.  The SDK persists it as the
+      next proof's psea_chain_prev.
+
+   psea_payload_verified  Boolean result of the fail-closed action-
+      binding check ([PSEA-TOKEN-PROFILE]).
+
+   psea_policy_verdict  The deployment policy evaluation result for this
+      action.  When present, its decision field MUST be one of exactly:
+      "APPROVE", "STEP_UP", or "DENY".  These are a closed value set; no
+      other values are defined.  The psea_policy_verdict object also
+      carries a reasons array of {code, humanText} objects.  The
+      internal evaluator verb WEBHOOK_HANDOFF is always resolved to
+      either APPROVE or DENY before signing when a step-up webhook is
+      configured; STEP_UP passes through as-is.  psea_policy_verdict is
+      omitted entirely on reject responses (where no ACK is signed).
+      Implementations MUST treat an unrecognized decision value as an
+      error.
+
+   psea_ack_version  Acknowledgement format version.
+
+   degraded (implementation-private)  Boolean.  Indicates the Verifier
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 13]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+      produced this ACK on a degraded appraisal path (for example, a
+      fail-open on an unreachable auxiliary input).  Present in the
+      reference implementation's signed ACK.
+
+   degraded_reason (implementation-private)  String or null.  A short
+      machine-readable reason accompanying degraded; null when not
+      degraded.
+
+   psea_reason (implementation-private)  String.  A short reason label
+      present on some reject ACKs to disambiguate the verdict.
+
+   externalApproved (OPTIONAL, implementation-private)  Boolean.
+      Present when the deployment consulted an external approval
+      authority; conveys that authority's decision.
+
+   The fields marked implementation-private above are emitted by the
+   reference implementation's signed ACK and are documented here for
+   completeness; a Verifier MAY emit them and a consumer that does not
+   recognize them MUST tolerate them.
+
+4.  AttestationBlock
+
+   The AttestationBlock conveys the authenticator-issued attestation
+   token that the Verifier uses to appraise the Attester's hardware-
+   protected key against the authenticator's Endorsement (for example an
+   Android Key Attestation root, an Apple App Attest root, a FIDO
+   authenticator vendor root, or a smartcard issuer root).  The wire
+   shape of the AttestationBlock is intentionally minimal:
+
+   {
+     "provider": "<string from IANA-managed registry>",
+     "token":    "<base64 or platform-defined opaque token>"
+   }
+
+   Field semantics:
+
+   provider  A short identifier naming the attestation provider.
+      Initial registered values: PLAY_INTEGRITY, APP_ATTEST.  Future
+      values are added via the IANA-managed registry in
+      [PSEA-TOKEN-PROFILE].
+
+   token  The platform-issued attestation artifact.  The encoding is
+      platform-specific: PLAY_INTEGRITY tokens are JWS-encoded;
+      APP_ATTEST tokens are CBOR-encoded.  The Verifier MUST parse token
+      according to provider; no PSEA-defined canonical encoding applies
+      to the token field itself.
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 14]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+4.1.  Verifier Appraisal
+
+   The Verifier appraises the AttestationBlock by:
+
+   1.  Looking up the platform Endorsement (root certificate, public
+       key, or equivalent trust anchor) for the named provider.
+
+   2.  Parsing the token per the provider-specific format and validating
+       its chain or signature against the Endorsement.
+
+   3.  Extracting per-provider properties (package name / bundle
+       identifier, security level, attestation challenge value, etc.)
+       and comparing them to the Verifier's Reference Values.
+
+   4.  Returning a per-provider rejection code
+       (INTEGRITY_VERIFICATION_FAILED, INTEGRITY_PROVIDER_UNSUPPORTED,
+       INTEGRITY_PROVIDER_INSUFFICIENT,
+       ATTESTATION_SECURITY_LEVEL_INSUFFICIENT; see Section 8) on
+       failure, or proceeding to subsequent appraisal steps on success.
+
+   The internal structure of the token, the chain validation rules for
+   each provider, and the choice of Reference Values are out of scope of
+   this document; they are defined by the platform vendor's attestation
+   specification and by the deployment's policy respectively.
+
+5.  Enforcement Tiers
+
+   PSEA defines four enforcement tiers -- Passive (P), Silent (S),
+   Explicit (E), Authoritative (A) -- each with distinct connectivity,
+   presence, and verifier-interaction requirements.  The integrating
+   Relying Party selects the tier per action; the tier choice is not a
+   global per-user property.  A single deployment commonly mixes tiers
+   (for example, Tier P background attestation on every action plus Tier
+   A synchronous authorization on high-value transfers).
+
+5.1.  Tier Model: Primitives and Composition
+
+   Tiers P, E, and A are atomic primitives, each with a fully-defined
+   wire shape and verifier contract.  Tier S is a composition primitive
+   defined in terms of a bootstrap sub-primitive (Tier E or Tier A) and
+   a maintenance sub-primitive (Tier P-cached or Tier P-live); see
+   Section 5.7.
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 15]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+5.2.  Tier Summary
+
+   +===============+=============+=========+===========+===============+
+   |Tier           |Endpoint     |Presence |Verifier   |Per-action     |
+   |               |             |required |interaction|proof          |
+   +===============+=============+=========+===========+===============+
+   |P (Passive)    |/trustAttest |No       |Optional   |Yes (PToken)   |
+   |               |             |         |(Verifier  |               |
+   |               |             |         |accepts    |               |
+   |               |             |         |when       |               |
+   |               |             |         |reachable; |               |
+   |               |             |         |produced   |               |
+   |               |             |         |offline-   |               |
+   |               |             |         |capable)   |               |
+   +---------------+-------------+---------+-----------+---------------+
+   |S (Silent)     |/sessionBatch|At       |Deferred   |No per-action  |
+   |               |             |session  |batch at   |proof; one     |
+   |               |             |bootstrap|session end|SessionSummary |
+   |               |             |(via Tier|           |per session    |
+   |               |             |E or Tier|           |               |
+   |               |             |A)       |           |               |
+   +---------------+-------------+---------+-----------+---------------+
+   |E (Explicit)   |/verify      |Yes, per |Deferred   |Yes            |
+   |               |             |action   |async      |(ApprovalToken)|
+   |               |             |         |permitted  |               |
+   +---------------+-------------+---------+-----------+---------------+
+   |A              |/authorize   |Yes, per |Synchronous|Yes            |
+   |(Authoritative)|             |action   |required;  |(ApprovalToken)|
+   |               |             |         |no offline |               |
+   |               |             |         |operation  |               |
+   +---------------+-------------+---------+-----------+---------------+
+
+                                  Table 2
+
+5.3.  Common Preconditions
+
+   The following preconditions MUST hold for every tier:
+
+   *  The Attester's enrollment is in the Verifier's ACTIVE state (see
+      Section 6.2).
+
+   *  The Attester's local trust state permits proof emission for the
+      requested tier (see Section 6.1.3).
+
+   *  The Attester's hardware-bound signing key is available and the
+      platform user-verification ceremony (where applicable) has
+      completed contemporaneously with signing (see
+      [PSEA-TOKEN-PROFILE]).
+
+
+
+Yossif                  Expires 27 November 2026               [Page 16]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+5.4.  Tier P -- Passive
+
+   Tier P produces background-attestation Evidence without human action
+   approval.  The Attester emits a PToken at scheduled intervals or in
+   response to host-application triggers; the PToken is signed by a
+   deployment-specific passive-tier key (distinct from the user-
+   verification-gated trust-anchor key used for Tiers E and A) and
+   conveys the Attester's current trust posture without committing to a
+   specific action.
+
+   The PToken is a JWS Compact Serialization object ([RFC7515]) whose
+   protected header is
+   {"alg":"ES256","kid":<passiveKeyHash>,"typ":"psea-ptoken+jwt"}, where
+   kid is the standard-base64 SHA-256 of the passive-tier signing-key
+   SPKI.  Its claim set is: the JWT registered claims jti, aud, iss,
+   iat, and exp; the EAT claim ueid; and the PSEA-private claims
+   psea_counter, psea_tier, and psea_user_hash (omitted when blank),
+   plus the OPTIONAL psea_action_context_hash, psea_device_state_hash,
+   and eat_nonce.  The cross-replay binding ([PSEA-TOKEN-PROFILE]) is
+   carried as psea_tier == "P" (authority level), aud == "trustAttest"
+   (endpoint), and iss (deployment / tenant identifier).  The PToken
+   carries no psea_payload_hash and no psea_chain_prev (Tier P does not
+   bind to an action and is not part of the per-action hash chain), and
+   carries no eat_profile and no psea_uv (Tier P is not the EAT-profile
+   execution-authority proof and makes no user-presence claim).  The
+   Verifier verifies the JWS signature over the received header.payload
+   octets against the enrolled passive-tier key selected by kid.
+
+   The Verifier appraises PTokens via the /trustAttest endpoint
+   (Section 7.3 and Section 7) and returns one of the P-tier rejection
+   codes (PASSIVE_KEY_NOT_ENROLLED, MALFORMED_PTOKEN, WRONG_TIER,
+   PTOKEN_EXPIRED, ACTION_REQUEST_NOT_FOUND, USER_BINDING_MISMATCH,
+   TENANT_BINDING_MISMATCH; see Section 8) on failure, or signs an
+   Attestation Result indicating acceptance on success.
+
+   Tier P does not bind to an action payload and does not satisfy the
+   human-presence requirement of [PSEA-TOKEN-PROFILE].  The integrating
+   Relying Party MUST NOT use Tier P alone to gate execution authority
+   on a specific action; Tier P is intended for background risk-scoring,
+   every-action silent attestation, and agent activity audit.
+
+5.5.  Tier E -- Explicit
+
+   Tier E approves a specific action with execution-time human-presence
+   Evidence.  The Attester produces an ApprovalToken
+   ([PSEA-TOKEN-PROFILE]), gated by a contemporaneous user- verification
+   event ([PSEA-TOKEN-PROFILE]), and posts it to /verify.
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 17]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   Tier E permits deferred Verifier interaction: the Attester's local
+   trust state and the user- verification ceremony at the Attester are
+   sufficient for the host application to proceed with the action; the
+   Verifier appraises the proof asynchronously on the next available
+   connection.  On Verifier rejection (any of the wire codes in
+   Section 8), the Attester transitions its local state per
+   Section 6.4.2.
+
+   The Verifier's action-binding obligation for Tier E is specified
+   normatively in [PSEA-TOKEN-PROFILE]: the Verifier MUST recompute the
+   payload hash and reject with ACTION_BINDING_INVALID on mismatch,
+   fail-closed.
+
+5.6.  Tier A -- Authoritative
+
+   Tier A is identical to Tier E in signed-body shape and presence
+   requirements, but with two additional constraints: (i) the Attester
+   MUST NOT proceed offline (Verifier reachability is required at the
+   moment of action approval; on unreachable Verifier the Attester
+   surfaces OFFLINE_AUTHORITATIVE_BLOCKED -- see Section 2.6.5), and
+   (ii) the Verifier's authorization decision is synchronously delivered
+   to the Attester before the host application proceeds with the action.
+
+   The Verifier's action-binding obligation for Tier A is identical to
+   Tier E and is specified normatively in [PSEA-TOKEN-PROFILE].  Tier
+   A's stronger contract over Tier E is in the connectivity and
+   synchronous-decision dimensions, not in the action-binding dimension.
+
+   Tier A inherits Tier E's runtime integrity-evidence appraisal
+   obligation in full: the Verifier MUST appraise the envelope's
+   integrityEvidence AttestationBlock (Section 4) against the
+   deployment's Reference Values at every Tier A proof submission,
+   applying the same per-provider rejection codes as Tier E.  A Verifier
+   that enforces attestation appraisal at Tier E but skips it at Tier A
+   is non-conformant.
+
+   A Relying Party MAY supply an optional ContextLock primitive in the
+   /authorize request envelope; when supplied, the Verifier MUST
+   validate the ContextLock independently of the action-binding step.
+   The ContextLock provides an additional binding (typically to a
+   Relying-Party- held opaque context value); a future revision of this
+   document MAY normatively specify the ContextLock wire shape and
+   processing rules.
+
+5.7.  Tier S -- Silent (Composition)
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 18]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+5.7.1.  Semantics (Bootstrap x Maintenance)
+
+   Tier S is a composition primitive.  A Tier S deployment is fully
+   described by two choices on the Verifier-side configuration:
+
+   +===============+============+======================================+
+   | Sub-primitive | Allowed    | Meaning                              |
+   |               | values     |                                      |
+   +===============+============+======================================+
+   | bootstrap     | E          | The once-per-session ceremony        |
+   |               | (default), | performed at session                 |
+   |               | A          | establishment.  Runs as Tier E       |
+   |               |            | (offline-capable, async proof)       |
+   |               |            | or Tier A (synchronous Verifier      |
+   |               |            | authorization).                      |
+   +---------------+------------+--------------------------------------+
+   | maintenance   | P-cached   | The per-action validation            |
+   |               | (default), | performed silently inside an         |
+   |               | P-live     | established session.  Runs as        |
+   |               |            | Tier P-CACHED (local trust-state     |
+   |               |            | cache, zero added latency) or        |
+   |               |            | Tier P-LIVE (synchronous             |
+   |               |            | /trustAttest per action).            |
+   +---------------+------------+--------------------------------------+
+
+                                  Table 3
+
+   The connectivity requirements of Tier S inherit from the bootstrap
+   and maintenance choices, NOT from a separate Tier S primitive.  A
+   producer SHOULD expose these two sub-primitives as independently-
+   controlled configuration options.
+
+5.7.2.  Session Lifecycle
+
+   A Tier S _session_ is a producer-side cache of human-presence
+   authority.  The session has a stable identifier (sessionId), bounded
+   duration (ttl), bounded action count (maxActions), and an end reason
+   recorded at flush time.  Every action performed within the session is
+   gated by the maintenance sub-primitive; no per-action proof is
+   transmitted.
+
+   A session MUST end (and a SessionSummary MUST be generated and queued
+   for batch sync) when any of the following triggers fires:
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 19]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   +==============+===================+================================+
+   | Trigger      | End-reason code   | Cause                          |
+   +==============+===================+================================+
+   | TTL expiry   | TtlExpired        | Wall-clock time since          |
+   |              |                   | session start exceeds the      |
+   |              |                   | Verifier-supplied ttl.         |
+   +--------------+-------------------+--------------------------------+
+   | Action-count | MaxActionsReached | The session has produced       |
+   | cap          |                   | maxActions actions.            |
+   +--------------+-------------------+--------------------------------+
+   | Idle timeout | IdleTimeout       | Wall-clock time since the      |
+   |              |                   | most recent in-session         |
+   |              |                   | action exceeds the             |
+   |              |                   | Verifier-supplied              |
+   |              |                   | idleTimeout.                   |
+   +--------------+-------------------+--------------------------------+
+   | Trigger      | TriggerEventFired | A host-application-            |
+   | event        |                   | supplied event matching        |
+   |              |                   | the Verifier's configured      |
+   |              |                   | trigger list fires.  The       |
+   |              |                   | session summary MUST carry     |
+   |              |                   | a psea_trigger_event_name      |
+   |              |                   | claim.                         |
+   +--------------+-------------------+--------------------------------+
+   | Manual       | ManualInvalidate  | The host application           |
+   | invalidate   |                   | explicitly invokes the         |
+   |              |                   | session-invalidate API.        |
+   +--------------+-------------------+--------------------------------+
+
+                                  Table 4
+
+5.7.3.  SessionSummary Wire Shape (Normative)
+
+   Every Tier S session terminates by producing exactly one
+   SessionSummary, carried as a JWS Compact Serialization object
+   ([RFC7515]) signed by the device-anchored trust-anchor key (the same
+   hardware-bound key K_d used for Tier E and Tier A per-action proofs),
+   and transmitted inside a SessionBatch.  The SessionSummary JWS
+   protected header is {"alg":"ES256","kid":<deviceKeyHash>,"typ":"psea-
+   session+jwt"}, where kid is the standard-base64 SHA-256 of the trust-
+   anchor key SPKI (the same kid derivation as the Tier E / Tier A
+   proof).  The batch body is { "summaries": ["<compact JWS>", ...] }
+   POSTed to /sessionBatch.  The JWS signature covers the received
+   header.payload octets directly; there is no separate detached
+   signature field.  The summary claim set is:
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 20]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+SessionSummary JWS payload (claim set) =
+  JWT registered claims (RFC 7519)
+  "jti"                     ":" string         ; session id
+  "aud"                     ":" %s"sessionBatch"
+  "iss"                     ":" string         ; tenant id
+  "iat"                     ":" integer-epoch-seconds
+  EAT claim (RFC 9711)
+  "ueid"                    ":" string         ; RAND-type UEID,
+                                               ;   base64url(0x01||sha256(
+                                               ;   deviceId)); same as E/A
+  PSEA-private extension claims
+  "psea_tier"               ":" %s"S"
+  "psea_user_hash"          ":" string         ; base64url no-pad; ALWAYS
+                                               ;   present; "" when no user id
+  "psea_session_started_at" ":" integer-epoch-seconds
+  "psea_session_ended_at"   ":" integer-epoch-seconds
+  "psea_end_reason"         ":" %s"TtlExpired" / %s"MaxActionsReached"
+                                / %s"IdleTimeout" / %s"ManualInvalidate"
+                                / %s"TriggerEventFired"
+  "psea_action_count"       ":" non-negative-integer
+  "psea_rolling_hash"       ":" base64-sha256
+  ["psea_trigger_event_name" ":" string]       ; IFF psea_end_reason ==
+                                               ;   "TriggerEventFired"
+
+   Field semantics:
+
+   jti  Session identifier (the JWT jti claim, [RFC7519]), unique per
+      producer-side session, chosen by the producer.
+
+   aud  The JWT audience claim ([RFC7519]).  For Tier S it MUST be the
+      literal string "sessionBatch" — the endpoint binding of
+      [PSEA-TOKEN-PROFILE].
+
+   iss  The JWT issuer claim ([RFC7519]): the deployment / tenant
+      identifier the Attester has locally available at sign time — the
+      deployment binding of [PSEA-TOKEN-PROFILE].
+
+   iat  Issued-at, NumericDate in epoch SECONDS ([RFC7519]).
+
+   ueid  The RAND-type EAT UEID ([RFC9711], Section 4.2.1):
+      base64url(0x01 || SHA-256(deviceId)), base64url without padding —
+      the same encoding and value as on the Tier E / Tier A proof
+      ([PSEA-TOKEN-PROFILE]).
+
+   psea_tier  The authority-level binding of [PSEA-TOKEN-PROFILE].  For
+      Tier S it MUST be the literal string "S".
+
+   psea_user_hash  base64url (no padding) of SHA-256 over the subject
+
+
+
+Yossif                  Expires 27 November 2026               [Page 21]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+      identifier; audit attribution only.  ALWAYS present on the
+      SessionSummary — the empty string when the session has no
+      associated user identifier.
+
+   psea_session_started_at / psea_session_ended_at  Wall-clock
+      timestamps in epoch SECONDS.  psea_session_ended_at -
+      psea_session_started_at MUST be less than or equal to the
+      Verifier-supplied ttl plus a small grace window (RECOMMENDED <= 30
+      seconds).
+
+   psea_end_reason  One of the five normative codes from Section 5.7.2:
+      TtlExpired, MaxActionsReached, IdleTimeout, ManualInvalidate,
+      TriggerEventFired.
+
+   psea_action_count  Total number of in-session actions performed
+      before end.  MUST be a non-negative integer.
+
+   psea_rolling_hash  Standard base64 (RFC 4648, Section 4) with padding
+      of the SHA-256 over a canonical concatenation of action identifier
+      hashes.  The canonical formula is: (1) collect the SHA-256 hash
+      string for each in-session action, (2) sort those hash strings in
+      ascending lexicographic order, (3) join with ":" as separator and
+      append a trailing ":", (4) compute SHA-256 over the UTF-8 bytes of
+      the joined string, (5) encode as standard base64 with padding.
+      When the in-session action list is empty, psea_rolling_hash MUST
+      be the empty string.  The producer MUST use this formula
+      deterministically; replay of the same session yields the same
+      hash.  *Verifier non-verification (normative):* the Verifier does
+      not recompute or verify psea_rolling_hash.  It is carried as a
+      self-asserted audit digest, not a server-verified security
+      binding.  S-tier audit-trail integrity for the rolling hash is
+      therefore self-asserted; the authoritative integrity boundary for
+      Tier S is the SessionSummary JWS signature (Section 5.7.4).
+
+   psea_trigger_event_name  REQUIRED iff psea_end_reason ==
+      "TriggerEventFired".  MUST NOT be present for any other end
+      reason.
+
+   The three cross-replay binding properties ([PSEA-TOKEN-PROFILE]) are
+   carried on the SessionSummary as the psea_tier (authority level), aud
+   (endpoint), and iss (deployment) claims.  The Verifier MUST reject
+   the batch with TIER_MISMATCH, AUDIENCE_MISMATCH, or
+   TENANT_BINDING_MISMATCH (Section 8) respectively if any of the three
+   fails its byte-equality check; comparisons MUST NOT normalize case or
+   whitespace.  All three are claims in the JWS payload and are
+   therefore covered by the SessionSummary JWS signature.  Note that all
+   timestamp claims on the SessionSummary are epoch SECONDS.
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 22]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   Authenticity and integrity of each SessionSummary are established by
+   the JWS signature over its received BASE64URL(header) || "." ||
+   BASE64URL(payload) octets — the same ES256 P1363 (R||S) signature
+   form as the Tier E / Tier A proof.  There is no separate
+   sessionSignature field; the JWS compact-serialization signature
+   segment carries the signature.
+
+5.7.4.  Verifier Signature Gate (Fail-Closed at the Batch Level)
+
+   On receipt of a SessionBatch that carries at least one
+   SessionSummary, the Verifier MUST execute the following gate BEFORE
+   any persistence, counter increment, or downstream policy evaluation:
+
+   1.  Resolve the active enrollment record from each SessionSummary JWS
+       protected-header kid (the standard-base64 SHA-256 of the trust-
+       anchor key SPKI).  If no active record is found, reject with HTTP
+       404 ENROLLMENT_NOT_FOUND.
+
+   2.  Extract the enrollment's stored public key in SPKI form.
+
+   3.  For each SessionSummary compact JWS in summaries in order:
+
+       1.  If the entry is not a well-formed compact JWS (three
+           base64url segments) or its signature segment is absent or
+           empty, mark the batch as failed with reason MISSING_SIGNATURE
+           and break.
+
+       2.  Verify the JWS signature over the received
+           BASE64URL(header) || "." || BASE64URL(payload) octets against
+           the enrollment public key using ECDSA P-256 / SHA-256.
+
+       3.  If verification fails, mark the batch as failed with reason
+           SIGNATURE_VERIFICATION_FAILED and break.
+
+   4.  If any summary failed the gate, reject the entire batch with HTTP
+       401 SESSION_SIGNATURE_INVALID.  NO summary in the batch MAY be
+       persisted; NO counter MAY be incremented; NO downstream policy or
+       audit-log entry MAY be written (other than a per-batch failure
+       audit record).  This is an all-or-nothing gate by design.
+
+   5.  Otherwise (every summary verified), proceed to persistence,
+       counter increment, and policy evaluation.
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 23]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+5.7.5.  Transport Endpoint
+
+   The canonical transport endpoint for Tier S is POST /sessionBatch.
+   Producers MUST NOT route Tier S proofs through the Tier E endpoint
+   (/verify) or the Tier A endpoint (/authorize).  Verifiers MUST reject
+   any request to /verify or /authorize whose payload identifies as Tier
+   S with HTTP 400 STIER_NOT_ALLOWED (see Section 8) before consuming
+   any per-tier counter or replay-anchor.
+
+5.7.6.  Preconditions
+
+   Bootstrap MUST satisfy the preconditions of whichever bootstrap sub-
+   primitive is configured (Tier E preconditions or Tier A
+   preconditions).  The session summary MUST be flushed via
+   /sessionBatch before the session is considered fully settled; until
+   the flush completes the producer SHOULD retain the summary in durable
+   storage and retry per its sync policy.
+
+5.8.  Negotiation and Tier Mapping
+
+   The Relying Party communicates the required tier for a specific
+   action via deployment-level policy bundled into the action request.
+   A representative mapping uses a four-level risk classification:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 24]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+      +==========+=================+================================+
+      | Risk     | Tier            | Representative use cases       |
+      | level    |                 |                                |
+      +==========+=================+================================+
+      | LOW      | P (Passive)     | Background risk-scoring; agent |
+      |          |                 | activity audit; balance        |
+      |          |                 | lookups; pre-flight checks.    |
+      +----------+-----------------+--------------------------------+
+      | MEDIUM   | S (Silent)      | Low-risk in-session            |
+      |          |                 | confirmations; EHR record      |
+      |          |                 | reads; intra-session reads.    |
+      +----------+-----------------+--------------------------------+
+      | HIGH     | E (Explicit)    | Per-action explicit approvals; |
+      |          |                 | transfers below high-value     |
+      |          |                 | thresholds; drug dispense in   |
+      |          |                 | non-critical context.          |
+      +----------+-----------------+--------------------------------+
+      | CRITICAL | A               | Fund transfers; beneficiary-   |
+      |          | (Authoritative) | add; dangerous drug dispense;  |
+      |          |                 | AI-agent privileged actions;   |
+      |          |                 | critical-infrastructure admin  |
+      |          |                 | changes; bulk data export.     |
+      +----------+-----------------+--------------------------------+
+
+                                  Table 5
+
+   A Verifier MUST reject any proof submitted to a non-Tier-S endpoint
+   whose risk-level identifies it as a Tier S proof, before consuming
+   any per-tier counter or replay anchor (Section 5.7.5).
+
+5.9.  Conformance Checklist
+
+   An Attester or Verifier claiming PSEA conformance MUST implement at
+   least one of the four tiers end-to-end as defined in this section.  A
+   claim of multi-tier conformance MUST be qualified by listing the
+   tiers supported.  Reference appraisal pseudocode for each tier is
+   provided in [PSEA-TOKEN-PROFILE].
+
+6.  Trust State Systems
+
+   PSEA defines two concurrent state systems that together govern
+   whether a given proof is accepted at the Verifier.  The two systems
+   are distinct in their owner, persistence, and cardinality, and they
+   reconcile through the wire protocol rather than through a shared
+   mutable representation.
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 25]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   *  *Attester local trust state* (Section 6.1): private to the
+      Attester, real-time, four-valued.  Gates proof emission at the
+      Attester before any wire interaction.  Informative.
+
+   *  *Verifier enrollment lifecycle* (Section 6.2): authoritative
+      server-side record, durable, three-valued.  Gates proof acceptance
+      at the Verifier.  Normative.
+
+   A device can simultaneously hold different values in each of the two
+   systems without that being an error condition -- the systems are
+   reconciled at proof-submission time, not continuously.
+
+   Earlier revisions of this document defined a third system, a one-shot
+   signed trustState commitment carried on every per-action proof body.
+   That wire field has been removed: it was a single-value self-
+   assertion by the Attester, and the authoritative trust gate is the
+   Verifier's own enrollment-status / revocation check (Section 6.2),
+   not a value the Attester asserts about itself.  A conforming Tier E /
+   Tier A proof carries no trustState claim.
+
+6.1.  Attester Local Trust State (Informative)
+
+   A conforming Attester SHOULD maintain a real-time internal trust-
+   state representation that determines whether a proof may be emitted
+   for a requested action.  The internal representation is private to
+   the Attester; nothing about its structure is observable on the wire
+   and no Verifier depends on a specific structure.  The four-state
+   structure below is the reference-implementation structure;
+   alternative implementations MAY use different representations
+   (including a single-bit "ready-to-sign / not-ready-to-sign"
+   representation) as long as they gate proof emission per
+   Section 6.1.3.
+
+6.1.1.  States
+
+   FULL  Default operating state after enrollment.  The Attester has no
+      concerning local indicators.  Proof emission is permitted for all
+      action tiers per the policy defined by the Relying Party.
+
+   REDUCED  The Attester has detected one or more *downgrading-class*
+      local indicators.  The Attester restricts proof emission to lower-
+      criticality actions (Tier P and Tier S maintenance, plus Tier E
+      for non-CRITICAL actions).  Higher-criticality actions require
+      step-up authentication before transitioning back to FULL.
+
+   ESCALATED  The Attester has detected one or more *escalating-class*
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 26]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+      local indicators.  All proof emission is suspended pending step-up
+      authentication or operator intervention.  The Attester MUST NOT
+      emit a signed proof body while in this state.
+
+   REVOKED  The Attester has detected one or more *revoking-class* local
+      indicators OR has received a Verifier-side revocation indicator
+      (HTTP 403 TRUST_REVOKED) and mirrored the revocation locally.  All
+      proof emission is permanently blocked.  Recovery requires a full
+      re-enrollment ceremony; recovery in place from REVOKED is
+      forbidden.
+
+   The categorization of specific indicators into downgrading-,
+   escalating-, or revoking-class is an implementation decision local to
+   the Attester.  The Verifier does NOT observe individual indicators;
+   it observes only the presence or absence of a signed proof body (an
+   Attester whose local state disallows emission simply does not sign).
+   The signal-collection mechanism and the appraisal logic that converts
+   raw indicators into a state transition are outside the scope of this
+   document.
+
+6.1.2.  Transitions
+
+   FULL  <-- downgrade -->  REDUCED  <-- escalate -->  ESCALATED
+     |                         |                          |
+     | revoking-class          | revoking-class           | revoking-class
+     | indicator               | indicator                | indicator
+     +-------------------------+--------------------------+
+                               |
+                               v
+                          +---------+
+                          | REVOKED |  (terminal)
+                          +---------+
+                               |
+                               | full re-enrollment ceremony
+                               v
+                             FULL
+
+   Transitions between FULL, REDUCED, and ESCALATED are bidirectional
+   and SHOULD be driven by the indicator appraisal pipeline.
+   Transitions into REVOKED are terminal; the Attester MUST NOT
+   transition directly from REVOKED to FULL except through a successful
+   re-enrollment ceremony.
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 27]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+6.1.3.  Action Gating per State
+
+          +===========+========+========+=============+========+
+          | State     | Tier P | Tier S | Tier E      | Tier A |
+          +===========+========+========+=============+========+
+          | FULL      | YES    | YES    | YES         | YES    |
+          +-----------+--------+--------+-------------+--------+
+          | REDUCED   | YES    | YES    | conditional | NO     |
+          +-----------+--------+--------+-------------+--------+
+          | ESCALATED | NO     | NO     | NO          | NO     |
+          +-----------+--------+--------+-------------+--------+
+          | REVOKED   | NO     | NO     | NO          | NO     |
+          +-----------+--------+--------+-------------+--------+
+
+                                 Table 6
+
+   "Conditional" means the Attester MAY emit a Tier E proof in REDUCED
+   state only when the requesting criticality is below CRITICAL per
+   Section 5.8 AND the Attester's local policy admits proof emission in
+   this state.  A conforming Attester MAY choose to be more restrictive
+   than this table; it MUST NOT be more permissive.
+
+6.2.  Verifier Enrollment Lifecycle (Normative)
+
+   A Verifier MUST maintain, per Attester enrollment, a durable
+   lifecycle state taking exactly one of three values: ACTIVE,
+   SUSPENDED, or REVOKED.
+
+6.2.1.  States
+
+   ACTIVE  Default state set when an enrollment is created by successful
+      device-enrollment ceremony.  The Verifier MUST process proof
+      submissions from ACTIVE enrollments per the per-tier rules.
+
+   SUSPENDED  Operator-controlled temporary halt.  The Verifier MUST
+      reject proof submissions from SUSPENDED enrollments with an
+      implementation-specific 403 code.  Suspension is intended for
+      operational scenarios (customer-side investigation, billing hold)
+      and MAY be reversed by the operator without requiring re-
+      enrollment.
+
+   REVOKED  Terminal state.  The Verifier MUST reject every proof
+      submission from REVOKED enrollments with response code
+      TRUST_REVOKED (Section 8) and MUST NOT process the submission
+      further.  Revocation is not reversible in place; recovery requires
+      the Attester to perform a full re-enrollment ceremony, which
+      creates a new enrollment record.
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 28]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+6.2.2.  Transitions
+
+   Transitions ACTIVE <-> SUSPENDED MAY occur repeatedly.  Transitions
+   into REVOKED are terminal for the affected enrollment record;
+   recovery produces a new enrollment record rather than reactivating
+   the revoked one.
+
+6.2.3.  Proof Acceptance per Enrollment State
+
+   Each proof submission MUST be evaluated against the Verifier-side
+   enrollment state in the following order:
+
+   1.  If no enrollment record matches the Attester identifier carried
+       in the proof body, the Verifier MUST reject with
+       ENROLLMENT_NOT_FOUND.
+
+   2.  If the matched enrollment record's state is REVOKED, the Verifier
+       MUST reject with TRUST_REVOKED.  The Verifier MUST NOT proceed to
+       signature, counter, payload, or policy evaluation.
+
+   3.  If the matched enrollment record's state is SUSPENDED, the
+       Verifier MUST reject with an implementation-specific code
+       identifying the suspension.  The Verifier MUST NOT proceed to
+       further evaluation.
+
+   4.  If the matched enrollment record's state is ACTIVE, the Verifier
+       proceeds to the per-tier evaluation pipeline.
+
+6.3.  Absence of a Wire trustState Commitment
+
+   A PSEA proof body carries no self-asserted trustState field.  Such a
+   field would be a single-value self-assertion by the Attester — an
+   Attester that should not emit a proof simply does not sign one
+   (Section 6.1.3), so a signed proof body already implies the Attester
+   considered itself trusted; the field would carry no information the
+   signature does not already imply.  The authoritative trust gate is
+   the Verifier's own enrollment lifecycle (Section 6.2), not a value
+   the Attester asserts about itself.
+
+   A conforming Tier E / Tier A proof MUST NOT carry a trustState claim,
+   and a Verifier MUST NOT require one.  The error-code registry
+   (Section 8) defines no trust-state rejection code.
+
+6.4.  Reconciliation Across the Two Systems
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 29]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+6.4.1.  Authority for Proof Acceptance
+
+   The Verifier enrollment lifecycle is authoritative for proof
+   acceptance.  The Verifier MUST treat its own record of the enrollment
+   state as the source of truth.  The Attester's local trust state is
+   not directly observable by the Verifier and MUST NOT be relied upon
+   by the Verifier as authoritative for any decision.
+
+   The Attester's local trust state is authoritative for the decision to
+   emit a proof.  The Attester MUST NOT defer proof-emission gating to
+   the Verifier; round-tripping a proof for state validation creates a
+   wire-detectable side channel that this document forbids.
+
+6.4.2.  Disagreement Cases
+
+     +===========+============+===========+==========================+
+     | Attester  | Verifier   | Wire      | Reconciliation           |
+     | local     | enrollment | emitted?  |                          |
+     +===========+============+===========+==========================+
+     | FULL      | ACTIVE     | YES       | Normal path.  Verifier   |
+     |           |            | (signed   | accepts subject to per-  |
+     |           |            | proof)    | tier rules.              |
+     +-----------+------------+-----------+--------------------------+
+     | REDUCED / | ACTIVE     | NO        | Verifier observes        |
+     | ESCALATED |            | (Attester | silence.  No wire signal |
+     | / REVOKED |            | fails     | is required from the     |
+     |           |            | fast)     | Attester.                |
+     +-----------+------------+-----------+--------------------------+
+     | FULL      | SUSPENDED  | YES       | Verifier rejects per     |
+     |           |            | (signed   | Section 6.2.3 step 3.    |
+     |           |            | proof)    | Attester learns of the   |
+     |           |            |           | suspension via the wire  |
+     |           |            |           | response.                |
+     +-----------+------------+-----------+--------------------------+
+     | FULL      | REVOKED    | YES       | Verifier rejects with    |
+     |           |            | (signed   | TRUST_REVOKED.  Attester |
+     |           |            | proof)    | MUST treat receipt of    |
+     |           |            |           | TRUST_REVOKED as a       |
+     |           |            |           | revoking-class indicator |
+     |           |            |           | and transition its own   |
+     |           |            |           | local state to REVOKED.  |
+     +-----------+------------+-----------+--------------------------+
+
+                                  Table 7
+
+   The REVOKED row is the canonical wire-driven Attester-to-Verifier
+   reconciliation event: the Attester does not poll the Verifier for the
+   enrollment state; instead, the Attester discovers a Verifier-side
+
+
+
+Yossif                  Expires 27 November 2026               [Page 30]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   revocation only when its next proof submission is rejected with
+   TRUST_REVOKED.  This is by design -- it keeps the wire footprint
+   minimal in the steady state while guaranteeing eventual
+   reconciliation at the next proof opportunity.
+
+6.5.  Out of Scope
+
+   This document specifies _state_ systems and _state transitions_ but
+   does not specify the signal-collection mechanisms or appraisal logic
+   that drive transitions in the Attester local trust state.  The
+   categorization of specific local indicators into the downgrading-,
+   escalating-, or revoking-classes referenced in Section 6.1.1 is an
+   implementation decision local to the Attester.  The Verifier observes
+   only the presence or absence of a signed proof body; it does not
+   observe individual local indicators and does not need to.
+
+   Similarly, the operator-side decision pipeline that drives the
+   Verifier enrollment lifecycle -- specifically, the criteria under
+   which the operator transitions an enrollment from ACTIVE to SUSPENDED
+   or REVOKED -- is a deployment-level concern outside the wire-protocol
+   scope of this document.
+
+7.  Verifier HTTP Endpoints
+
+   This section specifies the HTTP-bound endpoints a Verifier exposes
+   for receiving Evidence and enrolling Attesters.  The endpoints are
+   the wire-protocol surface; alternative non-HTTP transports MAY be
+   defined by future documents.
+
+7.1.  Overview
+
+   +==================+=============+==================================+
+   | Endpoint         | Tier        | Purpose                          |
+   +==================+=============+==================================+
+   | POST /attest/    | (any tier)  | Issue a single-use Verifier-     |
+   | nonce            |             | bound nonce for an action.       |
+   +------------------+-------------+----------------------------------+
+   | POST             | (enrollment | Enroll an Attester by            |
+   | /deviceEnroll    | ceremony)   | submitting platform              |
+   |                  |             | attestation Evidence.            |
+   +------------------+-------------+----------------------------------+
+   | POST             | P           | Submit a Tier P PToken for       |
+   | /trustAttest     |             | background attestation.          |
+   +------------------+-------------+----------------------------------+
+   | POST             | S           | Submit one or more Tier S        |
+   | /sessionBatch    |             | SessionSummary objects at        |
+   |                  |             | session end.                     |
+   +------------------+-------------+----------------------------------+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 31]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   | POST /verify     | E           | Submit a Tier E                  |
+   |                  |             | ApprovalToken for                |
+   |                  |             | asynchronous verification.       |
+   +------------------+-------------+----------------------------------+
+   | POST /authorize  | A           | Submit a Tier A                  |
+   |                  |             | ApprovalToken for                |
+   |                  |             | synchronous authorization.       |
+   +------------------+-------------+----------------------------------+
+   | POST             | (revocation | Revoke an Attester's             |
+   | /trustInvalidate | ceremony)   | enrollment.                      |
+   +------------------+-------------+----------------------------------+
+
+                                  Table 8
+
+7.2.  Common Request Headers
+
+   Every request to a Verifier endpoint MUST carry:
+
+   *  X-API-Key: the deployment-issued API key authenticating the
+      Relying Party (for operator-facing endpoints) or the Attester (for
+      Attester-facing endpoints).
+
+   *  Content-Type: application/json for JSON-encoded bodies;
+      application/jose+json for JWS-encoded bodies.
+
+   *  X-Request-Id: an opaque client-issued correlation identifier
+      (RECOMMENDED).
+
+7.3.  POST /attest/nonce
+
+   Issues a single-use, time-bounded Verifier-supplied nonce for an
+   action.  The Attester MUST include the issued nonce in the signed
+   body's eat_nonce field; the Verifier MUST reject any proof whose
+   eat_nonce does not match or has expired (response codes
+   NONCE_EXPIRED, NONCE_REQUIRED, NONCE_MISMATCH; see Section 8).
+   Nonces issued by this endpoint are SHORT-LIVED (RECOMMENDED TTL:
+   60-300 seconds).
+
+7.4.  POST /deviceEnroll
+
+   Creates an enrollment record for an Attester.  The request body
+   carries the Attester's hardware- bound public key (SPKI form), a
+   platform attestation token tying the key to a hardware-backed key
+   store, and the deployment-specific subject and tenant identifiers.
+   The Verifier appraises the attestation token against the platform
+   Endorsement (see Section 4) and, on success, creates an enrollment
+   record in state ACTIVE.
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 32]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   Enrollment-specific rejection codes: ENROLLMENT_NOT_ATTESTED,
+   APP_PACKAGE_MISMATCH, ATTESTATION_SECURITY_LEVEL_INSUFFICIENT,
+   INTEGRITY_VERIFICATION_FAILED, INTEGRITY_PROVIDER_UNSUPPORTED,
+   INTEGRITY_PROVIDER_INSUFFICIENT (Section 8).
+
+7.5.  POST /verify
+
+   Receives a Tier E proof transport body ([PSEA-TOKEN-PROFILE]).  The
+   Verifier executes the appraisal pipeline: enrollment lookup by the
+   protected-header kid, JWS signature verification ([RFC7515]), ueid
+   validation ([PSEA-TOKEN-PROFILE]), counter check (psea_counter),
+   chain verification, action-binding fail-closed check
+   ([PSEA-TOKEN-PROFILE]), user-verification check (psea_uv;
+   [PSEA-TOKEN-PROFILE]), integrity-evidence appraisal of the body's
+   integrityEvidence AttestationBlock (Section 4) against the
+   deployment's Reference Values, posture appraisal, and policy
+   evaluation.  On success, the Verifier returns a signed Attestation
+   Result as a JWS acknowledgement (Section 3).  On failure, the
+   Verifier returns a wire response code from Section 8.
+
+7.6.  POST /authorize
+
+   Receives a Tier A ApprovalToken.  The Verifier executes the same
+   appraisal pipeline as Section 7.5, plus synchronous policy evaluation
+   (no async deferral), plus optional ContextLock validation when
+   supplied by the Relying Party.  The action-binding check is fail-
+   closed ([PSEA-TOKEN-PROFILE]).
+
+7.7.  POST /trustInvalidate
+
+   Transitions an Attester's enrollment to REVOKED.  The request body
+   carries the enrollment identifier, the revocation reason category,
+   and operator authentication.  On successful revocation, the Verifier
+   persists the revocation metadata (revokedAt, revokedBy,
+   revokedSource, revokedReason) and all subsequent proof submissions
+   from this enrollment will be rejected with TRUST_REVOKED per
+   Section 6.2.3.
+
+7.8.  Reference Schema
+
+   Detailed JSON Schemas for the signed-body and envelope shapes are
+   provided in Section 4 of this document.  Operational artifacts such
+   as OpenAPI contracts and machine-readable test vectors are
+   normatively unnecessary for conformance; if available from an
+   implementation, they are informative.
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 33]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+8.  Error Codes
+
+   This section defines the codes a Verifier returns to an Attester
+   across the four signing-tier endpoints (Tier P /trustAttest, Tier S
+   /sessionBatch, Tier E /verify, Tier A /authorize) plus the one
+   Attester-side surface code.  The codes are partitioned into active
+   codes (the Verifier emits these today) and reserved codes (defined
+   for forward compatibility).
+
+   Implementations MUST NOT return a generic AUTH_FAILED or any
+   undocumented code in place of the specific codes listed below.  The
+   code enumeration is IANA-managed (Section 9.2).  Audit-side fraud-
+   alert labels and ACK-payload field values that are NOT wire response
+   codes are listed separately in Section 8.1.
+
+   +=======================================+================+====+=============+============================+
+   |Code                                   |Endpoint(s)     |HTTP|Category     |Semantics                   |
+   |                                       |                |/   |             |                            |
+   |                                       |                |Body|             |                            |
+   +=======================================+================+====+=============+============================+
+   |RATE_LIMIT_EXCEEDED                    |all             |HTTP|Transport    |Per-deployment rate limit   |
+   |                                       |                |429 |             |exceeded.  The response     |
+   |                                       |                |    |             |includes Retry-After.       |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |TRUST_REVOKED                          |all signing-tier|HTTP|State        |The Attester's enrollment is|
+   |                                       |                |403 |             |in the REVOKED state.  The  |
+   |                                       |                |    |             |Attester MUST transition    |
+   |                                       |                |    |             |locally to REVOKED and stop |
+   |                                       |                |    |             |issuing proofs.             |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |ENROLLMENT_NOT_FOUND                   |all signing-tier|HTTP|Enrollment   |The Verifier has no ACTIVE  |
+   |                                       |                |404 |             |enrollment matching the     |
+   |                                       |                |/   |             |supplied deviceIdHash /     |
+   |                                       |                |body|             |deviceKeyHash.              |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |ENROLLMENT_NOT_ATTESTED                |/verify,        |body|Enrollment   |The enrollment record exists|
+   |                                       |/authorize      |    |             |but has no recorded device  |
+   |                                       |                |    |             |attestation.  Re-enrollment |
+   |                                       |                |    |             |is required.                |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |GRACE_WINDOW_EXPIRED                   |/verify         |body|Enrollment   |The enrollment is past its  |
+   |                                       |                |    |             |operational grace window    |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]).     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INVALID_SIGNATURE                      |all signing-tier|body|Cryptographic|The signed body's signature |
+   |                                       |                |    |             |does not verify against the |
+   |                                       |                |    |             |Attester's enrolled public  |
+   |                                       |                |    |             |key.                        |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 34]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |MALFORMED_UEID                         |/verify,        |HTTP|Cryptographic|The ueid claim is not a     |
+   |                                       |/authorize      |400 |             |valid RAND-type UEID        |
+   |                                       |                |    |             |([RFC9711], Section 4.2.1): |
+   |                                       |                |    |             |the decoded byte string is  |
+   |                                       |                |    |             |missing the 0x01 RAND type  |
+   |                                       |                |    |             |tag or is not 33 bytes long.|
+   |                                       |                |    |             |See [PSEA-TOKEN-PROFILE].   |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |COUNTER_REPLAY                         |all signing-tier|body|Cryptographic|The signed psea_counter is  |
+   |                                       |except S        |    |             |less than or equal to the   |
+   |                                       |                |    |             |Verifier's stored counter   |
+   |                                       |                |    |             |for the (Attester, risk-    |
+   |                                       |                |    |             |level) pair.  Counters are  |
+   |                                       |                |    |             |tracked per risk level (five|
+   |                                       |                |    |             |counters total: LOW, MEDIUM,|
+   |                                       |                |    |             |HIGH, CRITICAL, PASSIVE)    |
+   |                                       |                |    |             |rather than a single global |
+   |                                       |                |    |             |counter per Attester; see   |
+   |                                       |                |    |             |[PSEA-TOKEN-PROFILE] for the|
+   |                                       |                |    |             |rationale.                  |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |CHAIN_PREV_MISSING                     |/verify,        |HTTP|Hash chain   |The signed body lacks the   |
+   |                                       |/authorize      |400 |             |psea_chain_prev claim (Tier |
+   |                                       |                |    |             |E / Tier A require it;      |
+   |                                       |                |    |             |[PSEA-TOKEN-PROFILE]).      |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |CHAIN_PREV_MISMATCH                    |/verify,        |HTTP|Hash chain   |The signed psea_chain_prev  |
+   |                                       |/authorize      |401 |             |does not link to the        |
+   |                                       |                |/   |             |Verifier's stored chain     |
+   |                                       |                |body|             |state (strict-equality      |
+   |                                       |                |    |             |mismatch;                   |
+   |                                       |                |    |             |[PSEA-TOKEN-PROFILE]).  This|
+   |                                       |                |    |             |code is also reused for the |
+   |                                       |                |    |             |SUSPEND escalation outcome  |
+   |                                       |                |    |             |of chain gap-tolerance      |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]): a   |
+   |                                       |                |    |             |gap-tolerant Verifier whose |
+   |                                       |                |    |             |tenant policy sets          |
+   |                                       |                |    |             |onExceeded == "SUSPEND"     |
+   |                                       |                |    |             |returns HTTP 401            |
+   |                                       |                |    |             |CHAIN_PREV_MISMATCH on      |
+   |                                       |                |    |             |ESCALATE.  There is no      |
+   |                                       |                |    |             |dedicated SUSPEND wire code.|
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |NONCE_EXPIRED                          |/verify,        |body|Challenge    |The Verifier-issued nonce   |
+   |                                       |/authorize,     |    |             |embedded in the proof has   |
+   |                                       |/trustAttest    |    |             |expired.                    |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 35]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |NONCE_REQUIRED                         |/verify,        |body|Challenge    |The associated action       |
+   |                                       |/authorize,     |    |             |request carried a server-   |
+   |                                       |/trustAttest    |    |             |issued eat_nonce, but the   |
+   |                                       |                |    |             |signed body does not carry  |
+   |                                       |                |    |             |eat_nonce.                  |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |NONCE_MISMATCH                         |/verify,        |body|Challenge    |The signed body's eat_nonce |
+   |                                       |/authorize,     |    |             |field does not match the    |
+   |                                       |/trustAttest    |    |             |Verifier-issued nonce for   |
+   |                                       |                |    |             |this action.                |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |ACTION_ALREADY_PROCESSED               |/verify,        |body|Idempotency  |The "actionId" has already  |
+   |                                       |/authorize      |    |             |been finalized in the action|
+   |                                       |                |    |             |ledger.  Idempotent retries |
+   |                                       |                |    |             |return the original outcome.|
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |ACTION_BINDING_INVALID                 |/verify,        |HTTP|Action       |The action payload supplied |
+   |                                       |/authorize      |400 |binding      |with the proof does not     |
+   |                                       |                |    |             |match the binding carried in|
+   |                                       |                |    |             |the signed execution-       |
+   |                                       |                |    |             |authority token (see        |
+   |                                       |                |    |             |[PSEA-TOKEN-PROFILE]).  The |
+   |                                       |                |    |             |Verifier MUST NOT mint a    |
+   |                                       |                |    |             |signed acknowledgement when |
+   |                                       |                |    |             |this code is returned.      |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |CALLER_BINDING_MISMATCH                |/verify,        |HTTP|Caller       |The signed                  |
+   |                                       |/authorize      |403 |binding      |psea_caller_package does not|
+   |                                       |                |    |             |match any application       |
+   |                                       |                |    |             |registered to the           |
+   |                                       |                |    |             |deployment.                 |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |MISSING_CALLER_PACKAGE                 |/verify,        |HTTP|Caller       |The signed body lacks       |
+   |                                       |/authorize      |400 |binding      |psea_caller_package.  The   |
+   |                                       |                |    |             |claim is required at this   |
+   |                                       |                |    |             |revision.                   |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |APP_PACKAGE_MISMATCH                   |/deviceEnroll,  |HTTP|Caller       |The package identifier      |
+   |                                       |/trustInvalidate|403 |binding      |extracted from the device   |
+   |                                       |                |    |(enrollment) |attestation chain does not  |
+   |                                       |                |    |             |match any application       |
+   |                                       |                |    |             |registered to the           |
+   |                                       |                |    |             |deployment.                 |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |STIER_NOT_ALLOWED                      |/verify         |HTTP|Tier routing |Tier S (riskLevel = MEDIUM) |
+   |                                       |                |400 |             |requests must be batched via|
+   |                                       |                |    |             |/sessionBatch; /verify is   |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 36]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   |                                       |                |    |             |reserved for Tier E.        |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |TIER_MISMATCH                          |/trustAttest,   |body|Cross-replay |The signed authority-level  |
+   |                                       |/sessionBatch,  |/   |binding      |binding psea_tier (carried  |
+   |                                       |/verify,        |HTTP|             |on all four tiers) does not |
+   |                                       |/authorize      |403 |             |match the receiving         |
+   |                                       |                |    |             |endpoint's expected tier    |
+   |                                       |                |    |             |(/trustAttest expects "P";  |
+   |                                       |                |    |             |/sessionBatch expects "S";  |
+   |                                       |                |    |             |/verify expects "E";        |
+   |                                       |                |    |             |/authorize expects "A").    |
+   |                                       |                |    |             |See [PSEA-TOKEN-PROFILE].   |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |AUDIENCE_MISMATCH                      |/trustAttest,   |HTTP|Cross-replay |The signed endpoint binding |
+   |                                       |/sessionBatch,  |403 |binding      |aud (carried on all four    |
+   |                                       |/verify,        |    |             |tiers) does not match the   |
+   |                                       |/authorize      |    |             |receiving endpoint's logical|
+   |                                       |                |    |             |name (e.g., signed          |
+   |                                       |                |    |             |aud="proofAuthorize"        |
+   |                                       |                |    |             |submitted to /verify).  See |
+   |                                       |                |    |             |[PSEA-TOKEN-PROFILE].       |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |TENANT_BINDING_MISMATCH                |/trustAttest,   |HTTP|Cross-replay |The signed deployment       |
+   |                                       |/sessionBatch,  |403 |binding      |binding iss (carried on all |
+   |                                       |/verify,        |    |             |four tiers) does not match  |
+   |                                       |/authorize      |    |             |the tenant the Verifier     |
+   |                                       |                |    |             |resolves from the request's |
+   |                                       |                |    |             |API key (cross-deployment   |
+   |                                       |                |    |             |replay).  See               |
+   |                                       |                |    |             |[PSEA-TOKEN-PROFILE].       |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |EAT_PROFILE_MISMATCH                   |/verify,        |HTTP|EAT profile  |The eat_profile claim is    |
+   |                                       |/authorize      |403 |             |absent or does not match the|
+   |                                       |                |    |             |PSEA EAT profile identifier |
+   |                                       |                |    |             |(urn:ietf:params:psea:eat-  |
+   |                                       |                |    |             |profile:1).  The Verifier   |
+   |                                       |                |    |             |MUST reject a Tier E / Tier |
+   |                                       |                |    |             |A proof on this condition   |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]).     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |USER_VERIFICATION_REQUIRED             |/verify,        |body|User         |The Tier E / Tier A proof   |
+   |                                       |/authorize      |    |verification |lacks the required "psea_uv"|
+   |                                       |                |    |             |claim, or carries           |
+   |                                       |                |    |             |"psea_uv.verified" != true. |
+   |                                       |                |    |             |The Verifier MUST require a |
+   |                                       |                |    |             |contemporaneous user-       |
+   |                                       |                |    |             |verification claim          |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]).     |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 37]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |UV_CROSS_CHECK_MISMATCH                |/verify,        |body|User         |The signed "psea_uv" claim  |
+   |                                       |/authorize      |    |verification |contradicts the             |
+   |                                       |                |    |             |authenticator's attested UV-|
+   |                                       |                |    |             |enforcement property (e.g., |
+   |                                       |                |    |             |"verified" == true while the|
+   |                                       |                |    |             |attested key is not user-   |
+   |                                       |                |    |             |auth-gated).  Returned only |
+   |                                       |                |    |             |where the attestation       |
+   |                                       |                |    |             |conveys a UV-enforcement    |
+   |                                       |                |    |             |property to cross-check     |
+   |                                       |                |    |             |against                     |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]).     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |ATTESTATION_SECURITY_LEVEL_INSUFFICIENT|/verify,        |body|Integrity    |The platform-attestation    |
+   |                                       |/authorize      |    |             |security level is below the |
+   |                                       |                |    |             |deployment's policy floor.  |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INTEGRITY_EVIDENCE_REQUIRED            |/verify,        |HTTP|Integrity    |The deployment is in ENFORCE|
+   |                                       |/authorize      |503 |             |mode for integrity evidence |
+   |                                       |                |    |             |but the request did not     |
+   |                                       |                |    |             |carry an "integrityEvidence"|
+   |                                       |                |    |             |block (Section 4).          |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INTEGRITY_VERIFICATION_FAILED          |/verify,        |body|Integrity    |The Verifier appraised the  |
+   |                                       |/authorize      |    |             |"integrityEvidence" token   |
+   |                                       |                |    |             |(for example Play Integrity,|
+   |                                       |                |    |             |App Attest, or any other    |
+   |                                       |                |    |             |registered provider) and    |
+   |                                       |                |    |             |rejected it.                |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INTEGRITY_VERIFICATION_UNAVAILABLE     |/verify,        |body|Integrity    |The Verifier could not run  |
+   |                                       |/authorize      |    |             |the platform-specific       |
+   |                                       |                |    |             |verification.               |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INTEGRITY_PROVIDER_UNSUPPORTED         |/verify,        |body|Integrity    |The                         |
+   |                                       |/authorize      |    |             |"integrityEvidence.provider"|
+   |                                       |                |    |             |value is outside the        |
+   |                                       |                |    |             |registered set              |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]).     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INTEGRITY_PROVIDER_INSUFFICIENT        |/verify,        |body|Integrity    |The provider is supported   |
+   |                                       |/authorize      |    |             |but does not meet the       |
+   |                                       |                |    |             |deployment's policy floor.  |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |SIGNATURE_VERIFICATION_FAILED          |/verify,        |body|Cryptographic|The JWS signature over the  |
+   |                                       |/authorize      |    |             |received header.payload     |
+   |                                       |                |    |             |octets does not verify      |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 38]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   |                                       |                |    |             |against the enrolled device |
+   |                                       |                |    |             |key.  Emitted on the Tier E |
+   |                                       |                |    |             |/ Tier A proof path.        |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |STATE_DRIFT_REJECTED                   |/verify         |body|State        |The Verifier rejected the   |
+   |                                       |                |    |             |Tier E proof because the    |
+   |                                       |                |    |             |Attester's reported state   |
+   |                                       |                |    |             |diverged from the Verifier's|
+   |                                       |                |    |             |record beyond the tolerated |
+   |                                       |                |    |             |drift.                      |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |PASSIVE_KEY_NOT_ENROLLED               |/trustAttest    |body|P-tier       |The Attester has no passive-|
+   |                                       |                |    |             |tier key enrolled.  Re-     |
+   |                                       |                |    |             |enrollment with passive-key |
+   |                                       |                |    |             |registration is required.   |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |MALFORMED_PTOKEN                       |/trustAttest    |body|P-tier       |The submitted PToken is not |
+   |                                       |                |    |             |parseable as a well-formed  |
+   |                                       |                |    |             |compact-JWS PToken          |
+   |                                       |                |    |             |(Section 5.4).              |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |WRONG_TIER                             |/trustAttest    |body|P-tier       |A token submitted to        |
+   |                                       |                |    |             |/trustAttest does not carry |
+   |                                       |                |    |             |psea_tier == "P".           |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |PTOKEN_EXPIRED                         |/trustAttest    |body|P-tier       |The PToken's exp claim is in|
+   |                                       |                |    |             |the past.                   |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |ACTION_REQUEST_NOT_FOUND               |/trustAttest    |body|P-tier       |The proof references a push-|
+   |                                       |                |    |             |initiated action_request    |
+   |                                       |                |    |             |that does not exist.        |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |USER_BINDING_MISMATCH                  |/trustAttest    |body|P-tier       |The PToken's "userIdHash"   |
+   |                                       |                |    |             |does not match the          |
+   |                                       |                |    |             |enrollment-bound userIdHash.|
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |INVALID_SESSION                        |/sessionBatch   |HTTP|S-tier       |A SessionSummary in the     |
+   |                                       |                |400 |             |batch is missing required   |
+   |                                       |                |    |             |fields.                     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |MISSING_ROLLING_HASH                   |/sessionBatch   |HTTP|S-tier       |A SessionSummary in the     |
+   |                                       |                |400 |             |batch lacks the required    |
+   |                                       |                |    |             |psea_rolling_hash claim     |
+   |                                       |                |    |             |(Section 5.7.3).            |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |SESSION_SIGNATURE_INVALID              |/sessionBatch   |HTTP|S-tier       |One or more SessionSummary  |
+   |                                       |                |401 |             |entries in the batch carry  |
+   |                                       |                |    |             |an invalid or missing       |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 39]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   |                                       |                |    |             |signature; the entire batch |
+   |                                       |                |    |             |is rejected (Section 5.7.4).|
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |OFFLINE_AUTHORITATIVE_BLOCKED          |Attester (local |n/a |Connectivity |The Attester refused to     |
+   |                                       |surface)        |    |             |issue a Tier A proof because|
+   |                                       |                |    |             |the Verifier was unreachable|
+   |                                       |                |    |             |(Section 2.6.5).  Not a     |
+   |                                       |                |    |             |Verifier response code.     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |UNSUPPORTED_ALGORITHM                  |/verify,        |body|*Reserved*   |*Reserved for forward       |
+   |                                       |/authorize      |    |             |compatibility*; not emitted |
+   |                                       |                |    |             |by an implementation that   |
+   |                                       |                |    |             |supports only the MTI       |
+   |                                       |                |    |             |algorithm.  A Verifier that |
+   |                                       |                |    |             |supports algorithm          |
+   |                                       |                |    |             |negotiation                 |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]) MUST |
+   |                                       |                |    |             |return this code for        |
+   |                                       |                |    |             |unsupported algorithm       |
+   |                                       |                |    |             |values.                     |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+   |UNSUPPORTED_VERSION                    |/verify,        |body|*Reserved*   |*Reserved for forward       |
+   |                                       |/authorize,     |    |             |compatibility*; not emitted |
+   |                                       |/trustAttest    |    |             |by an implementation that   |
+   |                                       |                |    |             |supports only the current   |
+   |                                       |                |    |             |"body.version".  A Verifier |
+   |                                       |                |    |             |that supports multiple      |
+   |                                       |                |    |             |versions                    |
+   |                                       |                |    |             |([PSEA-TOKEN-PROFILE]) MUST |
+   |                                       |                |    |             |return this code for unknown|
+   |                                       |                |    |             |version values.             |
+   +---------------------------------------+----------------+----+-------------+----------------------------+
+
+                                  Table 9
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 40]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   Total: 45 wire response codes.  The compact-JWS single-payload format
+   carries no envelope-versus-body duplication, so no token/body
+   consistency codes are defined ([PSEA-TOKEN-PROFILE]); the
+   authoritative trust gate is the Verifier's own enrollment-status /
+   revocation check rather than any self-asserted wire trust-state
+   field.  USER_VERIFICATION_REQUIRED and UV_CROSS_CHECK_MISMATCH cover
+   the Tier E / Tier A user-verification claim per [PSEA-TOKEN-PROFILE];
+   TIER_MISMATCH and TENANT_BINDING_MISMATCH apply across all four
+   signing-tier endpoints per [PSEA-TOKEN-PROFILE]; two reserved-for-
+   forward-compatibility entries are included.  Deployment-level
+   licensing and quota rejections (for example, an exhausted monthly
+   action quota or a tiered-actions feature that is not enabled for the
+   deployment) are implementation-specific and out of scope for this
+   protocol; they are not assigned PSEA wire response codes.
+
+8.1.  Audit-Side Fraud-Alert Labels (Informative)
+
+   The following labels are written by the Verifier into the
+   deployment's audit log when specific fraud-class conditions are
+   detected.  They are *not* wire response codes; the Attester does not
+   receive them directly.  They are documented here so that operators
+   reading audit logs and external SIEM consumers can correlate audit
+   entries with the corresponding wire responses in Section 8.
+
+   +=====================+========+======================+=====================+
+   |Audit label          |Severity|Paired wire response  |Trigger              |
+   +=====================+========+======================+=====================+
+   |PAYLOAD_HASH_MISMATCH|HIGH    |ACTION_BINDING_INVALID|The Verifier-computed|
+   |                     |        |                      |SHA-256 of the       |
+   |                     |        |                      |canonical action     |
+   |                     |        |                      |payload does not     |
+   |                     |        |                      |match the signed     |
+   |                     |        |                      |"psea_payload_hash". |
+   |                     |        |                      |Fail-closed per      |
+   |                     |        |                      |[PSEA-TOKEN-PROFILE].|
+   +---------------------+--------+----------------------+---------------------+
+
+                                  Table 10
+
+9.  IANA Considerations
+
+9.1.  Summary of Requested Registries
+
+   This document requests IANA to establish one new registry:
+
+   *  The PSEA Error Code Registry (Section 9.2).
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 41]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   The PSEA Attestation Source Registry, the media-type registration,
+   and the urn:ietf:params:psea URN sub-namespace registration are
+   requested by [PSEA-TOKEN-PROFILE].
+
+9.2.  PSEA Error Code Registry
+
+   Registration policy: Specification Required [RFC8126].
+
+   Initial contents: the 45 codes listed in Section 8.  Each registry
+   entry consists of: Code (string), Endpoint scope, HTTP / body
+   classification, Category, Semantics text.  The codes are reproduced
+   here for the IANA-managed registry:
+
+   ACTION_ALREADY_PROCESSED, ACTION_BINDING_INVALID,
+   ACTION_REQUEST_NOT_FOUND, APP_PACKAGE_MISMATCH,
+   ATTESTATION_SECURITY_LEVEL_INSUFFICIENT, AUDIENCE_MISMATCH,
+   CALLER_BINDING_MISMATCH, CHAIN_PREV_MISMATCH, CHAIN_PREV_MISSING,
+   COUNTER_REPLAY, EAT_PROFILE_MISMATCH, ENROLLMENT_NOT_ATTESTED,
+   ENROLLMENT_NOT_FOUND, GRACE_WINDOW_EXPIRED,
+   INTEGRITY_EVIDENCE_REQUIRED, INTEGRITY_PROVIDER_INSUFFICIENT,
+   INTEGRITY_PROVIDER_UNSUPPORTED, INTEGRITY_VERIFICATION_FAILED,
+   INTEGRITY_VERIFICATION_UNAVAILABLE, INVALID_SESSION,
+   INVALID_SIGNATURE, MALFORMED_PTOKEN, MALFORMED_UEID,
+   MISSING_CALLER_PACKAGE, MISSING_ROLLING_HASH, NONCE_EXPIRED,
+   NONCE_MISMATCH, NONCE_REQUIRED, OFFLINE_AUTHORITATIVE_BLOCKED,
+   PASSIVE_KEY_NOT_ENROLLED, PTOKEN_EXPIRED, RATE_LIMIT_EXCEEDED,
+   SESSION_SIGNATURE_INVALID, SIGNATURE_VERIFICATION_FAILED,
+   STATE_DRIFT_REJECTED, STIER_NOT_ALLOWED, TENANT_BINDING_MISMATCH,
+   TIER_MISMATCH, TRUST_REVOKED, UNSUPPORTED_ALGORITHM (Reserved),
+   UNSUPPORTED_VERSION (Reserved), USER_BINDING_MISMATCH,
+   USER_VERIFICATION_REQUIRED, UV_CROSS_CHECK_MISMATCH, WRONG_TIER.
+
+   Total: 45 codes.
+
+10.  References
+
+10.1.  Normative References
+
+   [PSEA-TOKEN-PROFILE]
+              Yossif, M. K., "PSEA Token Profile: An EAT Profile for
+              Action-Bound, User-Verification-Gated Transaction-
+              Confirmation Evidence", Work in Progress, Internet-Draft,
+              draft-yossif-psea-token-profile-00, May 2026,
+              <https://datatracker.ietf.org/doc/html/draft-yossif-psea-
+              token-profile-00>.
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 42]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC7515]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web
+              Signature (JWS)", RFC 7515, May 2015,
+              <https://www.rfc-editor.org/info/rfc7515>.
+
+   [RFC7519]  Jones, M., Bradley, J., and N. Sakimura, "JSON Web Token
+              (JWT)", RFC 7519, May 2015,
+              <https://www.rfc-editor.org/info/rfc7519>.
+
+   [RFC8126]  Cotton, M., Leiba, B., and T. Narten, "Guidelines for
+              Writing an IANA Considerations Section in RFCs", BCP 26,
+              RFC 8126, June 2017,
+              <https://www.rfc-editor.org/info/rfc8126>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, May 2017,
+              <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC8785]  Rundgren, A., Jordan, B., and S. Erdtman, "JSON
+              Canonicalization Scheme (JCS)", RFC 8785, June 2020,
+              <https://www.rfc-editor.org/info/rfc8785>.
+
+   [RFC9334]  Birkholz, H., Thaler, D., Richardson, M., Smith, N., and
+              W. Pan, "Remote ATtestation procedureS (RATS)
+              Architecture", RFC 9334, January 2023,
+              <https://www.rfc-editor.org/info/rfc9334>.
+
+   [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
+              Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
+              December 2024, <https://www.rfc-editor.org/info/rfc9711>.
+
+10.2.  Informative References
+
+   [RFC4846]  Klensin, J. and D. Thaler, "Independent Submissions to the
+              RFC Editor", RFC 4846, July 2007,
+              <https://www.rfc-editor.org/info/rfc4846>.
+
+   [RFC6819]  Lodderstedt, T., Ed., McGloin, M., and P. Hunt, "OAuth 2.0
+              Threat Model and Security Considerations", RFC 6819,
+              January 2013, <https://www.rfc-editor.org/info/rfc6819>.
+
+Appendix A.  Citation and Reference
+
+   Citation suggestion (BibTeX):
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 43]
+
+Internet-Draft              PSEA Architecture                   May 2026
+
+
+   @misc{yossif-psea-architecture-00,
+     author       = "Mohamad Khalil Yossif",
+     title        = "Post-Session Execution Assurance (PSEA): A Deployment Architecture
+                     for the PSEA Token Profile",
+     series       = "Internet-Draft draft-yossif-psea-architecture-00",
+     publisher    = "Internet Engineering Task Force",
+     year         = "2026",
+     month        = "May",
+     howpublished = "https://datatracker.ietf.org/doc/draft-yossif-psea-architecture-00/"
+   }
+
+Author's Address
+
+   Mohamad Khalil Yossif
+   Yuthent
+   Email: mohamad@yuthent.com
+   URI:   https://yuthent.com/psea
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 44]
