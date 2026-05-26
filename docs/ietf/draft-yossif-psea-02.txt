@@ -87,7 +87,7 @@ Copyright Notice
 Table of Contents
 
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   4
-     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   6
+     1.1.  Requirements Language . . . . . . . . . . . . . . . . . .   5
      1.2.  Terminology . . . . . . . . . . . . . . . . . . . . . . .   6
    2.  Canonical Encoding of Proof Payloads  . . . . . . . . . . . .   7
      2.1.  UTF-8 Serialization . . . . . . . . . . . . . . . . . . .   8
@@ -95,15 +95,15 @@ Table of Contents
            Sort) . . . . . . . . . . . . . . . . . . . . . . . . . .   8
      2.3.  Array Ordering  . . . . . . . . . . . . . . . . . . . . .   8
      2.4.  String Serialization  . . . . . . . . . . . . . . . . . .   8
-     2.5.  Number Serialization (Integers Only)  . . . . . . . . . .   9
+     2.5.  Number Serialization (Integers Only)  . . . . . . . . . .   8
      2.6.  Boolean and Null Serialization  . . . . . . . . . . . . .   9
      2.7.  Whitespace  . . . . . . . . . . . . . . . . . . . . . . .   9
      2.8.  Conformance and Cross-Platform Implementer Warning  . . .   9
    3.  Proof Token Format  . . . . . . . . . . . . . . . . . . . . .  10
      3.1.  PSEA as an EAT Profile  . . . . . . . . . . . . . . . . .  11
-       3.1.1.  EAT Profile Definition (per RFC 9711, Section 7)  . .  12
-     3.2.  Top-Level Structure . . . . . . . . . . . . . . . . . . .  13
-     3.3.  Single Authoritative Payload (No Envelope Duplicates) . .  16
+       3.1.1.  EAT Profile Definition (per RFC 9711, Section 7)  . .  11
+     3.2.  Top-Level Structure . . . . . . . . . . . . . . . . . . .  12
+     3.3.  Single Authoritative Payload (No Envelope Duplicates) . .  15
      3.4.  JOSE Header Hardening (Normative) . . . . . . . . . . . .  16
      3.5.  JWS Payload Claim Set . . . . . . . . . . . . . . . . . .  17
 
@@ -120,48 +120,48 @@ Internet-Draft             PSEA Token Profile                   May 2026
      3.8.  Subject Hash (psea_user_hash) . . . . . . . . . . . . . .  23
      3.9.  Device-State Submodule (submods.psea-device-state)  . . .  24
      3.10. Counter Model (Monotonic Replay Ordering) . . . . . . . .  24
-     3.11. Freshness and Expiry  . . . . . . . . . . . . . . . . . .  25
-     3.12. ChainEntry (Deployment-Optional Tamper-Evidence Layer)  .  26
+     3.11. Freshness and Expiry  . . . . . . . . . . . . . . . . . .  26
+     3.12. ChainEntry (Deployment-Optional Tamper-Evidence Layer)  .  27
        3.12.1.  Formula (Length-Prefixed Concatenation)  . . . . . .  27
-       3.12.2.  Sentinel Value . . . . . . . . . . . . . . . . . . .  27
+       3.12.2.  Sentinel Value . . . . . . . . . . . . . . . . . . .  28
        3.12.3.  Verifier Behavior on Mismatch  . . . . . . . . . . .  28
-     3.13. Action Binding (Fail-Closed by Default) . . . . . . . . .  28
-       3.13.1.  Producer Obligations . . . . . . . . . . . . . . . .  28
+     3.13. Action Binding (Fail-Closed by Default) . . . . . . . . .  29
+       3.13.1.  Producer Obligations . . . . . . . . . . . . . . . .  29
        3.13.2.  Verifier Obligations: Fail-Closed Binding (Normative
-               Default)  . . . . . . . . . . . . . . . . . . . . . .  28
-       3.13.3.  Relying-Party Obligations  . . . . . . . . . . . . .  29
+               Default)  . . . . . . . . . . . . . . . . . . . . . .  29
+       3.13.3.  Relying-Party Obligations  . . . . . . . . . . . . .  30
        3.13.4.  Cross-Replay Binding (psea_tier + psea_op + aud +
                iss)  . . . . . . . . . . . . . . . . . . . . . . . .  30
-     3.14. Versioning  . . . . . . . . . . . . . . . . . . . . . . .  31
-   4.  Relationship to WebAuthn and FIDO Transaction Confirmation  .  31
-   5.  Relationship to OAuth 2.0 Step-Up Authentication  . . . . . .  32
-     5.1.  Comparison  . . . . . . . . . . . . . . . . . . . . . . .  32
-     5.2.  Complementarity . . . . . . . . . . . . . . . . . . . . .  33
-     5.3.  Out of Scope for This Document  . . . . . . . . . . . . .  34
-   6.  Security Considerations . . . . . . . . . . . . . . . . . . .  34
-     6.1.  Scope and Method  . . . . . . . . . . . . . . . . . . . .  34
-     6.2.  Attester Assumptions  . . . . . . . . . . . . . . . . . .  34
-     6.3.  STRIDE Threats Addressed  . . . . . . . . . . . . . . . .  35
-       6.3.1.  Spoofing  . . . . . . . . . . . . . . . . . . . . . .  35
-       6.3.2.  Tampering . . . . . . . . . . . . . . . . . . . . . .  36
-       6.3.3.  Repudiation . . . . . . . . . . . . . . . . . . . . .  36
-       6.3.4.  Information Disclosure  . . . . . . . . . . . . . . .  36
-       6.3.5.  Denial of Service . . . . . . . . . . . . . . . . . .  37
-       6.3.6.  Elevation of Privilege  . . . . . . . . . . . . . . .  37
-     6.4.  Future Work: Relying Party Counter-Signature  . . . . . .  38
-     6.5.  Threats Out of Scope  . . . . . . . . . . . . . . . . . .  38
-     6.6.  Known Open Problems . . . . . . . . . . . . . . . . . . .  38
-       6.6.1.  Coercion and Duress . . . . . . . . . . . . . . . . .  39
-       6.6.2.  What-You-See-Is-What-You-Sign (WYSIWYS) . . . . . . .  39
-       6.6.3.  Subject-Identity Limits . . . . . . . . . . . . . . .  40
-   7.  Privacy Considerations  . . . . . . . . . . . . . . . . . . .  41
-     7.1.  UEID Linkability  . . . . . . . . . . . . . . . . . . . .  41
-     7.2.  Hashing Is Not Anonymization  . . . . . . . . . . . . . .  42
-     7.3.  Data Minimization at the Verifier . . . . . . . . . . . .  42
-   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  43
-     8.1.  Summary of Requested Registrations  . . . . . . . . . . .  43
-     8.2.  Media Type Registration . . . . . . . . . . . . . . . . .  43
-     8.3.  URN Sub-namespace Registration (urn:ietf:params:psea) . .  44
+     3.14. Versioning  . . . . . . . . . . . . . . . . . . . . . . .  32
+   4.  Relationship to WebAuthn and FIDO Transaction Confirmation  .  32
+   5.  Relationship to OAuth 2.0 Step-Up Authentication  . . . . . .  33
+     5.1.  Comparison  . . . . . . . . . . . . . . . . . . . . . . .  33
+     5.2.  Complementarity . . . . . . . . . . . . . . . . . . . . .  34
+     5.3.  Out of Scope for This Document  . . . . . . . . . . . . .  35
+   6.  Security Considerations . . . . . . . . . . . . . . . . . . .  35
+     6.1.  Scope and Method  . . . . . . . . . . . . . . . . . . . .  35
+     6.2.  Attester Assumptions  . . . . . . . . . . . . . . . . . .  35
+     6.3.  STRIDE Threats Addressed  . . . . . . . . . . . . . . . .  36
+       6.3.1.  Spoofing  . . . . . . . . . . . . . . . . . . . . . .  36
+       6.3.2.  Tampering . . . . . . . . . . . . . . . . . . . . . .  37
+       6.3.3.  Repudiation . . . . . . . . . . . . . . . . . . . . .  37
+       6.3.4.  Information Disclosure  . . . . . . . . . . . . . . .  37
+       6.3.5.  Denial of Service . . . . . . . . . . . . . . . . . .  38
+       6.3.6.  Elevation of Privilege  . . . . . . . . . . . . . . .  38
+     6.4.  Future Work: Relying Party Counter-Signature  . . . . . .  39
+     6.5.  Threats Out of Scope  . . . . . . . . . . . . . . . . . .  39
+     6.6.  Known Open Problems . . . . . . . . . . . . . . . . . . .  39
+       6.6.1.  Coercion and Duress . . . . . . . . . . . . . . . . .  40
+       6.6.2.  What-You-See-Is-What-You-Sign (WYSIWYS) . . . . . . .  40
+       6.6.3.  Subject-Identity Limits . . . . . . . . . . . . . . .  41
+   7.  Privacy Considerations  . . . . . . . . . . . . . . . . . . .  42
+     7.1.  UEID Linkability  . . . . . . . . . . . . . . . . . . . .  42
+     7.2.  Hashing Is Not Anonymization  . . . . . . . . . . . . . .  43
+     7.3.  Data Minimization at the Verifier . . . . . . . . . . . .  44
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .  44
+     8.1.  Summary of Requested Registrations  . . . . . . . . . . .  44
+     8.2.  Media Type Registration . . . . . . . . . . . . . . . . .  44
+     8.3.  URN Sub-namespace Registration (urn:ietf:params:psea) . .  46
 
 
 
@@ -170,28 +170,27 @@ Yossif                  Expires 27 November 2026                [Page 3]
 Internet-Draft             PSEA Token Profile                   May 2026
 
 
-   9.  Algorithm Agility and Operational Defaults  . . . . . . . . .  45
-     9.1.  Cryptographic Algorithms  . . . . . . . . . . . . . . . .  45
-       9.1.1.  Mandatory-to-Implement (MTI)  . . . . . . . . . . . .  45
-       9.1.2.  Post-Quantum Migration  . . . . . . . . . . . . . . .  45
-       9.1.3.  Algorithm Negotiation . . . . . . . . . . . . . . . .  46
-     9.2.  Operational Defaults  . . . . . . . . . . . . . . . . . .  46
-   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  46
-     10.1.  Normative References . . . . . . . . . . . . . . . . . .  46
-     10.2.  Informative References . . . . . . . . . . . . . . . . .  48
-   Appendix A.  Canonical Encoding Test Vectors  . . . . . . . . . .  48
-     A.1.  Case-Sensitive Key Sort . . . . . . . . . . . . . . . . .  49
-     A.2.  Integer Serialization . . . . . . . . . . . . . . . . . .  49
-     A.3.  Action-Payload Hash (End-to-End Worked Example) . . . . .  49
-   Appendix B.  Conformance  . . . . . . . . . . . . . . . . . . . .  50
-     B.1.  Conformance Roles . . . . . . . . . . . . . . . . . . . .  50
-     B.2.  Attester Conformance  . . . . . . . . . . . . . . . . . .  50
-       B.2.1.  Requirements  . . . . . . . . . . . . . . . . . . . .  50
-     B.3.  Verifier Conformance  . . . . . . . . . . . . . . . . . .  51
-       B.3.1.  Requirements  . . . . . . . . . . . . . . . . . . . .  51
-     B.4.  Relying Party Conformance . . . . . . . . . . . . . . . .  53
-   Appendix C.  Citation and Reference . . . . . . . . . . . . . . .  53
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  53
+   9.  Algorithm Agility and Operational Defaults  . . . . . . . . .  46
+     9.1.  Cryptographic Algorithms  . . . . . . . . . . . . . . . .  46
+       9.1.1.  Mandatory-to-Implement (MTI)  . . . . . . . . . . . .  46
+       9.1.2.  Post-Quantum Migration  . . . . . . . . . . . . . . .  47
+       9.1.3.  Algorithm Negotiation . . . . . . . . . . . . . . . .  47
+     9.2.  Operational Defaults  . . . . . . . . . . . . . . . . . .  47
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .  48
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .  48
+     10.2.  Informative References . . . . . . . . . . . . . . . . .  49
+   Appendix A.  Canonical Encoding Test Vectors  . . . . . . . . . .  50
+     A.1.  Case-Sensitive Key Sort . . . . . . . . . . . . . . . . .  50
+     A.2.  Integer Serialization . . . . . . . . . . . . . . . . . .  51
+     A.3.  Action-Payload Hash (End-to-End Worked Example) . . . . .  51
+   Appendix B.  Conformance  . . . . . . . . . . . . . . . . . . . .  52
+     B.1.  Conformance Roles . . . . . . . . . . . . . . . . . . . .  52
+     B.2.  Attester Conformance  . . . . . . . . . . . . . . . . . .  52
+       B.2.1.  Requirements  . . . . . . . . . . . . . . . . . . . .  52
+     B.3.  Verifier Conformance  . . . . . . . . . . . . . . . . . .  52
+       B.3.1.  Requirements  . . . . . . . . . . . . . . . . . . . .  52
+     B.4.  Relying Party Conformance . . . . . . . . . . . . . . . .  54
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  54
 
 1.  Introduction
 
@@ -218,6 +217,7 @@ Internet-Draft             PSEA Token Profile                   May 2026
    Trusted Execution Environment (TEE)- or Secure-Element-backed mobile
    keystores (for example Android Keystore keys that require user
    authentication, or iOS Secure Enclave keys gated by a local-
+   authentication context), PIN-gated Personal Identity Verification
 
 
 
@@ -226,7 +226,6 @@ Yossif                  Expires 27 November 2026                [Page 4]
 Internet-Draft             PSEA Token Profile                   May 2026
 
 
-   authentication context), PIN-gated Personal Identity Verification
    (PIV)-class smartcards that expose a user-verification-gated raw
    ECDSA-over-digest operation, and programmable secure elements.  A
    standard FIDO2/WebAuthn security key does not natively conform: a
@@ -268,20 +267,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    step-up challenge can require and a resource server can verify
    (Section 5).
 
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026                [Page 5]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
 1.1.  Requirements Language
 
    The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
@@ -289,6 +274,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
    "OPTIONAL" in this document are to be interpreted as described in
    BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
    capitals, as shown here.
+
+
+
+Yossif                  Expires 27 November 2026                [Page 5]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 1.2.  Terminology
 
@@ -331,6 +323,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
       root, a FIDO authenticator vendor root, or a smartcard issuer
       root).
 
+   action / action payload  The specific operation the Subject approves.
+      The canonical encoding of the action payload is hashed and
+      included in the signed Evidence body (see Section 3.13).
+
+   capability / assurance level  An abstract indicator of the authority
+
+
+
 
 
 Yossif                  Expires 27 November 2026                [Page 6]
@@ -338,11 +338,6 @@ Yossif                  Expires 27 November 2026                [Page 6]
 Internet-Draft             PSEA Token Profile                   May 2026
 
 
-   action / action payload  The specific operation the Subject approves.
-      The canonical encoding of the action payload is hashed and
-      included in the signed Evidence body (see Section 3.13).
-
-   capability / assurance level  An abstract indicator of the authority
       or assurance context a proof is produced under, carried in the
       signed psea_tier claim and bound into the signature
       (Section 3.13.4).  The value space is opaque to this profile and
@@ -371,18 +366,23 @@ Internet-Draft             PSEA Token Profile                   May 2026
    produce byte sequences that fail the payload-binding comparison on
    peer platforms.
 
-   Canonical encoding MUST follow the JSON Canonicalization Scheme (JCS)
-   [RFC8785] in full.  This section restates the [RFC8785] rules that
-   are most consequential for cross-platform PSEA implementers and notes
-   the one schema restriction PSEA imposes: PSEA payload schemas use
-   JSON integer numbers only at this revision, so the floating-point
-   number-serialization rules of [RFC8785], Section 3.2.2.3 do not arise
-   (see Section 2.5); in all other respects an implementation MUST
-   conform to [RFC8785].  Implementers MUST read this section in full
-   before relying on a JSON library's default serialization or a third-
-   party JCS implementation; platform defaults frequently diverge from
-   these requirements in ways that are difficult to detect without
-   cross-platform test vectors.
+   The underlying data format is JSON ([RFC8259]).  Canonical encoding
+   MUST follow the JSON Canonicalization Scheme (JCS) [RFC8785] in full.
+   This section restates the [RFC8785] rules that are most consequential
+   for cross-platform PSEA implementers and notes the one schema
+   restriction PSEA imposes: PSEA payload schemas use JSON integer
+   numbers only at this revision, so the floating-point number-
+   serialization rules of [RFC8785], Section 3.2.2.3 do not arise (see
+   Section 2.5); in all other respects an implementation MUST conform to
+   [RFC8785].  Implementers MUST read this section in full before
+   relying on a JSON library's default serialization or a third-party
+   JCS implementation; platform defaults frequently diverge from these
+   requirements in ways that are difficult to detect without cross-
+   platform test vectors.
+
+   This document uses the verb "will" in lowercase to describe
+   deterministic consequences of non-conformance, not as a BCP 14
+   keyword.
 
 
 
@@ -393,10 +393,6 @@ Yossif                  Expires 27 November 2026                [Page 7]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
-
-   This document uses the verb "will" in lowercase to describe
-   deterministic consequences of non-conformance, not as a BCP 14
-   keyword.
 
 2.1.  UTF-8 Serialization
 
@@ -435,21 +431,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    hexadecimal digits; surrogate pairs MUST be emitted as written by the
    producer (canonical encoding does not normalize Unicode form).
 
-
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026                [Page 8]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
 2.5.  Number Serialization (Integers Only)
 
    PSEA payload schemas define numeric fields only as integers.  The
@@ -461,6 +442,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
    full RFC 8785 serializer and an implementation of only this integer
    rule produce identical output for every payload schema defined in
    this revision.
+
+
+
+Yossif                  Expires 27 November 2026                [Page 8]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    Floating-point numbers, decimal fractions, and exponent notation MUST
    NOT appear in any PSEA payload field at this revision.  A future
@@ -493,19 +481,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    Specific implementer-warning notes on common platform pitfalls:
 
    Apple platforms  JSONSerialization with the sortedKeys option
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026                [Page 9]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
       performs a _case-insensitive_ sort, which diverges from this
       section's _case-sensitive_ rule (see Section 2.2).
       Implementations on Apple platforms MUST NOT rely on sortedKeys;
@@ -523,6 +498,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
       code-point comparison; the standard JCS implementations in major
       libraries (Jackson, Gson) produce conformant output when
       configured for canonical mode.
+
+
+
+Yossif                  Expires 27 November 2026                [Page 9]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    Python  The standard sorted() on strings performs case-sensitive
       Unicode code-point sort.  The json module's sort_keys=True matches
@@ -554,14 +536,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    Verifier independently hashes and compares against the signed
    payload-hash claim.
 
-
-
-
-Yossif                  Expires 27 November 2026               [Page 10]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    The integrity flows are: the proof's authenticity and integrity are
    established by the JWS signature over its received octets; the action
    binding is established by the Verifier re-hashing the cleartext
@@ -579,6 +553,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
    that reuse the same JWS Compact Serialization representation and the
    same canonical encoding; such tokens are out of scope of this
    profile.
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 10]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 3.1.  PSEA as an EAT Profile
 
@@ -601,22 +583,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
       submodules map), and eat_profile (this profile's identifier).
 
    *  *Registered JWT claims ([RFC7519]).* jti, aud, iss, iat, and exp.
-
-
-
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 11]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    *  *Profile extension claims (psea_*).* The properties for which EAT
       defines no registered claim: psea_payload_hash (action-binding
@@ -643,6 +609,15 @@ Internet-Draft             PSEA Token Profile                   May 2026
    of the following.
 
    Profile identifier  The eat_profile claim ([RFC9711], Section 4.3.4)
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 11]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
       MUST equal the URI urn:ietf:params:psea:eat-profile:1 — or, if the
       urn:ietf:params:psea registration is not granted in the
       publication stream, the single fallback URI fixed by the published
@@ -667,13 +642,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
       Verifier that issued a challenge MUST reject a token whose
       eat_nonce is absent or does not equal the issued value.
 
-
-
-Yossif                  Expires 27 November 2026               [Page 12]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    Key confirmation  The verification key is resolved out of band from
       the enrolled record selected by the JOSE kid; a Verifier MUST NOT
       use any key conveyed in or referenced by the token header
@@ -697,11 +665,20 @@ JWS Compact Serialization (the value of the transport-body "proof" field)
 
 Protected header (a JSON object; base64url-encoded, no padding)
 +-- alg   ; "ES256"  (ECDSA P-256 with SHA-256)
-+-- kid   ; SHA-256 of the device signing-key SubjectPublicKeyInfo
-|         ;   (SPKI), standard base64; the untrusted-until-verified
-|         ;   enrollment-lookup selector
-|         ;   (a forged kid fails verification: the wrong key will not
-|         ;   validate the signature)
++-- kid   ; opaque, deployment-internal enrollment-lookup selector,
+
+
+
+Yossif                  Expires 27 November 2026               [Page 12]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
+|         ;   untrusted until verified (a forged kid fails: the wrong
+|         ;   key will not validate the signature). The SHA-256 of the
+|         ;   signing-key SubjectPublicKeyInfo (SPKI) in standard base64
+|         ;   is one ILLUSTRATIVE derivation; the value space is not
+|         ;   constrained by this profile.
 +-- typ   ; "psea-proof+jwt"
 
 Payload (the claim set; base64url-encoded, no padding)
@@ -722,14 +699,6 @@ Payload (the claim set; base64url-encoded, no padding)
   [+-- submods]     ; OPTIONAL; { "psea-device-state": {...} } --
   |                 ;   device-state appraisal input; contents
   |                 ;   out of scope of this document
-
-
-
-Yossif                  Expires 27 November 2026               [Page 13]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
   +-- eat_profile   ; "urn:ietf:params:psea:eat-profile:1"
   |                 ;   (RFC 9711 Sec 4.3.4); REQUIRED
   PSEA-private extension claims
@@ -753,6 +722,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
   [+-- psea_caller_package] ; OPTIONAL; reverse-DNS app identifier
   [+-- psea_sdk_version]    ; OPTIONAL; Attester implementation version
   [+-- psea_user_hash]     ; OPTIONAL; base64url no-pad; omitted
+
+
+
+Yossif                  Expires 27 November 2026               [Page 13]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
                            ;   entirely when empty
 
 Signature
@@ -778,30 +755,20 @@ entirely.
 
           Figure 1: PSEA proof as JWS Compact Serialization.
 
-
-
-
-Yossif                  Expires 27 November 2026               [Page 14]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    *Base64 encoding split (normative):* psea_payload_hash MUST be
    encoded as standard base64 ([RFC4648], Section 4) with padding (the
-   pattern ^[A-Za-z0-9+/]{43}=$).  ueid and psea_user_hash MUST be
-   encoded as base64url ([RFC4648], Section 5) without padding.  This is
-   a deliberate per-claim encoding split that implementers MUST observe
-   exactly; using base64url for psea_payload_hash or standard base64 for
-   ueid or psea_user_hash produces a non-conformant token.
+   pattern ^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$; the restricted final-
+   sextet class rejects non-canonical encodings of the 32-octet digest,
+   whose trailing two bits are always zero).  ueid and psea_user_hash
+   MUST be encoded as base64url ([RFC4648], Section 5) without padding.
+   This is a deliberate per-claim encoding split that implementers MUST
+   observe exactly; using base64url for psea_payload_hash or standard
+   base64 for ueid or psea_user_hash produces a non-conformant token.
 
-   The split is fixed for wire-compatibility with deployed Attesters and
-   Verifiers: the two encodings are not interchangeable, and a single
-   encoding for all three claims is not adopted at this revision because
-   changing the encoding of any one claim would break signature/hash
-   agreement with already-conforming implementations.  A Verifier
-   validates each claim against the exact pattern in Section 3.5; the
-   encodings carry the same byte content and differ only in alphabet and
-   padding.
+   The two encodings are not interchangeable; they carry the same
+   underlying octets and differ only in alphabet and padding.  A
+   Verifier validates each claim against the exact pattern in
+   Section 3.5.
 
    The operation a proof is presented for determines which psea_tier and
    psea_op values the Verifier expects in the payload; the expected
@@ -811,6 +778,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
    The transport body POSTed to the endpoint wraps the JWS in the proof
    field and carries the cleartext action and evidence alongside it:
+
+
+
+Yossif                  Expires 27 November 2026               [Page 14]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    {
      "proof":            "<compact JWS>",
@@ -829,18 +803,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    is the fail-closed action binding (Section 3.13).  Because a compact
    JWS has a single authoritative payload, the proof carries no
    envelope-level duplicates of the signed claims.
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 15]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
 3.3.  Single Authoritative Payload (No Envelope Duplicates)
 
@@ -865,6 +827,20 @@ Internet-Draft             PSEA Token Profile                   May 2026
    body mismatch error codes.  A Verifier reads the signed claim set
    (jti, psea_counter, psea_payload_hash, ueid) directly from the
    verified payload.
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 15]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 3.4.  JOSE Header Hardening (Normative)
 
@@ -891,13 +867,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
       NOT verify a PSEA JWS against any key conveyed in or referenced by
       the token itself.
 
-
-
-Yossif                  Expires 27 November 2026               [Page 16]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    *  The Verifier MUST verify the protected-header typ value.  A PSEA
       proof carries typ = "psea-proof+jwt" and a Verifier
       acknowledgement carries typ = "psea-ack+jwt"; both share the
@@ -919,6 +888,15 @@ Internet-Draft             PSEA Token Profile                   May 2026
    acknowledgement, and unencoded-payload / unknown-critical-header
    tricks) at the protocol's wire surface, and align with the JSON Web
    Token Best Current Practices ([RFC8725]); see also Section 6.3.1.
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 16]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 3.5.  JWS Payload Claim Set
 
@@ -946,14 +924,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
                                  Alphanumeric/dot/underscore/hyphen only.
                                  UUID RECOMMENDED." },
        "aud":  { "type": "string", "minLength": 1, "maxLength": 256,
-
-
-
-Yossif                  Expires 27 November 2026               [Page 17]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
                  "description": "JWT audience (RFC 7519): identifier of the
                                  intended Verifier/audience. See cross-replay
                                  binding." },
@@ -976,15 +946,24 @@ Internet-Draft             PSEA Token Profile                   May 2026
        "eat_nonce": { "type": "string",
                  "description": "OPTIONAL. Server nonce for push-initiated
                                  freshness. Omitted entirely when absent." },
+
+
+
+Yossif                  Expires 27 November 2026               [Page 17]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
        "submods": { "type": "object",
                  "properties": {
                    "psea-device-state": { "type": "object",
-                     "description": "Device-state appraisal input;
-                                     contents out of scope of this document." }
+                     "description": "Reserved placeholder extension point;
+                                     contributes nothing wire-normative in this
+                                     revision (contents out of scope)." }
                  },
                  "description": "OPTIONAL EAT submodules map. The
-                                 psea-device-state submodule is a
-                                 deployment-specific extension; an authenticator
+                                 psea-device-state submodule is a reserved,
+                                 deployment-specific placeholder; an authenticator
                                  that cannot produce device-state omits submods
                                  entirely." },
        "eat_profile": { "type": "string",
@@ -1002,14 +981,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
                                  this profile; deployment-defined value space
                                  agreed out of band. The Verifier rejects the
                                  proof if it does not match the level expected
-
-
-
-Yossif                  Expires 27 November 2026               [Page 18]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
                                  for the operation. See cross-replay binding." },
        "psea_op": { "type": "string", "minLength": 1, "maxLength": 128,
                  "description": "Operation / authority-context discriminator the
@@ -1021,12 +992,24 @@ Internet-Draft             PSEA Token Profile                   May 2026
                          "maximum": 9007199254740991,
                  "description": "Monotonic per (attester, counter scope). JSON
                                  integer in [0, 2^53-1]; see counter model." },
-       "psea_payload_hash": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$",
+       "psea_payload_hash": { "type": "string",
+                 "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$",
                  "description": "Standard base64 (with padding) of
                                  SHA-256(canonical actionPayload); the action
-                                 binding. See action binding." },
+                                 binding. The restricted final-sextet class
+                                 rejects non-canonical encodings (the digest's
+                                 trailing two bits are always zero). See action
+                                 binding." },
        "psea_chain_prev": { "type": "string", "pattern": "^[0-9a-f]{64}$",
                  "description": "OPTIONAL deployment-optional hash-chain anchor.
+
+
+
+Yossif                  Expires 27 November 2026               [Page 18]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
                                  64-char lowercase hex; sentinel 64 ASCII '0'
                                  for the first proof. Present only when the
                                  deployment enables the chain tamper-evidence
@@ -1038,10 +1021,11 @@ Internet-Draft             PSEA Token Profile                   May 2026
                      "description": "Whether a contemporaneous user-
                                      verification event gated this signature." },
                    "method": { "type": "string",
-                     "description": "User-verification method. Extensible enum;
-                                     registered baseline values include
-                                     \"biometric\", \"pin\", \"fido_uv\".
-                                     Unknown values MUST be tolerated." }
+                     "description": "User-verification method. Extensible string;
+                                     suggested baseline values include
+                                     \"biometric\", \"pin\", \"fido_uv\" (no IANA
+                                     registry is defined). Unknown values MUST be
+                                     tolerated." }
                  },
                  "description": "User-verification claim. REQUIRED on the PSEA
                                  proof. The Verifier MUST require verified==true
@@ -1057,7 +1041,23 @@ Internet-Draft             PSEA Token Profile                   May 2026
        "psea_sdk_version": { "type": "string", "maxLength": 64,
                  "description": "OPTIONAL profile-extension claim. Attester
                                  implementation version." },
-       "psea_user_hash": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$",
+       "psea_user_hash": { "type": "string",
+                 "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$",
+                 "description": "OPTIONAL. base64url (no padding) of
+                                 SHA-256(subject_id); audit-attribution only.
+                                 The restricted final-sextet class rejects
+                                 non-canonical encodings. Omitted entirely when
+                                 empty. MUST be derived pairwise per issuer
+                                 (see Privacy Considerations)." }
+     },
+     "additionalProperties": false
+   }
+
+
+
+
+
+
 
 
 
@@ -1065,13 +1065,6 @@ Yossif                  Expires 27 November 2026               [Page 19]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
-
-                 "description": "OPTIONAL. base64url (no padding) of
-                                 SHA-256(subject_id); audit-attribution only.
-                                 Omitted entirely when empty." }
-     },
-     "additionalProperties": false
-   }
 
 3.6.  Wire Transport Bodies
 
@@ -1106,22 +1099,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    Evidence that a user-verification event occurred at the moment of
    signing; the signature itself is the presence commitment.
 
-
-
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 20]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    *Per-operation gating (normative).* The user-verification gate MUST
    be enforced _per signing operation_: each proof signature MUST be
    preceded by its own fresh user-verification event.  A configuration
@@ -1132,6 +1109,27 @@ Internet-Draft             PSEA Token Profile                   May 2026
    pre-compute a batch of proofs from one ceremony (see Section 6.3.1,
    Paragraph 3).  A conforming Attester binds exactly one user-
    verification event to exactly one proof signature.
+
+   This rules out "authenticate-once-then-reuse" key configurations.  By
+   way of example, the following common platform configurations are non-
+   conformant for proof signing, and only their per-operation
+   counterparts conform: a PIV-class smartcard in PIN-once mode (only a
+
+
+
+Yossif                  Expires 27 November 2026               [Page 20]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
+   PIN-always / per-signature PIN policy conforms); an Android Keystore
+   key with a non-zero user-authentication validity timeout (only a
+   timeout of 0 — authentication required for every use — conforms); and
+   an iOS authentication context reused across multiple signing
+   operations (a fresh, non-reused authentication context per signature
+   is required).  The specific platform mechanism is out of scope; the
+   normative requirement is the one-verification-per-signature binding
+   above.
 
    The user-verification mechanisms that gate the signing key — for
    example, a platform biometric subsystem (fingerprint or face match),
@@ -1173,16 +1171,19 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
+
+
 Yossif                  Expires 27 November 2026               [Page 21]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
 
    *  psea_uv.method — a string identifying the user-verification
-      method.  The value space is an extensible enumeration; registered
-      baseline values include "biometric", "pin", and "fido_uv".  A
-      Verifier MUST tolerate an unknown method value (treat it as an
-      opaque label) rather than rejecting solely on the method string.
+      method.  The value space is extensible; suggested baseline values
+      are "biometric", "pin", and "fido_uv" (this document defines no
+      IANA registry for them).  A Verifier MUST tolerate an unknown
+      method value (treat it as an opaque label) rather than rejecting
+      solely on the method string.
 
    A token that makes no human-presence claim (such tokens are out of
    scope of this profile) does not carry psea_uv.  The claim is part of
@@ -1191,16 +1192,27 @@ Internet-Draft             PSEA Token Profile                   May 2026
    verified from false to true without invalidating the signature.
 
    Normative Verifier rule: the Verifier MUST require psea_uv.verified
-   == true and MUST reject the proof otherwise.  The Verifier MUST NOT
-   accept psea_uv as merely self-asserted by the producer: it MUST
-   anchor the claim to the authenticator's attested UV-enforcement
-   capability.  This requirement is device-agnostic — any conforming
-   authenticator emits psea_uv, and the Verifier cross-checks it against
-   that authenticator's attested UV-enforcement.  Where the attestation
-   conveys a UV-enforcement property and the psea_uv claim contradicts
-   it (for example, the claim asserts verified == true but the
-   authenticator's attested key properties show the signing key is not
-   user-auth-gated), the Verifier MUST reject the proof.
+   == true and MUST reject the proof otherwise.  Beyond that, anchoring
+   of the claim is conditional on what the authenticator's attestation
+   conveys:
+
+   *  Where the platform attestation conveys a UV-enforcement property,
+      the Verifier MUST cross-check psea_uv against it and MUST reject
+      the proof if the attested key properties contradict the claim (for
+      example, the claim asserts verified == true but the attested
+      signing key is not user-authentication-gated).  The Verifier MUST
+      NOT accept such a psea_uv as merely self-asserted when it could
+      have been cross-checked against the attestation.
+
+   *  Where the attestation does not convey a UV-enforcement property,
+      the Verifier MUST NOT treat the human-presence assurance as
+      attested — the claim is signed but rests on a documented trust
+      assumption (see below) — and for high-assurance operations SHOULD
+      reject the proof or require an additional independent factor.
+
+   This rule is device-agnostic: any conforming Attester emits psea_uv,
+   and the Verifier anchors it wherever the authenticator's attestation
+   permits.
 
    Examples of the per-authenticator cross-check (informative, NOT
    normative — the specific mechanism is out of scope): a phone with an
@@ -1215,6 +1227,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
    PSEA proof (Section 1); consuming a FIDO assertion's UV signal would
    require the separate, out-of-scope FIDO-assertion binding.
 
+
+
+Yossif                  Expires 27 November 2026               [Page 22]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    Verification depth (known limitation): where the authenticator's
    platform attestation conveys UV-enforcement (for example, a hardware-
    key attestation carrying an auth-enforced field), the Verifier cross-
@@ -1226,27 +1245,17 @@ Internet-Draft             PSEA Token Profile                   May 2026
    attested.  Authenticator-signed user-verification evidence — for
    example, a FIDO-style UV flag carried in signed authenticator data —
    is the path to full verifiability and is the RECOMMENDED direction
-
-
-
-Yossif                  Expires 27 November 2026               [Page 22]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    for authenticators that can produce it.  This document does not claim
    the property is fully solved on every platform; it normatively
    requires the claim and the cross-check, and documents the residual
    trust assumption where the attestation surface does not yet permit
    the cross-check.
 
-   Because an unattested psea_uv is advisory only — a signed boolean the
-   host populated, with no independent cryptographic backing for the
-   user-verification event — a Verifier that cannot anchor psea_uv to an
-   attested UV-enforcement property MUST NOT treat the human-presence
-   assurance as attested.  For high-assurance operations in that case
-   the Verifier SHOULD reject the proof, or require an additional
-   independent factor, rather than rely on the unattested claim.
+   The rationale for the unattested case above is that such a psea_uv is
+   advisory only — a signed boolean the host populated, with no
+   independent cryptographic backing for the user-verification event —
+   so it cannot be relied upon as an attested human-presence assurance
+   for high-assurance operations.
 
 3.8.  Subject Hash (psea_user_hash)
 
@@ -1273,15 +1282,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    Attester's commitment to a subject identifier is an additional audit-
    trail property, not a security gate.
 
-   The per-proof psea_user_hash is distinct from any enrollment-bound
-   subject binding a deployment records at enrollment time; that
-   binding, and its use in decision-bearing checks, is deployment-
-   specific and out of scope.  The per-proof signed value on the PSEA
-   proof is a commitment whose role is solely audit-trail attribution.
-
-
-
-
 
 
 
@@ -1289,6 +1289,12 @@ Yossif                  Expires 27 November 2026               [Page 23]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
+
+   The per-proof psea_user_hash is distinct from any enrollment-bound
+   subject binding a deployment records at enrollment time; that
+   binding, and its use in decision-bearing checks, is deployment-
+   specific and out of scope.  The per-proof signed value on the PSEA
+   proof is a commitment whose role is solely audit-trail attribution.
 
 3.9.  Device-State Submodule (submods.psea-device-state)
 
@@ -1332,12 +1338,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    scope of this profile.  Independent scopes serve only to preserve
    independent offline progress: if proofs produced offline under
    different scopes drew every value from one shared sequence, an
-   offline-signed proof would collide on submission with a proof signed
-   under another scope after the first was composed but before it was
-   synced.  Independent scopes let each progress without colliding.
-
-
-
 
 
 
@@ -1345,6 +1345,10 @@ Yossif                  Expires 27 November 2026               [Page 24]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
+
+   offline-signed proof would collide on submission with a proof signed
+   under another scope after the first was composed but before it was
+   synced.  Independent scopes let each progress without colliding.
 
    *Scope selection (normative).* When a deployment uses more than one
    counter scope, the value that identifies the scope a proof was
@@ -1377,6 +1381,42 @@ Internet-Draft             PSEA Token Profile                   May 2026
    finalized jti values for less than the exp window reopens the replay
    surface this check exists to close.
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 25]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
+   *Atomicity (normative).* A Verifier MUST perform the counter
+   comparison-and-advance and the jti finalization atomically —
+   serialized per (Attester, counter scope) — within a single
+   transaction: read the stored counter, compare, and conditionally
+   advance in one atomic step that also records the jti.  The counter
+   value compared MUST be the value read inside that transaction (not a
+   value read earlier), and the stored value MUST be advanced only when
+   the submitted counter is strictly greater than it.  A blind last-
+   write-wins advance is non-conformant.  This guarantees that two
+   concurrent or out-of-order submissions cannot both commit and cannot
+   lower (regress) the stored high-water mark: of any set of submissions
+   racing at a given scope, at most one advances, and a later-arriving
+   lower counter is rejected rather than overwriting a higher stored
+   value.
+
    *Interoperability bound (normative):* Producers MUST emit
    psea_counter as a JSON integer in the range [0, 2^53 − 1] (inclusive)
    so that the value round-trips losslessly through IEEE 754 double-
@@ -1395,13 +1435,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    the time of signing and exp to a value no later than iat plus the
    deployment's maximum proof lifetime.
 
-
-
-Yossif                  Expires 27 November 2026               [Page 25]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    A Verifier MUST reject a proof whose exp is at or before the current
    time, and MUST reject a proof whose iat is implausibly in the future.
    The Verifier MAY allow a small clock-skew tolerance when applying
@@ -1417,6 +1450,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
    finalizes exactly once, and the OPTIONAL eat_nonce (when the Verifier
    issued a challenge) binds the proof to that challenge.  A deployment
    that produces proofs offline for deferred submission MUST choose an
+
+
+
+Yossif                  Expires 27 November 2026               [Page 26]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    exp margin wide enough to cover its expected offline-to-sync
    interval; the freshness anchor for such proofs is then the counter
    and the jti uniqueness check rather than a narrow exp window.
@@ -1450,14 +1491,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    feature rather than a mandatory wire element, and a self-contained
    conforming Verifier (Appendix B.3) is not required to implement it.
 
-
-
-
-Yossif                  Expires 27 November 2026               [Page 26]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
 3.12.1.  Formula (Length-Prefixed Concatenation)
 
    For each PSEA proof, the chainEntry is computed over a length-
@@ -1468,6 +1501,18 @@ Internet-Draft             PSEA Token Profile                   May 2026
    inputs are byte-distinct regardless of whether any field contains a :
    character, NUL bytes, or any other character.  This is the standard
    cryptographic pattern for unambiguous hash-input encoding.
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 27]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    encode(s)  = u32_be(len(utf8(s))) || utf8(s)
 
@@ -1507,13 +1552,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
    as psea_chain_prev.  The Verifier MUST accept this sentinel value
    when its stored prior chain entry for the Attester is empty.
 
-
-
-Yossif                  Expires 27 November 2026               [Page 27]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
 3.12.3.  Verifier Behavior on Mismatch
 
    A Verifier that has enabled the chain layer performs a strict-
@@ -1524,6 +1562,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
    entry for the Attester — the Verifier MUST reject the proof.  A
    Verifier MAY, as a local operational policy out of scope of this
    profile, additionally accept a bounded class of out-of-order or
+
+
+
+Yossif                  Expires 27 November 2026               [Page 28]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    backfilled proofs; any such tolerance MUST preserve the tamper-
    evidence of the chain by accepting only chainEntry values the
    Verifier has itself previously computed and accepted for that
@@ -1561,15 +1607,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
        against the device- anchored public key bound to the active
        enrollment.
 
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 28]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    2.  Compute the canonical encoding of the request's action payload
        using Section 2 and hash the result with SHA-256.
 
@@ -1581,6 +1618,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
        psea_payload_hash claim, the Verifier MUST reject the proof and
        MUST NOT return any Attestation Result or other wire response
        that a Relying Party could interpret as approval.
+
+
+
+Yossif                  Expires 27 November 2026               [Page 29]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    The Verifier MUST emit this rejection before producing any wire
    response that could be interpreted by the Relying Party as an
@@ -1613,19 +1657,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    and on enrollment additionally requires a companion deployment
    profile that fixes those interfaces.
 
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 29]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
 3.13.4.  Cross-Replay Binding (psea_tier + psea_op + aud + iss)
 
    In addition to the payload binding of Section 3.13.2, every PSEA
@@ -1641,6 +1672,15 @@ Internet-Draft             PSEA Token Profile                   May 2026
       agreed out of band between producer and Verifier.  The Verifier
       MUST reject any proof whose signed psea_tier does not match the
       level expected for the operation being performed.
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 30]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    *  psea_op — operation / authority-context binding: a string
       identifying the operation the proof is presented for.  The
@@ -1670,18 +1710,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    signing).  The checks are byte-equality string comparisons;
    comparisons MUST NOT normalize case or whitespace.
 
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 30]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    The expected psea_tier and psea_op values for a given operation are
    deployment-defined and agreed out of band; the proof also carries the
    aud and iss bindings above.  Any additional, lower-assurance signed-
@@ -1696,6 +1724,19 @@ Internet-Draft             PSEA Token Profile                   May 2026
    a different deployment's Verifier).  The bindings are locally
    derivable at sign time without server round-trips, preserving the
    offline-capable property of proofs produced offline.
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 31]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 3.14.  Versioning
 
@@ -1729,15 +1770,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    the assertion to a specific application-level action or to human-
    readable transaction content.
 
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 31]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    Consequently, the transaction-binding / WYSIWYS property -- proof
    that a present, verified human approved a specific named action, with
    specific content, at the moment of execution -- is not provided by
@@ -1751,6 +1783,16 @@ Internet-Draft             PSEA Token Profile                   May 2026
    PSEA supplies the per-action execution-time Evidence that the
    transaction-confirmation extensions were intended to provide but, in
    deployed form, do not.
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 32]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 5.  Relationship to OAuth 2.0 Step-Up Authentication
 
@@ -1786,14 +1828,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
     |                |                     | payload.                |
     +----------------+---------------------+-------------------------+
     | Scope of       | Subsequent requests | The single action whose |
-
-
-
-Yossif                  Expires 27 November 2026               [Page 32]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
     | authority      | within the resource | payload is bound by the |
     | granted        | server's session    | Evidence.  No           |
     |                | policy, until the   | subsequent action       |
@@ -1808,6 +1842,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
     |                | server.             | or require synchronous  |
     |                |                     | Verifier interaction,   |
     |                |                     | per deployment policy   |
+
+
+
+Yossif                  Expires 27 November 2026               [Page 33]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
     |                |                     | (out of scope).         |
     +----------------+---------------------+-------------------------+
     | Action-payload | Not defined.  The   | Required for every PSEA |
@@ -1839,17 +1881,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    2.  The resource server returns HTTP 401 with a WWW-Authenticate
        challenge per [RFC9470], indicating the required step-up.
 
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 33]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    3.  The client drives the step-up flow on a device hosting a PSEA
        Attester.  The Attester produces fresh Evidence at the capability
        level the resource's policy demands, cryptographically bound to
@@ -1864,6 +1895,16 @@ Internet-Draft             PSEA Token Profile                   May 2026
    In this composition, OAuth supplies the session and identity context;
    PSEA supplies the per- action cryptographic authority proof.  Neither
    mechanism replaces the other.
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 34]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 5.3.  Out of Scope for This Document
 
@@ -1899,13 +1940,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
       attestation chain, verified by the Verifier against a trust anchor
       (Section 6.2), provides cryptographic evidence of this property.
 
-
-
-Yossif                  Expires 27 November 2026               [Page 34]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    A2.  Contemporaneous user-verification gating  The Attester's signing
       key is gated by a platform user-verification ceremony such that
       signing cannot complete without a successful, contemporaneous
@@ -1915,6 +1949,19 @@ Internet-Draft             PSEA Token Profile                   May 2026
       platform attestation.
 
    A3.  Platform user-verification subsystem integrity  The Attester
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 35]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
       relies on the integrity of the platform user-verification
       subsystem (for example, a platform biometric subsystem, PIN entry
       into a Secure Enclave, hardware-token PIN handling, smartcard or
@@ -1957,7 +2004,16 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
-Yossif                  Expires 27 November 2026               [Page 35]
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 36]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
@@ -2013,7 +2069,7 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
-Yossif                  Expires 27 November 2026               [Page 36]
+Yossif                  Expires 27 November 2026               [Page 37]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
@@ -2069,7 +2125,7 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
-Yossif                  Expires 27 November 2026               [Page 37]
+Yossif                  Expires 27 November 2026               [Page 38]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
@@ -2125,7 +2181,7 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
-Yossif                  Expires 27 November 2026               [Page 38]
+Yossif                  Expires 27 November 2026               [Page 39]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
@@ -2181,7 +2237,7 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
-Yossif                  Expires 27 November 2026               [Page 39]
+Yossif                  Expires 27 November 2026               [Page 40]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
@@ -2237,7 +2293,7 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
 
 
-Yossif                  Expires 27 November 2026               [Page 40]
+Yossif                  Expires 27 November 2026               [Page 41]
 
 Internet-Draft             PSEA Token Profile                   May 2026
 
@@ -2275,12 +2331,29 @@ Internet-Draft             PSEA Token Profile                   May 2026
    confines linkability to the single deployment that legitimately
    requires it.
 
+   The derived value is carried in the RFC 9711 RAND-type UEID (type tag
+   0x01) purely for wire simplicity — a single, already-specified
+   33-octet UEID encoding — even though the derivation is deterministic
+   per issuer rather than a randomly generated nonce.  The semantically
+   purer encoding for a per-issuer (and, in future, per-Relying-Party)
+   identifier is the EAT semipermanent-UEID (sueids) form, noted as the
+   future direction below; this revision uses the RAND-tagged ueid to
+   avoid introducing a second identifier claim on the wire.
+
    Per-issuer derivation does not provide per-Relying-Party
    unlinkability _within_ a single deployment, nor does it defeat
    correlation by other shared fields.  A future revision MAY define a
    pairwise / sueids-style per-Relying-Party identifier derivation (in
    the spirit of the EAT semipermanent-UEID concept, [RFC9711]) so that
    one device presents a distinct, unlinkable identifier to each Relying
+
+
+
+Yossif                  Expires 27 November 2026               [Page 42]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    Party within a deployment; this is the path to per-RP unlinkability
    and is RECOMMENDED as the direction for deployments with strong
    unlinkability requirements.
@@ -2290,14 +2363,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    ueid derivation.  If deviceId is a low-entropy or enumerable value
    (for example a hardware serial number or other guessable platform
    identifier), then SHA-256(deviceId || iss) with a known iss is
-
-
-
-Yossif                  Expires 27 November 2026               [Page 41]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    recoverable by brute force, defeating the confinement the per-issuer
    derivation is meant to provide.  A deployment SHOULD use a high-
    entropy, per-enrollment random value as deviceId (a value generated
@@ -2332,6 +2397,19 @@ Internet-Draft             PSEA Token Profile                   May 2026
    _raw_ identifier and the biometric template never transit the wire
    (Section 6.3.4); that is a reduction in exposure, not anonymization.
 
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 43]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
 7.3.  Data Minimization at the Verifier
 
    The Verifier and Relying Party necessarily retain proof records to
@@ -2344,15 +2422,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    natural person a ueid or psea_user_hash corresponds to) is
    established only at enrollment and is a deployment responsibility
    outside the wire protocol.
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 42]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
 8.  IANA Considerations
 
@@ -2390,6 +2459,13 @@ Internet-Draft             PSEA Token Profile                   May 2026
 
    Optional parameters  N/A
 
+
+
+Yossif                  Expires 27 November 2026               [Page 44]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    Encoding considerations  8bit; a PSEA token is a JWS Compact
       Serialization ([RFC7515]): a series of base64url-encoded values
       separated by period (".") characters.
@@ -2402,13 +2478,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
       payload option).
 
    Interoperability considerations  See Section 3 and Section 2.
-
-
-
-Yossif                  Expires 27 November 2026               [Page 43]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    Published specification  This document.
 
@@ -2438,6 +2507,21 @@ Internet-Draft             PSEA Token Profile                   May 2026
    ([RFC9711]) and psea_* claim set is future work; this revision does
    not register a +cose media type.
 
+
+
+
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 45]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
 8.3.  URN Sub-namespace Registration (urn:ietf:params:psea)
 
    This document requests that IANA register the psea sub-namespace
@@ -2457,15 +2541,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
       this and future PSEA documents.
 
    Index value  Sub-strings of the form
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 44]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
       urn:ietf:params:psea:<class>:<id> are assigned by Specification
       Required [RFC8126].  The initial assignment is
       urn:ietf:params:psea:eat-profile:1.
@@ -2495,6 +2570,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
    *  Signature: ECDSA on the P-256 curve with SHA-256 ([FIPS180-4],
       [RFC7518]).
 
+
+
+
+Yossif                  Expires 27 November 2026               [Page 46]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    *  Hash: SHA-256 ([FIPS180-4]).
 
    *  Encoding: canonical JSON per Section 2.
@@ -2511,16 +2594,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    fixed out-of-header algorithm.  A dedicated rejection outcome for an
    unsupported algorithm is reserved for a future revision that admits
    more than one signature algorithm.
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 45]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
 9.1.3.  Algorithm Negotiation
 
@@ -2553,6 +2626,14 @@ Internet-Draft             PSEA Token Profile                   May 2026
       (Section 3.10); exhaustion is not a practical concern at any
       reasonable operational rate.
 
+
+
+
+Yossif                  Expires 27 November 2026               [Page 47]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
 10.  References
 
 10.1.  Normative References
@@ -2568,15 +2649,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    [RFC4648]  Josefsson, S., "The Base16, Base32, and Base64 Data
               Encodings", RFC 4648, October 2006,
               <https://www.rfc-editor.org/info/rfc4648>.
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 46]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    [RFC3553]  Mealling, M., Masinter, L., Hardie, T., and G. Klyne, "An
               IETF URN Sub-namespace for Registered Protocol
@@ -2608,9 +2680,23 @@ Internet-Draft             PSEA Token Profile                   May 2026
               RFC 8126, June 2017,
               <https://www.rfc-editor.org/info/rfc8126>.
 
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 48]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
               2119 Key Words", BCP 14, RFC 8174, May 2017,
               <https://www.rfc-editor.org/info/rfc8174>.
+
+   [RFC8259]  Bray, T., Ed., "The JavaScript Object Notation (JSON) Data
+              Interchange Format", STD 90, RFC 8259, December 2017,
+              <https://www.rfc-editor.org/info/rfc8259>.
 
    [RFC8725]  Sheffer, Y., Hardt, D., and M. Jones, "JSON Web Token Best
               Current Practices", BCP 225, RFC 8725, February 2020,
@@ -2624,15 +2710,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
               W. Pan, "Remote ATtestation procedureS (RATS)
               Architecture", RFC 9334, January 2023,
               <https://www.rfc-editor.org/info/rfc9334>.
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 47]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
               Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
@@ -2659,6 +2736,16 @@ Internet-Draft             PSEA Token Profile                   May 2026
               Authentication Challenge Protocol", RFC 9470, September
               2023, <https://www.rfc-editor.org/info/rfc9470>.
 
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 49]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    [FIPS204]  National Institute of Standards and Technology, "Module-
               Lattice-Based Digital Signature Standard (ML-DSA)",
               FIPS 204, August 2024,
@@ -2680,15 +2767,6 @@ Appendix A.  Canonical Encoding Test Vectors
    This appendix provides test vectors for verifying canonical-encoding
    implementations.  An implementation that produces output matching
    every vector in this appendix is conformant with Section 2.
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 48]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    Implementations SHOULD construct their own canonical-encoding test
    suite covering the canonical-JSON input that PSEA hashes (the action
@@ -2713,6 +2791,16 @@ A.1.  Case-Sensitive Key Sort
      "endedAt":   1700000060,
      "sessionId": "abc-123",
      "startedAt": 1700000000 }
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 50]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
    Canonical bytes (the keys ordered by case-sensitive Unicode code-
    point sort: 'R' = U+0052 = 82 sorts before 'e' = U+0065 = 101, so
@@ -2739,13 +2827,6 @@ A.3.  Action-Payload Hash (End-to-End Worked Example)
    inter-token whitespace, and serializes the integer with no decimal
    point or exponent, yielding the 69 canonical octets:
 
-
-
-Yossif                  Expires 27 November 2026               [Page 49]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
    {"actionType":"transfer","amount":2500,"currency":"EUR","to":"alice"}
 
    SHA-256 of those octets is, in lowercase hex:
@@ -2765,6 +2846,17 @@ Internet-Draft             PSEA Token Profile                   May 2026
    OoiMOa1FcbuU3fxVMjCkuFFx6UI; the difference (+ versus -, trailing =
    versus none) illustrates why the per-claim encoding split of
    Section 3.2 must be observed exactly.
+
+
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 51]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
 
 Appendix B.  Conformance
 
@@ -2788,19 +2880,6 @@ B.2.1.  Requirements
 
    *  MUST generate its signing key in a hardware-backed key store and
       MUST NOT permit key extraction.
-
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 50]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    *  MUST gate signing on a fresh, per-operation platform user-
       verification event for any proof that carries a human-presence
@@ -2828,6 +2907,13 @@ B.3.1.  Requirements
    binding/freshness checks MUST complete before any state mutation
    (counter advance, ledger write, acknowledgement signing).
 
+
+
+Yossif                  Expires 27 November 2026               [Page 52]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    *  MUST apply the JOSE header hardening of Section 3.4 before
       trusting any claim: accept only alg = "ES256", reject alg =
       "none", ignore any jwk / jku / x5u header key material, resolve
@@ -2848,15 +2934,6 @@ B.3.1.  Requirements
       is in the past or whose iat is implausibly in the future, applying
       only a small bounded clock-skew tolerance (SHOULD NOT exceed 60
       seconds) and a bounded maximum proof lifetime (Section 9.2).
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 51]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
 
    *  MUST, when it issued a challenge, reject a proof whose eat_nonce
       is absent or does not equal the issued value (Section 3.1.1).
@@ -2883,6 +2960,16 @@ Internet-Draft             PSEA Token Profile                   May 2026
       value for that scope, and treat the claim as a 64-bit unsigned
       integer.
 
+
+
+
+
+
+Yossif                  Expires 27 November 2026               [Page 53]
+
+Internet-Draft             PSEA Token Profile                   May 2026
+
+
    *  MUST maintain the global jti uniqueness check (Section 3.10),
       finalizing each jti exactly once and retaining finalized jti
       values for at least the exp validity window.
@@ -2906,14 +2993,6 @@ Internet-Draft             PSEA Token Profile                   May 2026
    *  MUST produce integrity-protected Attestation Results for non-co-
       located Relying Parties (Section 3.13.3).
 
-
-
-
-Yossif                  Expires 27 November 2026               [Page 52]
-
-Internet-Draft             PSEA Token Profile                   May 2026
-
-
 B.4.  Relying Party Conformance
 
    A conforming Relying Party:
@@ -2922,21 +3001,6 @@ B.4.  Relying Party Conformance
 
    *  MUST verify the integrity of the Attestation Result for non-co-
       located Verifiers.
-
-Appendix C.  Citation and Reference
-
-   Citation suggestion (BibTeX):
-
-   @misc{yossif-psea-02,
-     author       = "Mohamad Khalil Yossif",
-     title        = "PSEA Token Profile: An EAT Profile for Action-Bound,
-                     User-Verification-Gated Transaction-Confirmation Evidence",
-     series       = "Internet-Draft draft-yossif-psea-02",
-     publisher    = "Internet Engineering Task Force",
-     year         = "2026",
-     month        = "May",
-     howpublished = "https://datatracker.ietf.org/doc/draft-yossif-psea-02/"
-   }
 
 Author's Address
 
@@ -2957,12 +3021,4 @@ Author's Address
 
 
 
-
-
-
-
-
-
-
-
-Yossif                  Expires 27 November 2026               [Page 53]
+Yossif                  Expires 27 November 2026               [Page 54]

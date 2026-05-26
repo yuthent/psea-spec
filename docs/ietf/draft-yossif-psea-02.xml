@@ -12,8 +12,6 @@
   <front>
     <title abbrev="PSEA Token Profile">PSEA Token Profile: An EAT Profile for Action-Bound, User-Verification-Gated Transaction-Confirmation Evidence</title>
 
-    <seriesInfo name="Internet-Draft" value="draft-yossif-psea-02"/>
-
     <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif">
       <organization>Yuthent</organization>
       <address>
@@ -197,7 +195,8 @@
       <t>For this use, implementations that deviate from the rules below will produce byte sequences that
       fail the payload-binding comparison on peer platforms.</t>
 
-      <t>Canonical encoding <bcp14>MUST</bcp14> follow the JSON Canonicalization Scheme (JCS)
+      <t>The underlying data format is JSON (<xref target="RFC8259"/>). Canonical encoding
+      <bcp14>MUST</bcp14> follow the JSON Canonicalization Scheme (JCS)
       <xref target="RFC8785"/> in full. This section restates the <xref target="RFC8785"/> rules that are
       most consequential for cross-platform PSEA implementers and notes the one schema restriction PSEA
       imposes: PSEA payload schemas use JSON integer numbers only at this revision, so the floating-point
@@ -454,11 +453,12 @@ JWS Compact Serialization (the value of the transport-body "proof" field)
 
 Protected header (a JSON object; base64url-encoded, no padding)
 +-- alg   ; "ES256"  (ECDSA P-256 with SHA-256)
-+-- kid   ; SHA-256 of the device signing-key SubjectPublicKeyInfo
-|         ;   (SPKI), standard base64; the untrusted-until-verified
-|         ;   enrollment-lookup selector
-|         ;   (a forged kid fails verification: the wrong key will not
-|         ;   validate the signature)
++-- kid   ; opaque, deployment-internal enrollment-lookup selector,
+|         ;   untrusted until verified (a forged kid fails: the wrong
+|         ;   key will not validate the signature). The SHA-256 of the
+|         ;   signing-key SubjectPublicKeyInfo (SPKI) in standard base64
+|         ;   is one ILLUSTRATIVE derivation; the value space is not
+|         ;   constrained by this profile.
 +-- typ   ; "psea-proof+jwt"
 
 Payload (the claim set; base64url-encoded, no padding)
@@ -528,18 +528,17 @@ entirely.
         </figure>
 
         <t><strong>Base64 encoding split (normative):</strong> <tt>psea_payload_hash</tt> <bcp14>MUST</bcp14> be encoded as
-        standard base64 (<xref target="RFC4648"/>, Section 4) with padding (the pattern <tt>^[A-Za-z0-9+/]{43}=$</tt>).
+        standard base64 (<xref target="RFC4648"/>, Section 4) with padding (the pattern
+        <tt>^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$</tt>; the restricted final-sextet class rejects
+        non-canonical encodings of the 32-octet digest, whose trailing two bits are always zero).
         <tt>ueid</tt> and <tt>psea_user_hash</tt> <bcp14>MUST</bcp14> be encoded as base64url (<xref target="RFC4648"/>, Section 5) without
         padding.  This is a deliberate per-claim encoding split that implementers <bcp14>MUST</bcp14> observe
         exactly; using base64url for <tt>psea_payload_hash</tt> or standard base64 for <tt>ueid</tt> or
         <tt>psea_user_hash</tt> produces a non-conformant token.</t>
 
-        <t>The split is fixed for wire-compatibility with deployed Attesters and Verifiers: the two
-        encodings are not interchangeable, and a single encoding for all three claims is not adopted at
-        this revision because changing the encoding of any one claim would break signature/hash agreement
-        with already-conforming implementations. A Verifier validates each claim against the exact pattern
-        in <xref target="proof-schema"/>; the encodings carry the same byte content and differ only in
-        alphabet and padding.</t>
+        <t>The two encodings are not interchangeable; they carry the same underlying octets and differ
+        only in alphabet and padding. A Verifier validates each claim against the exact pattern in
+        <xref target="proof-schema"/>.</t>
 
         <t>The operation a proof is presented for determines which <tt>psea_tier</tt> and
         <tt>psea_op</tt> values the Verifier expects in the payload; the expected values are
@@ -688,12 +687,13 @@ entirely.
     "submods": { "type": "object",
               "properties": {
                 "psea-device-state": { "type": "object",
-                  "description": "Device-state appraisal input;
-                                  contents out of scope of this document." }
+                  "description": "Reserved placeholder extension point;
+                                  contributes nothing wire-normative in this
+                                  revision (contents out of scope)." }
               },
               "description": "OPTIONAL EAT submodules map. The
-                              psea-device-state submodule is a
-                              deployment-specific extension; an authenticator
+                              psea-device-state submodule is a reserved,
+                              deployment-specific placeholder; an authenticator
                               that cannot produce device-state omits submods
                               entirely." },
     "eat_profile": { "type": "string",
@@ -722,10 +722,14 @@ entirely.
                       "maximum": 9007199254740991,
               "description": "Monotonic per (attester, counter scope). JSON
                               integer in [0, 2^53-1]; see counter model." },
-    "psea_payload_hash": { "type": "string", "pattern": "^[A-Za-z0-9+/]{43}=$",
+    "psea_payload_hash": { "type": "string",
+              "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$",
               "description": "Standard base64 (with padding) of
                               SHA-256(canonical actionPayload); the action
-                              binding. See action binding." },
+                              binding. The restricted final-sextet class
+                              rejects non-canonical encodings (the digest's
+                              trailing two bits are always zero). See action
+                              binding." },
     "psea_chain_prev": { "type": "string", "pattern": "^[0-9a-f]{64}$",
               "description": "OPTIONAL deployment-optional hash-chain anchor.
                               64-char lowercase hex; sentinel 64 ASCII '0'
@@ -739,10 +743,11 @@ entirely.
                   "description": "Whether a contemporaneous user-
                                   verification event gated this signature." },
                 "method": { "type": "string",
-                  "description": "User-verification method. Extensible enum;
-                                  registered baseline values include
-                                  \"biometric\", \"pin\", \"fido_uv\".
-                                  Unknown values MUST be tolerated." }
+                  "description": "User-verification method. Extensible string;
+                                  suggested baseline values include
+                                  \"biometric\", \"pin\", \"fido_uv\" (no IANA
+                                  registry is defined). Unknown values MUST be
+                                  tolerated." }
               },
               "description": "User-verification claim. REQUIRED on the PSEA
                               proof. The Verifier MUST require verified==true
@@ -758,10 +763,14 @@ entirely.
     "psea_sdk_version": { "type": "string", "maxLength": 64,
               "description": "OPTIONAL profile-extension claim. Attester
                               implementation version." },
-    "psea_user_hash": { "type": "string", "pattern": "^[A-Za-z0-9_-]{43}$",
+    "psea_user_hash": { "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$",
               "description": "OPTIONAL. base64url (no padding) of
                               SHA-256(subject_id); audit-attribution only.
-                              Omitted entirely when empty." }
+                              The restricted final-sextet class rejects
+                              non-canonical encodings. Omitted entirely when
+                              empty. MUST be derived pairwise per issuer
+                              (see Privacy Considerations)." }
   },
   "additionalProperties": false
 }
@@ -810,6 +819,15 @@ entirely.
         batch of proofs from one ceremony (see <xref target="threats-pre-mint"/>). A conforming Attester
         binds exactly one user-verification event to exactly one proof signature.</t>
 
+        <t>This rules out "authenticate-once-then-reuse" key configurations. By way of example, the
+        following common platform configurations are non-conformant for proof signing, and only their
+        per-operation counterparts conform: a PIV-class smartcard in PIN-once mode (only a PIN-always /
+        per-signature PIN policy conforms); an Android Keystore key with a non-zero user-authentication
+        validity timeout (only a timeout of 0 — authentication required for every use — conforms); and an
+        iOS authentication context reused across multiple signing operations (a fresh, non-reused
+        authentication context per signature is required). The specific platform mechanism is out of
+        scope; the normative requirement is the one-verification-per-signature binding above.</t>
+
         <t>The user-verification mechanisms that gate the signing key — for example, a platform biometric
         subsystem (fingerprint or face match), a Secure Enclave PIN entry, a hardware-token PIN, a
         smartcard with PIN, a magnetic-stripe credential combined with a PIN, or any equivalent platform
@@ -842,10 +860,10 @@ entirely.
             <li><tt>psea_uv.verified</tt> — a boolean asserting that a contemporaneous user-verification
             event gated the signing operation that produced this proof.</li>
             <li><tt>psea_uv.method</tt> — a string identifying the user-verification method. The value
-            space is an extensible enumeration; registered baseline values include <tt>"biometric"</tt>,
-            <tt>"pin"</tt>, and <tt>"fido_uv"</tt>. A Verifier <bcp14>MUST</bcp14> tolerate an unknown
-            method value (treat it as an opaque label) rather than rejecting solely on the method
-            string.</li>
+            space is extensible; suggested baseline values are <tt>"biometric"</tt>,
+            <tt>"pin"</tt>, and <tt>"fido_uv"</tt> (this document defines no IANA registry for them). A
+            Verifier <bcp14>MUST</bcp14> tolerate an unknown method value (treat it as an opaque label)
+            rather than rejecting solely on the method string.</li>
           </ul>
           <t>A token that makes no human-presence claim (such tokens are out of scope of this profile)
           does not carry <tt>psea_uv</tt>. The claim is part of the JWS payload and is
@@ -853,15 +871,22 @@ entirely.
           cannot flip <tt>verified</tt> from false to true without invalidating the signature.</t>
 
           <t>Normative Verifier rule: the Verifier <bcp14>MUST</bcp14> require
-          <tt>psea_uv.verified == true</tt> and <bcp14>MUST</bcp14> reject the proof otherwise. The
-          Verifier <bcp14>MUST NOT</bcp14> accept <tt>psea_uv</tt> as merely self-asserted by the
-          producer: it <bcp14>MUST</bcp14> anchor the claim to the authenticator's attested
-          UV-enforcement capability. This requirement is device-agnostic — any conforming authenticator
-          emits <tt>psea_uv</tt>, and the Verifier cross-checks it against that authenticator's attested
-          UV-enforcement. Where the attestation conveys a UV-enforcement property and the
-          <tt>psea_uv</tt> claim contradicts it (for example, the claim asserts
-          <tt>verified == true</tt> but the authenticator's attested key properties show the signing key
-          is not user-auth-gated), the Verifier <bcp14>MUST</bcp14> reject the proof.</t>
+          <tt>psea_uv.verified == true</tt> and <bcp14>MUST</bcp14> reject the proof otherwise. Beyond
+          that, anchoring of the claim is conditional on what the authenticator's attestation conveys:</t>
+          <ul>
+            <li>Where the platform attestation conveys a UV-enforcement property, the Verifier
+            <bcp14>MUST</bcp14> cross-check <tt>psea_uv</tt> against it and <bcp14>MUST</bcp14> reject the
+            proof if the attested key properties contradict the claim (for example, the claim asserts
+            <tt>verified == true</tt> but the attested signing key is not user-authentication-gated). The
+            Verifier <bcp14>MUST NOT</bcp14> accept such a <tt>psea_uv</tt> as merely self-asserted when it
+            could have been cross-checked against the attestation.</li>
+            <li>Where the attestation does not convey a UV-enforcement property, the Verifier
+            <bcp14>MUST NOT</bcp14> treat the human-presence assurance as attested — the claim is signed
+            but rests on a documented trust assumption (see below) — and for high-assurance operations
+            <bcp14>SHOULD</bcp14> reject the proof or require an additional independent factor.</li>
+          </ul>
+          <t>This rule is device-agnostic: any conforming Attester emits <tt>psea_uv</tt>, and the
+          Verifier anchors it wherever the authenticator's attestation permits.</t>
 
           <t>Examples of the per-authenticator cross-check (informative, NOT normative — the specific
           mechanism is out of scope): a phone with an attested UV-gated hardware key whose key
@@ -887,12 +912,10 @@ entirely.
           the residual trust assumption where the attestation surface does not yet permit the
           cross-check.</t>
 
-          <t>Because an unattested <tt>psea_uv</tt> is advisory only — a signed boolean the host
-          populated, with no independent cryptographic backing for the user-verification event — a
-          Verifier that cannot anchor <tt>psea_uv</tt> to an attested UV-enforcement property
-          <bcp14>MUST NOT</bcp14> treat the human-presence assurance as attested. For high-assurance
-          operations in that case the Verifier <bcp14>SHOULD</bcp14> reject the proof, or require an
-          additional independent factor, rather than rely on the unattested claim.</t>
+          <t>The rationale for the unattested case above is that such a <tt>psea_uv</tt> is advisory
+          only — a signed boolean the host populated, with no independent cryptographic backing for the
+          user-verification event — so it cannot be relied upon as an attested human-presence assurance
+          for high-assurance operations.</t>
         </section>
       </section>
 
@@ -991,6 +1014,17 @@ entirely.
         <bcp14>MAY</bcp14> be evicted once no proof carrying it could still pass the <tt>exp</tt> freshness
         check. A Verifier that retains finalized <tt>jti</tt> values for less than the <tt>exp</tt> window
         reopens the replay surface this check exists to close.</t>
+
+        <t><strong>Atomicity (normative).</strong> A Verifier <bcp14>MUST</bcp14> perform the
+        counter comparison-and-advance and the <tt>jti</tt> finalization atomically — serialized per
+        (Attester, counter scope) — within a single transaction: read the stored counter, compare, and
+        conditionally advance in one atomic step that also records the <tt>jti</tt>. The counter value
+        compared <bcp14>MUST</bcp14> be the value read inside that transaction (not a value read earlier),
+        and the stored value <bcp14>MUST</bcp14> be advanced only when the submitted counter is strictly
+        greater than it. A blind last-write-wins advance is non-conformant. This guarantees that two
+        concurrent or out-of-order submissions cannot both commit and cannot lower (regress) the stored
+        high-water mark: of any set of submissions racing at a given scope, at most one advances, and a
+        later-arriving lower counter is rejected rather than overwriting a higher stored value.</t>
 
         <t><strong>Interoperability bound (normative):</strong> Producers <bcp14>MUST</bcp14> emit
         <tt>psea_counter</tt> as a JSON integer in the range [0, 2<sup>53</sup> &#8722; 1] (inclusive) so
@@ -1256,122 +1290,122 @@ Total: 114 bytes → SHA-256 → 64 hex chars
       </section>
     </section>
 
-      <section anchor="relationship-webauthn" numbered="true">
-        <name>Relationship to WebAuthn and FIDO Transaction Confirmation</name>
+    <section anchor="relationship-webauthn" numbered="true">
+      <name>Relationship to WebAuthn and FIDO Transaction Confirmation</name>
 
-        <t>WebAuthn and FIDO2 provide phishing-resistant, hardware-backed authentication and are the
-        strongest widely deployed primitives for the login boundary. A natural question is whether their
-        transaction-confirmation features already solve the execution-time authority problem PSEA targets.
-        As a matter of deployment reality, they do not.</t>
+      <t>WebAuthn and FIDO2 provide phishing-resistant, hardware-backed authentication and are the
+      strongest widely deployed primitives for the login boundary. A natural question is whether their
+      transaction-confirmation features already solve the execution-time authority problem PSEA targets.
+      As a matter of deployment reality, they do not.</t>
 
-        <t>Web Authentication Level 1 (<xref target="WebAuthn-L1"/>) defined two transaction-confirmation
-        extensions: <tt>txAuthSimple</tt> (display a text prompt and bind the user's approval of that exact
-        text into the signed assertion) and <tt>txAuthGeneric</tt> (the same for a hashed content blob).
-        These were the mechanism by which a WebAuthn assertion could attest that the user approved a
-        specific transaction -- a What-You-See-Is-What-You-Sign (WYSIWYS) binding. No browser implemented
-        these extensions, and they were removed in Web Authentication Level 2
-        (<xref target="WebAuthn-L2"/>). A current WebAuthn assertion
-        therefore attests that an authenticator holding a given credential was exercised with user presence
-        (and optionally user verification), but it does not cryptographically bind the assertion to a
-        specific application-level action or to human-readable transaction content.</t>
+      <t>Web Authentication Level 1 (<xref target="WebAuthn-L1"/>) defined two transaction-confirmation
+      extensions: <tt>txAuthSimple</tt> (display a text prompt and bind the user's approval of that exact
+      text into the signed assertion) and <tt>txAuthGeneric</tt> (the same for a hashed content blob).
+      These were the mechanism by which a WebAuthn assertion could attest that the user approved a
+      specific transaction -- a What-You-See-Is-What-You-Sign (WYSIWYS) binding. No browser implemented
+      these extensions, and they were removed in Web Authentication Level 2
+      (<xref target="WebAuthn-L2"/>). A current WebAuthn assertion
+      therefore attests that an authenticator holding a given credential was exercised with user presence
+      (and optionally user verification), but it does not cryptographically bind the assertion to a
+      specific application-level action or to human-readable transaction content.</t>
 
-        <t>Consequently, the transaction-binding / WYSIWYS property -- proof that a present, verified human
-        approved a specific named action, with specific content, at the moment of execution -- is not
-        provided by any deployed authentication standard today. PSEA addresses precisely this gap: a PSEA
-        proof binds the action identity and a SHA-256 hash of the action payload (the fail-closed
-        action-binding defined later in this document) into a hardware-signed Attestation produced at
-        execution time. PSEA is complementary to WebAuthn and FIDO rather than a replacement: WebAuthn and
-        FIDO2 remain appropriate for establishing the session and verifying the human's credential, while
-        PSEA supplies the per-action execution-time Evidence that the transaction-confirmation extensions
-        were intended to provide but, in deployed form, do not.</t>
+      <t>Consequently, the transaction-binding / WYSIWYS property -- proof that a present, verified human
+      approved a specific named action, with specific content, at the moment of execution -- is not
+      provided by any deployed authentication standard today. PSEA addresses precisely this gap: a PSEA
+      proof binds the action identity and a SHA-256 hash of the action payload (the fail-closed
+      action-binding defined later in this document) into a hardware-signed Attestation produced at
+      execution time. PSEA is complementary to WebAuthn and FIDO rather than a replacement: WebAuthn and
+      FIDO2 remain appropriate for establishing the session and verifying the human's credential, while
+      PSEA supplies the per-action execution-time Evidence that the transaction-confirmation extensions
+      were intended to provide but, in deployed form, do not.</t>
+    </section>
+    <section anchor="relationship-rfc9470" numbered="true">
+      <name>Relationship to OAuth 2.0 Step-Up Authentication</name>
+
+      <t>OAuth 2.0 Step-Up Authentication Challenge <xref target="RFC9470"/> defines a mechanism by which
+      an OAuth-protected resource server signals to a client that the bearer access token presented does
+      not satisfy the resource's authentication requirements. The resource server responds with HTTP 401
+      and a WWW-Authenticate challenge carrying a required Authentication Context Class Reference
+      (acr_values) and/or a maximum authentication age (max_age). The client then drives the user through
+      re-authentication and obtains a new access token that satisfies the requirement.</t>
+
+      <t>RFC 9470 and PSEA address adjacent but distinct points in the access-control chain. Both react to
+      the same operational gap: an access token or session that was sufficient at issuance time may be
+      insufficient at the moment a higher-risk action is requested. They differ in the unit of escalation
+      and in the cryptographic properties of the artifact produced.</t>
+
+      <section anchor="rfc9470-comparison" numbered="true">
+        <name>Comparison</name>
+
+        <table>
+          <thead>
+            <tr><th>Property</th><th>RFC 9470 step-up</th><th>PSEA</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Unit of escalation</td><td>The access token (session-scoped).</td>
+              <td>The individual action (action-scoped).</td></tr>
+            <tr><td>Artifact produced</td>
+              <td>A new bearer access token, possibly with refreshed acr / auth_time claims.</td>
+              <td>Evidence (signed proof token; see <xref target="proof-token-format"/>) cryptographically
+              bound to the specific action payload.</td></tr>
+            <tr><td>Scope of authority granted</td>
+              <td>Subsequent requests within the resource server's session policy, until the new token
+              expires or fails its own freshness check.</td>
+              <td>The single action whose payload is bound by the Evidence. No subsequent action inherits
+              authority.</td></tr>
+            <tr><td>Connectivity requirement</td>
+              <td>Re-authentication requires reachability of the authorization server.</td>
+              <td>Deployment-dependent: a proof MAY be produced offline with deferred Verifier
+              interaction, or require synchronous Verifier interaction, per deployment policy (out of
+              scope).</td></tr>
+            <tr><td>Action-payload binding</td>
+              <td>Not defined. The new token does not bind to any specific resource or operation.</td>
+              <td>Required for every PSEA proof. The Evidence body contains the action's payload hash;
+              see <xref target="action-binding"/>.</td></tr>
+            <tr><td>Authentication context</td>
+              <td>Conveyed via acr_values; identifiers are registry-managed and opaque to OAuth
+              itself.</td>
+              <td>Conveyed via the abstract capability/assurance indicator and other fields in the
+              Evidence.</td></tr>
+          </tbody>
+        </table>
       </section>
-      <section anchor="relationship-rfc9470" numbered="true">
-        <name>Relationship to OAuth 2.0 Step-Up Authentication</name>
 
-        <t>OAuth 2.0 Step-Up Authentication Challenge <xref target="RFC9470"/> defines a mechanism by which
-        an OAuth-protected resource server signals to a client that the bearer access token presented does
-        not satisfy the resource's authentication requirements. The resource server responds with HTTP 401
-        and a WWW-Authenticate challenge carrying a required Authentication Context Class Reference
-        (acr_values) and/or a maximum authentication age (max_age). The client then drives the user through
-        re-authentication and obtains a new access token that satisfies the requirement.</t>
+      <section anchor="rfc9470-complementarity" numbered="true">
+        <name>Complementarity</name>
 
-        <t>RFC 9470 and PSEA address adjacent but distinct points in the access-control chain. Both react to
-        the same operational gap: an access token or session that was sufficient at issuance time may be
-        insufficient at the moment a higher-risk action is requested. They differ in the unit of escalation
-        and in the cryptographic properties of the artifact produced.</t>
+        <t>RFC 9470 step-up and PSEA <bcp14>MAY</bcp14> be composed: the first to signal that a per-action
+        authority check is required; the second to produce the cryptographically action-bound Evidence
+        that satisfies that check.</t>
 
-        <section anchor="rfc9470-comparison" numbered="true">
-          <name>Comparison</name>
+        <ol>
+          <li>An OAuth-protected resource server, acting as a Relying Party, receives a request whose access
+          token does not satisfy the resource's per-action policy.</li>
+          <li>The resource server returns HTTP 401 with a WWW-Authenticate challenge per
+          <xref target="RFC9470"/>, indicating the required step-up.</li>
+          <li>The client drives the step-up flow on a device hosting a PSEA Attester. The Attester
+          produces fresh Evidence at the capability level the resource's policy demands,
+          cryptographically bound to the specific action that triggered the 401.</li>
+          <li>The client re-submits the request, conveying the Evidence to the Verifier. The Verifier
+          appraises the Evidence and produces an Attestation Result. The resource server gates the
+          action on both the OAuth access token (session validity) and the Attestation Result (per-action
+          authority).</li>
+        </ol>
 
-          <table>
-            <thead>
-              <tr><th>Property</th><th>RFC 9470 step-up</th><th>PSEA</th></tr>
-            </thead>
-            <tbody>
-              <tr><td>Unit of escalation</td><td>The access token (session-scoped).</td>
-                <td>The individual action (action-scoped).</td></tr>
-              <tr><td>Artifact produced</td>
-                <td>A new bearer access token, possibly with refreshed acr / auth_time claims.</td>
-                <td>Evidence (signed proof token; see <xref target="proof-token-format"/>) cryptographically
-                bound to the specific action payload.</td></tr>
-              <tr><td>Scope of authority granted</td>
-                <td>Subsequent requests within the resource server's session policy, until the new token
-                expires or fails its own freshness check.</td>
-                <td>The single action whose payload is bound by the Evidence. No subsequent action inherits
-                authority.</td></tr>
-              <tr><td>Connectivity requirement</td>
-                <td>Re-authentication requires reachability of the authorization server.</td>
-                <td>Deployment-dependent: a proof MAY be produced offline with deferred Verifier
-                interaction, or require synchronous Verifier interaction, per deployment policy (out of
-                scope).</td></tr>
-              <tr><td>Action-payload binding</td>
-                <td>Not defined. The new token does not bind to any specific resource or operation.</td>
-                <td>Required for every PSEA proof. The Evidence body contains the action's payload hash;
-                see <xref target="action-binding"/>.</td></tr>
-              <tr><td>Authentication context</td>
-                <td>Conveyed via acr_values; identifiers are registry-managed and opaque to OAuth
-                itself.</td>
-                <td>Conveyed via the abstract capability/assurance indicator and other fields in the
-                Evidence.</td></tr>
-            </tbody>
-          </table>
-        </section>
-
-        <section anchor="rfc9470-complementarity" numbered="true">
-          <name>Complementarity</name>
-
-          <t>RFC 9470 step-up and PSEA <bcp14>MAY</bcp14> be composed: the first to signal that a per-action
-          authority check is required; the second to produce the cryptographically action-bound Evidence
-          that satisfies that check.</t>
-
-          <ol>
-            <li>An OAuth-protected resource server, acting as a Relying Party, receives a request whose access
-            token does not satisfy the resource's per-action policy.</li>
-            <li>The resource server returns HTTP 401 with a WWW-Authenticate challenge per
-            <xref target="RFC9470"/>, indicating the required step-up.</li>
-            <li>The client drives the step-up flow on a device hosting a PSEA Attester. The Attester
-            produces fresh Evidence at the capability level the resource's policy demands,
-            cryptographically bound to the specific action that triggered the 401.</li>
-            <li>The client re-submits the request, conveying the Evidence to the Verifier. The Verifier
-            appraises the Evidence and produces an Attestation Result. The resource server gates the
-            action on both the OAuth access token (session validity) and the Attestation Result (per-action
-            authority).</li>
-          </ol>
-
-          <t>In this composition, OAuth supplies the session and identity context; PSEA supplies the per-
-          action cryptographic authority proof. Neither mechanism replaces the other.</t>
-        </section>
-
-        <section anchor="rfc9470-out-of-scope" numbered="true">
-          <name>Out of Scope for This Document</name>
-          <t>This section identifies architectural complementarity. It does not define a normative
-          integration profile between PSEA and <xref target="RFC9470"/>. A normative integration profile
-          (specifying the precise WWW-Authenticate challenge syntax, the acr_values registration for PSEA
-          capability/assurance levels, the error-mapping table between RFC 9470 challenges and PSEA error
-          codes, and the conveyance of the Evidence in the re-submitted request) is deferred to a future
-          document.</t>
-        </section>
+        <t>In this composition, OAuth supplies the session and identity context; PSEA supplies the per-
+        action cryptographic authority proof. Neither mechanism replaces the other.</t>
       </section>
+
+      <section anchor="rfc9470-out-of-scope" numbered="true">
+        <name>Out of Scope for This Document</name>
+        <t>This section identifies architectural complementarity. It does not define a normative
+        integration profile between PSEA and <xref target="RFC9470"/>. A normative integration profile
+        (specifying the precise WWW-Authenticate challenge syntax, the acr_values registration for PSEA
+        capability/assurance levels, the error-mapping table between RFC 9470 challenges and PSEA error
+        codes, and the conveyance of the Evidence in the re-submitted request) is deferred to a future
+        document.</t>
+      </section>
+    </section>
     <section anchor="security-considerations" numbered="true" toc="default">
       <name>Security Considerations</name>
 
@@ -1660,6 +1694,13 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         Parties and deployments correlate one person's device activity across unrelated services; binding
         the identifier to <tt>iss</tt> confines linkability to the single deployment that legitimately
         requires it.</t>
+
+        <t>The derived value is carried in the RFC 9711 RAND-type UEID (type tag <tt>0x01</tt>) purely for
+        wire simplicity — a single, already-specified 33-octet UEID encoding — even though the derivation
+        is deterministic per issuer rather than a randomly generated nonce. The semantically purer
+        encoding for a per-issuer (and, in future, per-Relying-Party) identifier is the EAT
+        semipermanent-UEID (<tt>sueids</tt>) form, noted as the future direction below; this revision uses
+        the RAND-tagged <tt>ueid</tt> to avoid introducing a second identifier claim on the wire.</t>
 
         <t>Per-issuer derivation does not provide per-Relying-Party unlinkability <em>within</em> a single
         deployment, nor does it defeat correlation by other shared fields. A future revision
@@ -1982,6 +2023,14 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <seriesInfo name="RFC" value="8174"/>
         </reference>
 
+        <reference anchor="RFC8259" target="https://www.rfc-editor.org/info/rfc8259">
+          <front><title>The JavaScript Object Notation (JSON) Data Interchange Format</title>
+            <author fullname="T. Bray" initials="T." surname="Bray" role="editor"/>
+            <date year="2017" month="December"/></front>
+          <seriesInfo name="STD" value="90"/>
+          <seriesInfo name="RFC" value="8259"/>
+        </reference>
+
         <reference anchor="RFC8725" target="https://www.rfc-editor.org/info/rfc8725">
           <front><title>JSON Web Token Best Current Practices</title>
             <author fullname="Y. Sheffer" initials="Y." surname="Sheffer"/>
@@ -2275,25 +2324,6 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
           <li>MUST verify the integrity of the Attestation Result for non-co-located Verifiers.</li>
         </ul>
       </section>
-    </section>
-
-    <section anchor="citation" numbered="true" toc="default">
-      <name>Citation and Reference</name>
-
-      <t>Citation suggestion (BibTeX):</t>
-
-      <sourcecode type="bibtex"><![CDATA[
-@misc{yossif-psea-02,
-  author       = "Mohamad Khalil Yossif",
-  title        = "PSEA Token Profile: An EAT Profile for Action-Bound,
-                  User-Verification-Gated Transaction-Confirmation Evidence",
-  series       = "Internet-Draft draft-yossif-psea-02",
-  publisher    = "Internet Engineering Task Force",
-  year         = "2026",
-  month        = "May",
-  howpublished = "https://datatracker.ietf.org/doc/draft-yossif-psea-02/"
-}
-]]></sourcecode>
     </section>
 
   </back>
