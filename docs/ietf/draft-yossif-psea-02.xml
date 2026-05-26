@@ -182,9 +182,10 @@
       <name>Canonical Encoding of Proof Payloads</name>
 
       <t>The canonical encoding rules in this section apply wherever a PSEA hash is taken over canonical
-      JSON octets. The PSEA proof and the Verifier acknowledgement are carried as JWS Compact
-      Serialization (<xref target="proof-token-format"/>), whose signatures cover the received wire octets
-      directly; canonical encoding is therefore not load-bearing for verifying those JWS objects.
+      JSON octets. The PSEA proof is carried as JWS Compact Serialization
+      (<xref target="proof-token-format"/>), as is any Verifier acknowledgement a deployment defines (that
+      artifact's format is out of scope of this profile); a JWS signature covers the received wire octets
+      directly, so canonical encoding is therefore not load-bearing for verifying those JWS objects.
       It is normative (a <bcp14>MUST</bcp14>) for exactly one use, in which the producer and the Verifier
       independently hash canonical JSON bytes with SHA-256 and compare the result:</t>
       <ul>
@@ -260,6 +261,17 @@
         in any PSEA payload field at this revision. A future revision <bcp14>MAY</bcp14> extend the subset;
         until such an extension is registered, any non-integer numeric value in a signed payload field
         is non-conformant.</t>
+        <t>This integers-only rule also governs the <tt>actionPayload</tt> that the action binding hashes
+        (<xref target="action-binding"/>). The <tt>actionPayload</tt> schema is deployment-defined, but it
+        is hashed under the same canonical encoding, so a JSON floating-point value placed in it would
+        re-introduce exactly the <xref target="RFC8785"/> floating-point serialization divergence this
+        section avoids for the profile's own claims. Accordingly, monetary and other fractional quantities
+        carried in <tt>actionPayload</tt> <bcp14>MUST</bcp14> be represented as integers in a fixed minor
+        unit (for example, integer cents) or as strings, and <bcp14>MUST NOT</bcp14> be represented as JSON
+        floating-point numbers. The worked example of <xref target="tv-payload-hash"/> follows this rule
+        (an amount of 2500 minor units, not 25.00). A deployment that places a JSON float in
+        <tt>actionPayload</tt> falls outside the cross-platform canonicalization guarantee of this section
+        and will observe payload-binding failures between peers whose float serializers differ.</t>
       </section>
 
       <section anchor="canonical-encoding-literals" numbered="true">
@@ -435,6 +447,28 @@
             <dd>The OPTIONAL <tt>submods</tt> map (<xref target="RFC9711"/>) carries a single
             <tt>psea-device-state</tt> submodule whose contents are out of scope; an authenticator that
             cannot produce device-state omits <tt>submods</tt> entirely.</dd>
+            <dt>Detached EAT Bundles and nested tokens</dt>
+            <dd>This profile does not use Detached EAT Bundles (<xref target="RFC9711"/>, Section 5) and
+            does not use nested tokens (<xref target="RFC9711"/>, Section 4.2.18): a conforming PSEA proof
+            is a single, self-contained JWS whose payload is one EAT-JSON claims-set. A Verifier
+            <bcp14>MUST NOT</bcp14> accept a Detached EAT Bundle or a nested token as conforming to this
+            profile.</dd>
+            <dt>UEID type</dt>
+            <dd>The <tt>ueid</tt> claim carries a deterministic per-issuer value under the RFC 9711 RAND
+            type tag (<tt>0x01</tt>); this is a deliberate, disclosed choice whose rationale and migration
+            path are stated in <xref target="privacy-ueid"/>.</dd>
+            <dt>Extensibility model</dt>
+            <dd>This profile is a deliberately strict, lock-step profile rather than an
+            ignore-unknown-claims profile. A conforming Verifier rejects a proof carrying any claim outside
+            this profile's defined set (the claim-set schema sets <tt>additionalProperties: false</tt>,
+            <xref target="proof-schema"/>), any unknown <tt>psea_proof_version</tt>
+            (<xref target="proof-versioning"/>), and any unrecognized <tt>crit</tt> header parameter
+            (<xref target="jose-hardening"/>). A consequence intended by this design is that a future
+            <tt>psea_*</tt> claim is rejected by current-revision Verifiers until they are upgraded to a
+            revision that defines it; the wire format is versioned as a whole rather than extended in
+            place. This departs from the ignore-unknown extensibility customary for EAT and JWT consumers,
+            and is chosen so that the set of claims a Verifier appraises is exactly the set the profile
+            revision specifies.</dd>
           </dl>
         </section>
       </section>
@@ -596,8 +630,11 @@ entirely.
         <name>JOSE Header Hardening (Normative)</name>
 
         <t>Because a JWS protected header is attacker-influenceable until the signature is verified, a
-        Verifier <bcp14>MUST</bcp14> apply the following constraints to every PSEA JWS (the proof, and —
-        at the Attester consuming it — the Verifier acknowledgement) before trusting any claim:</t>
+        Verifier <bcp14>MUST</bcp14> apply the following constraints to every PSEA proof JWS before
+        trusting any claim. A deployment that represents its Verifier acknowledgement / Attestation Result
+        as a JWS — that artifact's format is out of scope of this profile
+        (<xref target="action-binding-rp"/>) — <bcp14>SHOULD</bcp14> apply equivalent header hardening when
+        the Attester consumes it:</t>
 
         <ul>
           <li>The Verifier <bcp14>MUST</bcp14> reject any JWS whose protected-header <tt>alg</tt> is not
@@ -614,12 +651,12 @@ entirely.
           untrusted-until-verified <tt>kid</tt>; the Verifier <bcp14>MUST NOT</bcp14> verify a PSEA JWS
           against any key conveyed in or referenced by the token itself.</li>
           <li>The Verifier <bcp14>MUST</bcp14> verify the protected-header <tt>typ</tt> value. A PSEA
-          proof carries <tt>typ</tt> = <tt>"psea-proof+jwt"</tt> and a Verifier acknowledgement carries
-          <tt>typ</tt> = <tt>"psea-ack+jwt"</tt>; both share the single media type
-          (<xref target="iana-media-types"/>) and are distinguished only by <tt>typ</tt>, so a consumer
-          <bcp14>MUST</bcp14> reject a JWS whose <tt>typ</tt> is not the value expected for the artifact it
-          is processing. This prevents a proof from being processed as an acknowledgement, or the
-          reverse.</li>
+          proof carries <tt>typ</tt> = <tt>"psea-proof+jwt"</tt>, and a consumer expecting a proof
+          <bcp14>MUST</bcp14> reject a JWS whose <tt>typ</tt> is not <tt>"psea-proof+jwt"</tt>. A deployment
+          that defines a Verifier acknowledgement / Attestation Result as a JWS (out of scope of this
+          profile) <bcp14>SHOULD</bcp14> give it a distinct <tt>typ</tt> — for example
+          <tt>"psea-ack+jwt"</tt> — applying the explicit-typing guidance of <xref target="RFC8725"/>,
+          Section 3.11, so that a proof cannot be processed as an acknowledgement or the reverse.</li>
           <li>The Verifier <bcp14>MUST</bcp14> reject any JWS that carries a <tt>crit</tt> header
           parameter naming an extension this profile does not define, and <bcp14>MUST</bcp14> reject any
           JWS that uses the unencoded-payload option (the <tt>b64</tt> header parameter set to
@@ -643,6 +680,12 @@ entirely.
         and PSEA-private <tt>psea_*</tt> claims. <tt>eat_nonce</tt> and <tt>psea_user_hash</tt> are
         optional and, when not applicable, are omitted entirely rather than serialized as empty or
         <tt>null</tt>.</t>
+
+        <t>The schema sets <tt>additionalProperties: false</tt>. This is deliberate: as stated in the
+        "Extensibility model" entry of <xref target="eat-profile-definition"/>, this profile is a strict
+        lock-step profile, so a Verifier rejects a proof carrying any claim outside the set below, and a
+        future <tt>psea_*</tt> claim is by design rejected by current-revision Verifiers until they are
+        upgraded. This departs from the ignore-unknown-claims extensibility customary for EAT and JWT.</t>
 
         <sourcecode type="json"><![CDATA[
 {
@@ -1061,6 +1104,16 @@ entirely.
         <tt>exp</tt> margin wide enough to cover its expected offline-to-sync interval; the freshness
         anchor for such proofs is then the counter and the <tt>jti</tt> uniqueness check rather than a
         narrow <tt>exp</tt> window.</t>
+
+        <t>When a Verifier issued a challenge, it <bcp14>MUST</bcp14> correlate the returned proof to the
+        issued challenge using only the signed <tt>eat_nonce</tt> claim value read from the verified
+        payload — for example, by looking up its outstanding-challenge state keyed on the nonce value
+        itself. A Verifier <bcp14>MUST NOT</bcp14> rely on any unsigned transport-body field (for example
+        <tt>requestId</tt>, <xref target="envelope-schemas"/>) to decide which issued challenge a proof
+        answers, because an unsigned field is attacker-mutable in transit and a mismatched correlation
+        could let a proof carrying one (signed) nonce be accepted against a different outstanding
+        challenge. The <tt>eat_nonce</tt> value is covered by the proof signature, so keying the
+        correlation on it keeps the challenge-to-proof binding within the signed surface.</t>
       </section>
 
       <section anchor="chain-entry" numbered="true">
@@ -1220,10 +1273,21 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
           <t>The concrete encoding of the Attestation Result, the Verifier-to-Relying-Party transport,
           and the enrollment ceremony that binds a <tt>kid</tt> to an enrolled key are deployment-specific
-          and out of scope of this profile. A second party can build a conforming Attester and a
-          conforming Verifier of the proof token from this document alone; interoperating on the
-          Verifier-to-Relying-Party Attestation Result and on enrollment additionally requires a companion
-          deployment profile that fixes those interfaces.</t>
+          and out of scope of this profile. The extent of what a second party can build from this document
+          alone should be stated precisely. The proof-token validation core is fully specified here: from
+          this document alone a second party can build a conforming Attester that emits byte-conformant
+          proofs, and the Verifier-side validation core — JWS signature verification, the JOSE header
+          hardening (<xref target="jose-hardening"/>), the fail-closed payload-hash action binding
+          (<xref target="action-binding-verifier"/>), the cross-replay binding
+          (<xref target="cross-replay-binding"/>), the monotonic counter (<xref target="counter-model"/>),
+          the <tt>jti</tt> uniqueness check, and freshness (<xref target="freshness"/>). A
+          <em>deployable</em> Verifier additionally requires two inputs this profile deliberately leaves
+          out of scope: the enrollment binding that resolves <tt>kid</tt> to an enrolled public key
+          (without which no signature can be verified), and — for human presence to be <em>attested</em>
+          rather than merely signed — the appraisal of the out-of-scope attestation evidence against which
+          <tt>psea_uv</tt> is cross-checked (<xref target="presence-uv-claim"/>). Interoperating on those
+          two interfaces, and on the Verifier-to-Relying-Party Attestation Result, additionally requires a
+          companion deployment profile that fixes them.</t>
         </section>
 
         <section anchor="cross-replay-binding" numbered="true">
@@ -1275,7 +1339,37 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           as a lower-assurance one), and (c) cross-deployment replay (a captured proof presented to a
           different deployment's Verifier). The bindings are locally derivable at sign time without server
           round-trips, preserving the offline-capable property of proofs produced offline.</t>
+
+          <t>The scope of this protection should not be over-read. The cross-replay binding defends against
+          <em>capture-replay</em> of an existing proof — a proof minted for one operation, level,
+          audience, or deployment being presented for a different one. It does <em>not</em> defend
+          against a compromised host minting a <em>fresh</em> proof for the wrong operation: because the
+          host chooses the claim values it asks the user-verification-gated key to sign, a compromised host
+          that obtains a user-verification ceremony can sign a proof carrying whatever <tt>psea_op</tt> /
+          <tt>psea_tier</tt> / <tt>actionPayload</tt> it wishes. The user-verification gate constrains
+          <em>that signing can occur</em>, not <em>what content is signed</em>. That compromised-host case
+          is the What-You-See-Is-What-You-Sign problem and is treated in
+          <xref target="open-wysiwys"/>.</t>
         </section>
+      </section>
+
+      <section anchor="enrollment-lifecycle" numbered="true">
+        <name>Enrollment Lifecycle and Trust Gate (Verifier)</name>
+        <t>The enrollment ceremony that binds a <tt>kid</tt> to an enrolled signing key and to a subject is
+        deployment-specific and out of scope of this profile (<xref target="action-binding-rp"/>). The
+        enrollment <em>lifecycle states</em> that the Verifier enforces on every proof are, by contrast, in
+        scope and normative, because they are the trust gate that makes the rest of the profile meaningful:
+        a valid signature from an enrolled key is necessary but not sufficient for acceptance.</t>
+        <t>A conforming Verifier <bcp14>MUST</bcp14> maintain an authoritative, server-side enrollment
+        lifecycle for each enrolled Attester with at least the states <tt>active</tt>, <tt>suspended</tt>,
+        and <tt>revoked</tt>, and <bcp14>MUST</bcp14> reject any proof whose enrollment is not in the
+        <tt>active</tt> state. This enrollment-status check is authoritative: this profile carries no
+        self-asserted wire trust-state field, and a Verifier <bcp14>MUST NOT</bcp14> derive the trust state
+        from any value the Attester supplies. The check <bcp14>MUST</bcp14> be applied after signature
+        verification and before any state mutation. The transitions between these states, and the events
+        that trigger them, are deployment-specific; the requirement here is only that the three states
+        exist and gate acceptance. The Elevation-of-Privilege analysis in
+        <xref target="threats-elevation"/> relies on this requirement.</t>
       </section>
 
       <section anchor="proof-versioning" numbered="true">
@@ -1293,10 +1387,9 @@ Total: 114 bytes → SHA-256 → 64 hex chars
     <section anchor="relationship-webauthn" numbered="true">
       <name>Relationship to WebAuthn and FIDO Transaction Confirmation</name>
 
-      <t>WebAuthn and FIDO2 provide phishing-resistant, hardware-backed authentication and are the
-      strongest widely deployed primitives for the login boundary. A natural question is whether their
-      transaction-confirmation features already solve the execution-time authority problem PSEA targets.
-      As a matter of deployment reality, they do not.</t>
+      <t>WebAuthn and FIDO2 provide phishing-resistant, hardware-backed authentication for the login
+      boundary. Their transaction-confirmation features do not provide the per-action execution-time
+      action-binding this profile defines, for the following specific reason.</t>
 
       <t>Web Authentication Level 1 (<xref target="WebAuthn-L1"/>) defined two transaction-confirmation
       extensions: <tt>txAuthSimple</tt> (display a text prompt and bind the user's approval of that exact
@@ -1454,6 +1547,30 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         </dl>
       </section>
 
+      <section anchor="enrollment-root-of-trust" numbered="true">
+        <name>Enrollment Is the Root of Trust</name>
+        <t>Every security property in this document is conditional on one out-of-scope step: the
+        enrollment ceremony that binds an enrolled signing key (selected at verification time by
+        <tt>kid</tt>) to the correct device and the correct subject. This is stated as an out-of-scope
+        assumption in O3 (<xref target="threats-out-of-scope"/>), but its consequence is foundational and
+        is called out here explicitly so it is not understated: if enrollment binds the wrong key, the
+        entire chain of guarantees is anchored to the wrong hardware, and every downstream check in this
+        profile still passes.</t>
+        <t>Concretely, an adversary who can complete the deployment's enrollment ceremony with hardware
+        the adversary controls — enrolling the adversary's own hardware-protected key as if it were the
+        victim's device — thereafter produces proofs that are valid in every respect this profile can
+        check: the signature verifies against the enrolled key, the attestation chain is genuine (it
+        attests the adversary's real hardware), the user-verification gate fires (on the adversary), the
+        action binding holds, and the counter and <tt>jti</tt> checks pass. The Verifier has no in-protocol
+        signal that the enrolled key belongs to the wrong person, and the substitution persists for the
+        lifetime of the enrollment. The forged-binding cannot be detected by the wire protocol; it can be
+        detected only by the strength of the enrollment ceremony and by out-of-band identity proofing.</t>
+        <t>Deployments therefore <bcp14>MUST</bcp14> treat enrollment as the security-critical root of the
+        whole system and apply identity-proofing, attestation freshness, and binding controls commensurate
+        with the authority the resulting proofs will carry. No property claimed elsewhere in this document
+        is stronger than the enrollment binding it rests on.</t>
+      </section>
+
       <section anchor="threats-addressed" numbered="true">
         <name>STRIDE Threats Addressed</name>
 
@@ -1480,8 +1597,19 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           proof would pass the wire checks. Mitigated by the per-operation gating requirement of
           <xref target="presence-via-signature"/>: each proof signature <bcp14>MUST</bcp14> be preceded by
           its own fresh user-verification event, so the number of valid proofs is bounded by the number of
-          ceremonies and pre-minting is not reachable. Residual risk: a host that subverts the platform
-          user-verification subsystem itself (O1) is out of scope.</t>
+          ceremonies and pre-minting is not reachable. This mitigation is subject to the same
+          attestation-conditionality as the <tt>psea_uv</tt> claim (<xref target="presence-uv-claim"/>):
+          the Verifier can confirm that the signing key is gated per operation (rather than under a
+          duration- or window-based policy that would permit pre-minting) only where the platform
+          attestation conveys the key's user-verification-gating configuration. Where the attestation
+          conveys it, the Verifier <bcp14>MUST</bcp14> reject a proof whose attested key properties show a
+          duration- or window-based gating policy, and pre-minting is attested-closed. Where the
+          attestation does not convey the gating configuration, per-operation gating rests on a documented
+          trust assumption in the Attester rather than an attested property, and a compromised host that
+          configures window-based authentication could pre-mint without the Verifier detecting it from the
+          attestation; for high-assurance operations a Verifier <bcp14>SHOULD</bcp14> reject or require an
+          additional independent factor in that case, as for <tt>psea_uv</tt>. Residual risk: a host that
+          subverts the platform user-verification subsystem itself (O1) is out of scope.</t>
         </section>
 
         <section anchor="threats-tampering" numbered="true">
@@ -1532,18 +1660,50 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <section anchor="threats-elevation" numbered="true">
           <name>Elevation of Privilege</name>
           <t>E1. <em>Attester signing a proof while it should be locally untrusted.</em> Mitigated by
-          the authoritative server-side enrollment lifecycle the Verifier maintains. A conforming Verifier
-          <bcp14>MUST</bcp14> maintain an enrollment lifecycle with at least the states
-          <tt>active</tt>, <tt>suspended</tt>, and <tt>revoked</tt>, and <bcp14>MUST</bcp14> reject a
-          proof whose enrollment is not <tt>active</tt>. This server-side enrollment-status / revocation
-          check is the trust gate, so a misbehaving or compromised Attester that signs a proof it should
-          have withheld cannot bypass a suspended or revoked state. This profile carries no self-asserted
-          wire trust-state field; the Verifier's enrollment record, not any Attester self-assertion, is
-          authoritative.</t>
+          the authoritative server-side enrollment lifecycle the Verifier maintains, specified normatively
+          in <xref target="enrollment-lifecycle"/>: the Verifier rejects any proof whose enrollment is not
+          in the <tt>active</tt> state. This server-side enrollment-status / revocation check is the trust
+          gate, so a misbehaving or compromised Attester that signs a proof it should have withheld cannot
+          bypass a suspended or revoked state. This profile carries no self-asserted wire trust-state
+          field; the Verifier's enrollment record, not any Attester self-assertion, is authoritative.</t>
           <t>E2. <em>Attester emitting proofs after local-state revocation.</em> Mitigated by the
           Verifier's enrollment lifecycle: even if a misbehaving Attester continues to emit
           proofs after local revocation, the Verifier rejects them.</t>
         </section>
+      </section>
+
+      <section anchor="verifier-state-integrity" numbered="true">
+        <name>Verifier State Integrity: Sharding and Rollback</name>
+        <t>The replay defenses of <xref target="counter-model"/> — the strictly-increasing
+        <tt>psea_counter</tt> compared-and-advanced atomically per (Attester, counter scope), and the
+        global <tt>jti</tt> uniqueness check that finalizes each action identifier exactly once — are
+        stated as logical, single-domain guarantees. A horizontally-scaled (sharded) Verifier deployment
+        and the durability of the Verifier's state both bear on whether those guarantees actually hold, and
+        neither is closed by the wire format alone.</t>
+        <t><em>Sharding / distributed serialization.</em> The atomic compare-and-advance of
+        <xref target="counter-model"/> assumes a single transactional domain per (Attester, counter scope),
+        and the <tt>jti</tt> uniqueness check assumes a globally consistent index. A deployment that spreads
+        verification across multiple nodes <bcp14>MUST</bcp14> preserve these assumptions: all submissions
+        for a given (Attester, counter scope) <bcp14>MUST</bcp14> be serialized to a single authority (for
+        example by routing or partitioning on the Attester identity, or by a shared transactional store
+        that serializes per scope), and the <tt>jti</tt> finalization index <bcp14>MUST</bcp14> be globally
+        consistent across all nodes that can accept proofs for the deployment. A design in which two nodes
+        can independently advance the same scope's counter, or independently finalize the same
+        <tt>jti</tt>, without a serializing authority is non-conformant: it reopens the
+        concurrent-double-accept and counter-regression surfaces that the atomicity requirement of
+        <xref target="counter-model"/> exists to close, this time at the storage tier rather than at the
+        single-node transaction.</t>
+        <t><em>Rollback / durability.</em> <xref target="counter-model"/> prevents an Attester from
+        regressing its counter; the symmetric risk is the Verifier regressing its own stored high-water
+        mark and <tt>jti</tt> set. If the Verifier's counter / <tt>jti</tt> state is restored from an older
+        backup or otherwise rolled back, counter values and <tt>jti</tt> values consumed since that backup
+        become acceptable again, reopening the replay surface for proofs still within their <tt>exp</tt>
+        window. A conforming Verifier <bcp14>MUST</bcp14> protect its replay state (the per-scope
+        high-water-mark counters and the finalized-<tt>jti</tt> set) against rollback, such that a restore
+        or failover does not lower a stored high-water mark or forget a finalized <tt>jti</tt> that could
+        still be replayed within the <tt>exp</tt> window. This is the server-side mirror of the client-side
+        regression the counter model forbids; durability of the replay state is part of the replay defense,
+        not an operational afterthought.</t>
       </section>
 
       <section anchor="rp-countersignature-future" numbered="true">
@@ -1579,7 +1739,10 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
           <dt>O3. Pre-enrollment trust establishment</dt>
           <dd>The protocol assumes that an enrollment ceremony validly binds an Attester to a subject
-          identity. Deployment-specific enrollment policies are out of scope.</dd>
+          identity. Deployment-specific enrollment policies are out of scope. This is the root-of-trust
+          assumption for the entire profile and its consequence (a forged enrollment binding yields
+          fully-valid proofs anchored to the wrong hardware) is treated explicitly in
+          <xref target="enrollment-root-of-trust"/>.</dd>
         </dl>
       </section>
 
@@ -1624,6 +1787,17 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           Verifier is "$10,000 transfer to Mallory." The hardware key signs the payload it was given,
           not the pixels the human saw. PSEA binds signature to execution; it does not, by itself, bind
           the human's perception to either.</t>
+          <t>It is important to state the degraded-mode value plainly rather than leave it implied. On a
+          fully compromised display — or, equivalently, where a compromised Relying Party or in-path
+          modifier substitutes a plausible-but-tampered payload that the human did not intend — PSEA does
+          <em>not</em> prevent execution of the unintended action: the tampered payload is signed by
+          the genuine hardware key under a genuine user-verification event, so the action-binding check
+          passes on it. What PSEA retains in that case is forensic / non-repudiation value: the signed
+          proof is durable, hardware-anchored evidence of exactly what was signed (and that a
+          user-verification event gated the signing), establishing after the fact what the device actually
+          committed to. PSEA's contribution on a compromised display/RP is therefore non-repudiation, not
+          prevention; prevention of the eye-to-signature mismatch requires the trusted-display path below,
+          which is out of scope.</t>
           <t>Why this is hard for any authenticator: full WYSIWYS requires a trusted display path the
           application cannot influence — pixels rendered by a trusted execution path (for example a
           Trusted Execution Environment), with the
@@ -1695,12 +1869,32 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         the identifier to <tt>iss</tt> confines linkability to the single deployment that legitimately
         requires it.</t>
 
-        <t>The derived value is carried in the RFC 9711 RAND-type UEID (type tag <tt>0x01</tt>) purely for
-        wire simplicity — a single, already-specified 33-octet UEID encoding — even though the derivation
-        is deterministic per issuer rather than a randomly generated nonce. The semantically purer
-        encoding for a per-issuer (and, in future, per-Relying-Party) identifier is the EAT
-        semipermanent-UEID (<tt>sueids</tt>) form, noted as the future direction below; this revision uses
-        the RAND-tagged <tt>ueid</tt> to avoid introducing a second identifier claim on the wire.</t>
+        <t>This profile carries a deterministic per-issuer value under the RFC 9711 RAND type tag
+        (<tt>0x01</tt>). This is a deliberate, disclosed design choice, not an oversight, and it warrants an
+        explicit justification because the RAND type tag nominally denotes a randomly generated UEID
+        (<xref target="RFC9711"/>, Section 4.2.1), whereas the value this profile places under that tag is
+        the deterministic derivation <tt>SHA-256(deviceId || iss)</tt>. The cross-issuer unlinkability the
+        privacy model requires is supplied here by the per-issuer derivation (a distinct, non-correlatable
+        value per <tt>iss</tt>), not by randomness; within a single issuer the value is intentionally
+        stable, because PSEA's security model depends on binding a device's successive proofs to one
+        enrollment. The semantically purer vehicle for a stable-but-pairwise identifier of this kind is the
+        EAT semipermanent UEID (<tt>sueids</tt>) claim (<xref target="RFC9711"/>), which is defined
+        precisely for non-random, semipermanent per-relationship identifiers.</t>
+
+        <t>The trade-off this revision weighed is the following. The <tt>sueids</tt> claim is the more exact
+        EAT semantics, but adopting it adds a second identifier claim to the wire with its own array
+        structure and per-entry labelling semantics, which every conforming Attester and every conforming
+        Verifier must then produce and appraise. The RAND-tagged <tt>ueid</tt> reuses a single,
+        already-specified 33-octet UEID encoding that all parties already implement, and the per-issuer
+        derivation gives the required cross-issuer confinement (<xref target="privacy-ueid"/>) without a
+        second claim. This revision therefore chose one stable per-issuer <tt>ueid</tt> over introducing
+        <tt>sueids</tt> handling, accepting the looser fit against the RAND tag's "randomly generated"
+        connotation as the cost of that simplicity. The choice is recorded here so a consumer is not misled
+        into treating the value as random: it is a per-issuer pseudonym, deterministic by construction and
+        verifiable from the enrolled <tt>deviceId</tt> input. A future revision <bcp14>MAY</bcp14> migrate
+        the per-issuer (and per-Relying-Party) identifier to the <tt>sueids</tt> form; that migration is the
+        recommended direction for aligning the wire encoding with the EAT identifier semantics, and it
+        composes with the per-Relying-Party unlinkability direction noted below.</t>
 
         <t>Per-issuer derivation does not provide per-Relying-Party unlinkability <em>within</em> a single
         deployment, nor does it defeat correlation by other shared fields. A future revision
@@ -1770,6 +1964,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <li>Registration of the <tt>urn:ietf:params:psea</tt> URN sub-namespace
           (<xref target="iana-urn-namespace"/>).</li>
         </ul>
+        <t>This document does not request registration of the <tt>psea_*</tt> claims in the JSON Web Token
+        Claims registry (<xref target="RFC7519"/>, Section 10.1) or in the CBOR Web Token (CWT) Claims
+        registry. The <tt>psea_*</tt> claims are profile-private extension claims whose semantics are
+        meaningful only to a consumer that understands this <tt>eat_profile</tt>
+        (<xref target="eat-profile"/>); their names are scoped by the <tt>eat_profile</tt> claim rather
+        than by a global registry, consistent with the strict, profile-scoped extensibility model of this
+        document (<xref target="eat-profile-definition"/>). A future revision <bcp14>MAY</bcp14> register
+        one or more <tt>psea_*</tt> claims in the JWT Claims registry should cross-profile reuse warrant a
+        globally-managed name; this revision intentionally does not, to avoid reserving global names for
+        semantics that are defined only relative to this profile.</t>
       </section>
 
       <section anchor="iana-media-types" numbered="true">
@@ -1777,15 +1981,15 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <t>This document requests registration of the media type <tt>application/psea+jwt</tt> in the
         "Media Types" registry, following the procedures of <xref target="RFC6838"/> and using the
         registered <tt>+jwt</tt> structured syntax suffix (<xref target="RFC7519"/>). The subtype carries
-        a PSEA proof (protected-header <tt>typ = "psea-proof+jwt"</tt>) or a Verifier acknowledgement /
-        Attestation Result (protected-header <tt>typ = "psea-ack+jwt"</tt>) per
-        <xref target="proof-token-format"/>; both share this single media type and are distinguished by
-        the JWS protected-header <tt>typ</tt> value, which a consumer <bcp14>MUST</bcp14> verify
-        (<xref target="jose-hardening"/>). The media type <tt>application/psea+jwt</tt> labels the object
-        at the transport layer; the protected-header <tt>typ</tt> value is an intra-profile discriminator
-        between the two PSEA JWS object types and applies the explicit-typing guidance of
-        <xref target="RFC8725"/>, Section 3.11. The two are complementary and carry no conflicting
-        semantics.</t>
+        the PSEA proof defined by this profile (protected-header <tt>typ = "psea-proof+jwt"</tt>) per
+        <xref target="proof-token-format"/>. The media type <tt>application/psea+jwt</tt> labels the object
+        at the transport layer, and a consumer expecting a proof <bcp14>MUST</bcp14> verify the
+        protected-header <tt>typ</tt> value (<xref target="jose-hardening"/>). The Verifier acknowledgement
+        / Attestation Result is out of scope of this profile (<xref target="action-binding-rp"/>); a
+        deployment that represents that artifact as a JWS <bcp14>MAY</bcp14> reuse this media type with a
+        distinct protected-header <tt>typ</tt> value (for example <tt>"psea-ack+jwt"</tt>), applying the
+        explicit-typing guidance of <xref target="RFC8725"/>, Section 3.11 so the two object types are not
+        confused, but this document does not define that artifact.</t>
         <dl>
           <dt>Type name</dt><dd>application</dd>
           <dt>Subtype name</dt><dd>psea+jwt</dd>
@@ -2277,7 +2481,9 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             bounded clock-skew tolerance (SHOULD NOT exceed 60 seconds) and a bounded maximum proof
             lifetime (<xref target="operational-defaults"/>).</li>
             <li>MUST, when it issued a challenge, reject a proof whose <tt>eat_nonce</tt> is absent or does
-            not equal the issued value (<xref target="eat-profile-definition"/>).</li>
+            not equal the issued value (<xref target="eat-profile-definition"/>), and MUST correlate the
+            proof to the issued challenge using only the signed <tt>eat_nonce</tt> value, never an unsigned
+            transport-body field (<xref target="freshness"/>).</li>
             <li>MUST require <tt>psea_uv.verified == true</tt> and reject otherwise, and MUST anchor the
             <tt>psea_uv</tt> claim to the authenticator's attested UV-enforcement where the attestation
             conveys it; where it cannot, MUST NOT treat human presence as attested and SHOULD reject for
@@ -2297,13 +2503,21 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             <li>MUST maintain the global <tt>jti</tt> uniqueness check (<xref target="counter-model"/>),
             finalizing each <tt>jti</tt> exactly once and retaining finalized <tt>jti</tt> values for at
             least the <tt>exp</tt> validity window.</li>
+            <li>MUST, in a horizontally-scaled deployment, serialize all submissions for a given
+            (Attester, counter scope) to a single authority and keep the <tt>jti</tt> finalization index
+            globally consistent across all nodes, so that the counter atomicity and <tt>jti</tt>
+            uniqueness guarantees hold under sharding (<xref target="verifier-state-integrity"/>).</li>
+            <li>MUST protect its replay state (per-scope high-water-mark counters and the finalized-<tt>jti</tt>
+            set) against rollback, so a backup restore or failover does not lower a stored high-water mark
+            or forget a finalized <tt>jti</tt> still replayable within the <tt>exp</tt> window
+            (<xref target="verifier-state-integrity"/>).</li>
             <li>MUST, when the deployment-optional chain layer (<xref target="chain-entry"/>) is enabled,
             perform the strict-equality <tt>psea_chain_prev</tt> linkage check of
             <xref target="chain-verifier-behavior"/>; a Verifier that does not enable the chain layer
             is not required to implement it.</li>
             <li>MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended,
-            revoked) as the trust gate, and MUST reject proofs from a suspended or revoked enrollment
-            (<xref target="threats-elevation"/>).</li>
+            revoked) as the trust gate, and MUST reject proofs whose enrollment is not active
+            (<xref target="enrollment-lifecycle"/>).</li>
             <li>MUST NOT use any unsigned transport-body field (for example <tt>requestId</tt>,
             <tt>proofId</tt>, <tt>signalReport</tt>) as an input to any security decision
             (<xref target="envelope-schemas"/>).</li>
