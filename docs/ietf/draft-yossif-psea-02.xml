@@ -22,7 +22,7 @@
       </address>
     </author>
 
-    <date year="2026" month="May" day="26"/>
+    <date year="2026" month="June" day="9"/>
 
     <area>Security</area>
 
@@ -703,7 +703,12 @@ entirely.
         "Extensibility model" entry of <xref target="eat-profile-definition"/>, this profile is a strict
         lock-step profile, so a Verifier rejects a proof carrying any claim outside the set below, and a
         future <tt>psea_*</tt> claim is by design rejected by current-revision Verifiers until they are
-        upgraded. This departs from the ignore-unknown-claims extensibility customary for EAT and JWT.</t>
+        upgraded. This departs from the ignore-unknown-claims extensibility customary for EAT and JWT.
+        The three OPTIONAL members <tt>psea_chain_pending</tt>, <tt>psea_last_confirmed_head</tt>, and
+        <tt>psea_rp_context_hash</tt> are registered in the schema below as opaque, non-appraised
+        extension members: they are permitted so that proofs carrying deployment-defined diagnostic
+        context are not rejected by <tt>additionalProperties: false</tt>, but they carry no Verifier
+        appraisal obligation, and a Verifier that does not recognize them ignores them.</t>
 
         <sourcecode type="json"><![CDATA[
 {
@@ -831,7 +836,28 @@ entirely.
                               The restricted final-sextet class rejects
                               non-canonical encodings. Omitted entirely when
                               empty. MUST be derived pairwise per issuer
-                              (see Privacy Considerations)." }
+                              (see Privacy Considerations)." },
+    "psea_chain_pending": {
+      "description": "OPTIONAL registered opaque profile-extension
+        member; empty schema (any JSON value). Semantics are
+        deployment-defined and out of scope; the member carries no
+        Verifier appraisal obligation, and a Verifier that does not
+        recognize it ignores it. Present only when the deployment's
+        chain gap-tolerance layer emits it." },
+    "psea_last_confirmed_head": {
+      "description": "OPTIONAL registered opaque profile-extension
+        member; empty schema (any JSON value). Semantics are
+        deployment-defined and out of scope; the member carries no
+        Verifier appraisal obligation, and a Verifier that does not
+        recognize it ignores it. Present only when the deployment's
+        chain gap-tolerance layer emits it." },
+    "psea_rp_context_hash": {
+      "description": "OPTIONAL registered opaque profile-extension
+        member; empty schema (any JSON value). Semantics are
+        deployment-defined and out of scope; the member carries no
+        Verifier appraisal obligation, and a Verifier that does not
+        recognize it ignores it. Present only when the deployment
+        binds a relying-party request context." }
   },
   "additionalProperties": false
 }
@@ -1368,6 +1394,17 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <em>that signing can occur</em>, not <em>what content is signed</em>. That compromised-host case
           is the What-You-See-Is-What-You-Sign problem and is treated in
           <xref target="open-wysiwys"/>.</t>
+        </section>
+
+        <section anchor="caller-binding" numbered="true">
+          <name>Caller-Identity Binding (psea_caller_package)</name>
+
+          <t>When a deployment has enrolled an expected caller identity for the operation, a conforming
+          Verifier <bcp14>MUST</bcp14> reject a proof whose signed <tt>psea_caller_package</tt> is absent
+          or does not byte-exactly equal the expected value, before any state mutation. A deployment that
+          has not enrolled an expected caller identity <bcp14>MUST NOT</bcp14> treat the claim's absence
+          as failure. The binding is covered by the JWS signature; the comparison is a byte-equality
+          string comparison that <bcp14>MUST NOT</bcp14> normalize case or whitespace.</t>
         </section>
       </section>
 
@@ -2514,6 +2551,11 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             <li>MUST verify the cross-replay binding of <xref target="cross-replay-binding"/>
             (<tt>psea_tier</tt>, <tt>psea_op</tt>, <tt>aud</tt>, <tt>iss</tt>) by case- and
             whitespace-exact comparison, after signature verification and before any state mutation.</li>
+            <li>MUST, when the deployment has enrolled an expected caller identity for the operation,
+            reject a proof whose signed <tt>psea_caller_package</tt> is absent or does not byte-exactly
+            equal the expected value, before any state mutation (<xref target="caller-binding"/>); a
+            deployment that has not enrolled an expected caller identity MUST NOT treat the claim's
+            absence as failure.</li>
             <li>MUST enforce the monotonic <tt>psea_counter</tt> (<xref target="counter-model"/>): select
             the comparison bucket using only a cryptographically bound scope identifier, reject a value
             not strictly greater than the stored value for that scope, and treat the claim as a 64-bit
