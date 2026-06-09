@@ -497,7 +497,7 @@
         <figure anchor="fig-proof-structure">
           <name>PSEA proof as JWS Compact Serialization.</name>
           <artwork align="left"><![CDATA[
-JWS Compact Serialization (the value of the transport-body "proof" field)
+JWS Compact Serialization (value of the transport-body "proof" field)
 
    BASE64URL(UTF8(protected header))
    || "." || BASE64URL(JCS-canonical-JSON(payload))
@@ -607,8 +607,8 @@ entirely.
   "actionPayload":    { ... },        // unsigned cleartext; the Verifier
                                       //   re-canonicalizes, SHA-256s, and
                                       //   compares against psea_payload_hash
-  "integrityEvidence": { ... },       // OPTIONAL attestation evidence (out of scope)
-  "requestId":        "...",          // OPTIONAL opaque request identifier
+  "integrityEvidence": { ... },       // OPTIONAL attestation evidence
+  "requestId":        "...",          // OPTIONAL opaque request id
   "signalReport":     { ... },        // OPTIONAL device-signal report
   "proofId":          "..."           // OPTIONAL opaque proof identifier
 }
