@@ -134,7 +134,8 @@ See [`CITATION.cff`](CITATION.cff).
 ## Reference
 
 - IETF Datatracker: <https://datatracker.ietf.org/doc/draft-yossif-psea/>
-- Project: <https://yuthent.com/psea>
+- Model overview: [Post-Session Execution Assurance (PSEA)](https://yuthent.com/psea)
+- Implementation: [Yuthent, Execution Authority Infrastructure](https://yuthent.com) implements this profile. Per the anti-cartel posture above, PSEA is an open model; any party may implement it, and this listing is informational, not an endorsement.
 
 ## License
 
