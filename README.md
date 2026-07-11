@@ -1,5 +1,7 @@
 # PSEA Token Profile
 
+In one sentence: PSEA is an open, vendor-neutral token profile for producing compact cryptographic evidence that a present, user-verified human approved a specific named action at the moment it was executed. Any independent party can verify that evidence from the draft alone, without a shared SDK, a registry, or a vendor's permission.
+
 **An EAT profile for action-bound, user-verification-gated transaction-confirmation evidence.**
 
 This repository is the home of the IETF Internet-Draft
