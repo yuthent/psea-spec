@@ -1,0 +1,420 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rfc [
+  <!ENTITY nbsp    "&#160;">
+  <!ENTITY zwsp   "&#8203;">
+  <!ENTITY nbhy   "&#8209;">
+  <!ENTITY wj     "&#8288;">
+]>
+<rfc version="3" ipr="trust200902" submissionType="IETF" category="info"
+     docName="draft-yossif-agent-mandate-problem-00"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <front>
+    <title abbrev="Agent Mandate Problem Statement">Problem Statement: Verifiable Human Mandates for Autonomous Agent Actions</title>
+
+    <seriesInfo name="Internet-Draft" value="draft-yossif-agent-mandate-problem-00"/>
+
+    <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif">
+      <organization>Yuthent</organization>
+      <address>
+        <email>mohamad@yuthent.com</email>
+      </address>
+    </author>
+
+    <date year="2026" month="July" day="22"/>
+
+    <area>Security</area>
+
+    <keyword>autonomous agents</keyword>
+    <keyword>delegation</keyword>
+    <keyword>mandate</keyword>
+    <keyword>authorization</keyword>
+    <keyword>problem statement</keyword>
+
+    <abstract>
+      <t>An autonomous software agent commonly acts under authority a human granted at
+      an earlier moment: the human expresses and authorizes an intent at one time, and
+      the agent executes one or more concrete actions at a later time.  The credentials
+      and session state the agent carries at execution time establish that some agent is
+      authorized to act, but they do not establish that this specific action, with these
+      specific parameters, falls within the constraints the human actually signed.  As
+      agent autonomy and action throughput grow, the population of executed actions that
+      no human individually bounded grows with it.  This document is a problem statement.
+      It characterizes the gap between an authorized agent and an authorized action,
+      explains why existing delegation, logging, and payment-mandate mechanisms do not
+      close it, and states the requirements any solution would have to satisfy.  It
+      defines no protocol or mechanism.</t>
+    </abstract>
+
+    <note removeInRFC="true">
+      <name>Note to Readers</name>
+      <t>This is an individual submission to the IETF.  "Informational" above is the
+      <em>intended</em> status; this document has not been adopted by any IETF working
+      group and does not represent IETF consensus.  The author intends to request
+      dispatch of this work (for example through the SECDISPATCH working group) toward
+      consideration by an appropriate working group.  Review and comments are welcome.</t>
+    </note>
+  </front>
+
+  <middle>
+
+    <section anchor="introduction" numbered="true" toc="default">
+      <name>Introduction</name>
+
+      <t>Delegated authority for autonomous agents is granted and exercised at two
+      separated moments.  At an earlier moment, call it T0, a human expresses an intent
+      and authorizes an agent to act on that intent -- for example, to arrange travel
+      within a budget, to reconcile a set of invoices, or to negotiate and place orders
+      within stated limits.  At a later moment, call it T1, the agent executes one or
+      more concrete actions.  The temporal separation between T0 and T1 is the defining
+      characteristic of agent delegation: the human is, by design, not present at T1.</t>
+
+      <t>An agent that reaches T1 carrying valid credentials and a valid session
+      demonstrates that <em>an agent is authorized to act</em>.  It does not demonstrate
+      that <em>this action is authorized</em>.  Session validity answers "does the caller
+      hold authority granted at some point in the past?"; it does not answer "does the
+      specific action now being executed, with its specific parameters, fall within the
+      constraints the human signed at T0?".  Nothing in the credential or the session
+      carries the human's T0 constraints forward and binds them to the T1 action.  This
+      is a confused-deputy condition: the agent wields the human's authority over actions
+      the human never individually bounded.</t>
+
+      <t>Human review does not naturally cover the gap, because throughput scales the gap.
+      A human can meaningfully bound a handful of actions per interaction; an autonomous
+      agent can execute thousands.  The larger the ratio of executed actions to human
+      authorization events, the larger the population of actions that no human
+      individually constrained.  A mechanism that requires a human decision per action
+      defeats the purpose of delegation, and a mechanism that requires no per-action human
+      constraint leaves every action after T0 unbounded.  The problem is to make the
+      human's T0 constraints verifiable at T1 without requiring the human to be present
+      at T1.</t>
+
+      <t>This document states that problem and the requirements a solution must meet.  It
+      deliberately describes no design.  Where the text uses the word "requirement", it
+      denotes a property any solution would have to exhibit, not a specification of how to
+      achieve it.  An explicit non-goal statement appears in <xref target="no-mechanism"/>.</t>
+    </section>
+
+    <section anchor="requirements-language" numbered="true" toc="default">
+      <name>Requirements Language</name>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+      "OPTIONAL" in this document are to be interpreted as described in
+      BCP&nbsp;14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
+      only when, they appear in all capitals, as shown here.  In this document
+      they are used to state requirements <em>on any solution to the stated
+      problem</em>; this document itself specifies no protocol behavior.</t>
+    </section>
+
+    <section anchor="terminology" numbered="true" toc="default">
+      <name>Terminology</name>
+
+      <t>This document uses the following terms.</t>
+
+      <dl>
+        <dt>Principal</dt>
+        <dd>The natural person whose authority the agent exercises.  The Principal is
+        present at T0 and, by assumption, absent at T1.</dd>
+
+        <dt>Agent</dt>
+        <dd>The autonomous software entity that executes actions at T1 under authority the
+        Principal granted at T0.</dd>
+
+        <dt>T0 / authorization moment</dt>
+        <dd>The moment at which the Principal expresses an intent and authorizes the Agent
+        to act, producing the mandate.</dd>
+
+        <dt>T1 / execution moment</dt>
+        <dd>The moment at which the Agent executes a concrete action.  One authorization at
+        T0 may govern many executions at T1.</dd>
+
+        <dt>Mandate</dt>
+        <dd>The set of constraints the Principal authorizes at T0, expressed as data the
+        Principal signs.  A mandate bounds the actions the Agent may execute on the
+        Principal's behalf -- for example by naming permitted operations, permitted
+        counterparties, value ceilings, or a validity window.  This document treats the
+        mandate as a signed constraint set; it does not define its encoding, its
+        constraint vocabulary, or how it is evaluated.</dd>
+
+        <dt>Action parameters</dt>
+        <dd>The concrete attributes of an action executed at T1 (for example the operation
+        name, the counterparty, and the value) that a mandate's constraints range over.</dd>
+
+        <dt>Execution evidence</dt>
+        <dd>The verifiable artifact produced at T1 attesting that a specific action was
+        executed under stated authority.  Producing such evidence is the subject of
+        <xref target="I-D.yossif-psea"/>; this document treats it as the T1 counterpart to
+        the T0 mandate and does not re-specify it (<xref target="relationship-psea"/>).</dd>
+
+        <dt>Hard constraint (class)</dt>
+        <dd>A constraint class whose violation is not permitted under any circumstance:
+        crossing the boundary means the action is outside the mandate.  A value ceiling
+        that may never be exceeded, or a counterparty set outside of which no action may be
+        directed, are hard constraints.  This document defines the class conceptually only;
+        it specifies no means of evaluating or enforcing it.</dd>
+
+        <dt>Escalating constraint (class)</dt>
+        <dd>A constraint class whose crossing does not by itself place the action outside
+        the mandate but instead removes the action from the Agent's autonomous authority
+        and returns the decision to the Principal for fresh authorization.  An escalating
+        constraint demotes autonomy back to a human decision rather than failing the action
+        outright.  This document defines the class conceptually only; it specifies no means
+        of evaluating it, no threshold semantics, and no interaction with the Principal.</dd>
+      </dl>
+
+      <t>The distinction between the two constraint classes is conceptual and is stated
+      here only to make the problem precise: a mandate's constraints differ in what a
+      solution must do when the boundary is approached or crossed.  Defining an evaluation
+      mechanism for either class is out of scope (<xref target="no-mechanism"/>).</t>
+    </section>
+
+    <section anchor="problem" numbered="true" toc="default">
+      <name>The Uncovered Gap</name>
+
+      <t>The gap is the absence of any binding between the action executed at T1 and the
+      constraint set the Principal signed at T0.  Concretely:</t>
+      <ul>
+        <li>The Principal signs a constraint set at T0, but that signature travels no
+        further than T0 unless something carries it to T1.</li>
+        <li>The Agent arrives at T1 with credentials and a session that prove authority in
+        general, but carry no bound copy of the Principal's constraints and no way for a
+        verifying party to test the T1 action against them.</li>
+        <li>The party that executes or authorizes the action at T1 therefore verifies that
+        an authorized agent asked, not that the Principal authorized this action.</li>
+      </ul>
+
+      <t>Because the two moments are separated and the Principal is absent at T1, the gap
+      cannot be closed by asking the Principal again without defeating delegation.  It can
+      only be closed by making the T0 constraints verifiable at T1.  The remainder of this
+      document examines why deployed mechanisms do not do so (<xref target="existing"/>)
+      and what a mechanism that did would have to satisfy (<xref target="requirements"/>).</t>
+    </section>
+
+    <section anchor="existing" numbered="true" toc="default">
+      <name>Why Existing Mechanisms Do Not Cover the Gap</name>
+
+      <section anchor="existing-oauth" numbered="true">
+        <name>OAuth Scopes and Static Grants</name>
+        <t>Delegated-authorization scopes (as in OAuth 2.0 <xref target="RFC6749"/> access tokens) describe, at grant
+        time, the categories of resource or operation a token may reach.  A scope is static
+        with respect to the individual action: it states that the bearer may perform
+        operations of a class, not that a specific action instance -- this counterparty,
+        this value, this moment -- falls within constraints a Principal signed.  A scope
+        carries no per-action parameter binding and no representation of a value ceiling, a
+        permitted-counterparty set, or an escalation boundary tied to the individual action.
+        Two actions of the same class but with very different parameters are
+        indistinguishable to the scope.  Scopes are necessary infrastructure for expressing
+        that an agent may act; they do not express that the specific action is within the
+        Principal's mandate.</t>
+      </section>
+
+      <section anchor="existing-audit" numbered="true">
+        <name>Audit Logs</name>
+        <t>An audit log records that an action occurred.  It is written by the same system
+        that executed the action, after the fact, and its entries are assertions by that
+        system about its own behavior.  A log is therefore an assertion, not evidence in
+        the sense a third party can independently appraise: it can attest that the system
+        believes an action was authorized, but it cannot, by itself, establish to an
+        independent verifier that the action fell within a constraint set the Principal
+        signed.  A log also acts after execution: it is a record of what happened, not a
+        gate that fails an action outside the mandate before it takes effect.  Logging is
+        essential for accountability but does not close a gap that must be closed at or
+        before the moment of action.</t>
+      </section>
+
+      <section anchor="existing-payments" numbered="true">
+        <name>Payment-Scoped Mandates</name>
+        <t>Recent work defines signed mandates for agent-initiated <em>payments</em>.  The
+        Agent Payments Protocol (<xref target="AP2"/>) is representative: it lets a human
+        authorize an agent to make payments within stated bounds and carries that
+        authorization to the payment execution.  Such work is directly relevant, but it is
+        scoped to payment authorization.  Its constraint vocabulary and its binding are
+        defined for the payment case -- amounts, payees, and payment instruments -- and it
+        does not generalize to the arbitrary action parameters of non-payment operations
+        (for example a data export, a configuration change, a clinical or administrative
+        action, or a message dispatched on the Principal's behalf).  The gap this document
+        states is the general one: binding <em>any</em> action's parameters to a
+        Principal-signed constraint set, of which payment mandates address one important but
+        bounded case.</t>
+      </section>
+    </section>
+
+    <section anchor="requirements" numbered="true" toc="default">
+      <name>Requirements for Any Solution</name>
+
+      <t>A mechanism that closes the gap of <xref target="problem"/> would have to satisfy
+      the requirements in this section.  These are properties of a solution, stated to
+      scope the problem; this document does not describe a solution that meets them.</t>
+
+      <t>REQ-1 (Action-to-mandate binding).  A solution MUST cryptographically bind the
+      parameters of the action executed at T1 to the constraint set the Principal signed at
+      T0, such that the bound action cannot be altered relative to the constraints it was
+      checked against without detection.  A binding that covers only the operation class,
+      or only some parameters, does not satisfy this requirement.</t>
+
+      <t>REQ-2 (Deterministic server-side verifiability).  A solution MUST allow a party
+      other than the Agent to determine, deterministically and without consulting the
+      Agent, whether a given T1 action lies within the Principal's T0 constraints.  The
+      determination MUST be reproducible: the same action and the same mandate MUST yield
+      the same verdict at any verifier.</t>
+
+      <t>REQ-3 (Fail-closed on violation).  A solution MUST fail closed.  When the action
+      is outside the mandate's hard constraints, or the binding of REQ-1 cannot be verified,
+      the action MUST NOT be treated as authorized.  Absence of a positive, verifiable
+      within-mandate result MUST be treated as outside the mandate, not as permission.</t>
+
+      <t>REQ-4 (Independently verifiable evidence output).  A solution MUST produce evidence
+      of the within-mandate determination that an independent party can verify from the
+      evidence and the mandate alone, without trusting the executing system's own assertion
+      and without a shared secret with, or permission from, the executing system.</t>
+
+      <t>REQ-5 (Transport and format neutrality).  A solution MUST NOT depend on a
+      particular transport, a particular agent framework, or a particular action-payload
+      encoding.  The binding and the verifiability requirements MUST hold regardless of how
+      the action is conveyed, so that the mechanism applies across the range of operations
+      an agent may execute rather than to a single vertical.</t>
+
+      <t>REQ-6 (Escalation without re-centralizing every action).  A solution SHOULD support
+      the escalating-constraint class of <xref target="terminology"/>: it SHOULD be able to
+      return a specific action to the Principal for fresh authorization when an escalating
+      boundary is crossed, without requiring the Principal to authorize every action
+      individually.  A solution that can only either allow all actions autonomously or
+      require a human decision on each one does not meet the throughput reality described in
+      <xref target="introduction"/>.</t>
+    </section>
+
+    <section anchor="relationship-psea" numbered="true" toc="default">
+      <name>Relationship to draft-yossif-psea</name>
+
+      <t>This section is informative.  <xref target="I-D.yossif-psea"/> defines a token
+      profile for <em>execution evidence</em>: a signed, action-bound artifact that a
+      specific action was executed under a stated, user-verification-gated authority at the
+      moment of execution.  In the terms of this document, that work addresses the T1 side
+      -- producing verifiable evidence at the execution moment -- and it binds what is
+      executed to what is signed at T1.</t>
+
+      <t>It does not address the T0 side.  It does not carry a Principal's earlier-signed
+      constraint set forward and test the T1 action against it; the constraint set,
+      its provenance, and the delegation relationship between a Principal at T0 and an Agent
+      at T1 are outside its scope.  The gap this document states -- the delegation-constraint
+      layer that binds a T1 action to a T0 mandate -- is therefore uncovered by that work
+      and by the deployed mechanisms of <xref target="existing"/>.  A solution to the
+      present problem would compose with, rather than replace, execution evidence: execution
+      evidence attests that an action happened under some authority, and the missing layer
+      attests that the authority was the Principal's mandate.</t>
+    </section>
+
+    <section anchor="security-considerations" numbered="true" toc="default">
+      <name>Security Considerations</name>
+
+      <t>This document defines no mechanism, so it introduces no protocol-specific
+      vulnerabilities; the considerations below are sketched to frame analysis of any
+      future solution and are not exhaustive.</t>
+
+      <t>The core hazard is the confused-deputy condition of <xref target="introduction"/>:
+      an Agent executing actions outside the Principal's intended constraints while every
+      downstream artifact -- the session, the credential, the audit log -- still validates.
+      A solution that fails REQ-1 (binding) or REQ-3 (fail-closed) leaves this hazard in
+      place while appearing to address it, which is more dangerous than an acknowledged gap.</t>
+
+      <t>Any solution moves the critical surface onto the mandate itself.  A forged mandate,
+      a mandate replayed to authorize an action the Principal has since had reason to
+      disallow, a mandate substituted for the one the Principal signed, or a mandate whose
+      constraints are widened after signing, would each let an action pass as within-mandate
+      when it is not.  The provenance and freshness of the Principal's signature at T0, and
+      the integrity of the constraint set between T0 and T1, are therefore central to any
+      analysis; a solution must specify them.</t>
+
+      <t>The absence of the Principal at T1 means a solution cannot fall back on interactive
+      human confirmation for every action; the escalating-constraint class (REQ-6) exists
+      precisely so that returning to the Principal is reserved for boundary cases rather than
+      being the only safe default.  A poorly chosen escalation boundary can fail in either
+      direction -- escalating so rarely that hard constraints are the only real protection,
+      or so often that delegation collapses into per-action approval.  The rooting of any
+      such solution in an enrollment and key-binding assumption is itself a problem treated
+      separately in <xref target="I-D.yossif-enrollment-problem"/>.</t>
+    </section>
+
+    <section anchor="no-mechanism" numbered="true" toc="default">
+      <name>No Mechanism Defined</name>
+      <t>This document defines no protocol or mechanism.  It states a problem and the
+      requirements a solution must satisfy.  The constraint classes of
+      <xref target="terminology"/> are defined conceptually and carry no evaluation
+      procedure; the requirements of <xref target="requirements"/> are properties, not
+      designs.  Any encoding, evaluation, binding construction, escalation procedure, or
+      wire format is deliberately left to a separate solution document.</t>
+    </section>
+
+    <section anchor="iana" numbered="true" toc="default">
+      <name>IANA Considerations</name>
+      <t>This document has no IANA actions.</t>
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references>
+      <name>References</name>
+
+      <references>
+        <name>Normative References</name>
+
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+          <front><title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date year="1997" month="March"/></front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+        </reference>
+
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
+          <front><title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date year="2017" month="May"/></front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+        </reference>
+      </references>
+
+      <references>
+        <name>Informative References</name>
+
+        <reference anchor="RFC6749" target="https://www.rfc-editor.org/info/rfc6749">
+          <front><title>The OAuth 2.0 Authorization Framework</title>
+            <author fullname="D. Hardt" initials="D." surname="Hardt" role="editor"/>
+            <date year="2012" month="October"/></front>
+          <seriesInfo name="RFC" value="6749"/>
+        </reference>
+
+        <reference anchor="I-D.yossif-psea" target="https://datatracker.ietf.org/doc/draft-yossif-psea/">
+          <front>
+            <title>PSEA Token Profile: An EAT Profile for Action-Bound, User-Verification-Gated Transaction-Confirmation Evidence</title>
+            <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif"/>
+            <date year="2026" month="June"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-yossif-psea-02"/>
+        </reference>
+
+        <reference anchor="I-D.yossif-enrollment-problem" target="https://datatracker.ietf.org/doc/draft-yossif-enrollment-problem/">
+          <front>
+            <title>Problem Statement: Enrollment and Key-Binding Assumptions in Execution Authority Evidence</title>
+            <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif"/>
+            <date year="2026" month="July"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-yossif-enrollment-problem-00"/>
+        </reference>
+
+        <reference anchor="AP2" target="https://github.com/google-agentic-commerce/AP2">
+          <front>
+            <title>Agent Payments Protocol (AP2)</title>
+            <author><organization>Agent Payments Protocol Project</organization></author>
+            <date year="2025"/>
+          </front>
+          <refcontent>Open specification for agent-initiated payment mandates</refcontent>
+        </reference>
+      </references>
+    </references>
+
+  </back>
+</rfc>

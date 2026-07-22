@@ -1,0 +1,560 @@
+
+
+
+
+Network Working Group                                       M. K. Yossif
+Internet-Draft                                                   Yuthent
+Intended status: Informational                              22 July 2026
+Expires: 23 January 2027
+
+
+   Problem Statement: Verifiable Human Mandates for Autonomous Agent
+                                Actions
+                 draft-yossif-agent-mandate-problem-00
+
+Abstract
+
+   An autonomous software agent commonly acts under authority a human
+   granted at an earlier moment: the human expresses and authorizes an
+   intent at one time, and the agent executes one or more concrete
+   actions at a later time.  The credentials and session state the agent
+   carries at execution time establish that some agent is authorized to
+   act, but they do not establish that this specific action, with these
+   specific parameters, falls within the constraints the human actually
+   signed.  As agent autonomy and action throughput grow, the population
+   of executed actions that no human individually bounded grows with it.
+   This document is a problem statement.  It characterizes the gap
+   between an authorized agent and an authorized action, explains why
+   existing delegation, logging, and payment-mandate mechanisms do not
+   close it, and states the requirements any solution would have to
+   satisfy.  It defines no protocol or mechanism.
+
+Note to Readers
+
+   This note is to be removed before publishing as an RFC.
+
+   This is an individual submission to the IETF.  "Informational" above
+   is the _intended_ status; this document has not been adopted by any
+   IETF working group and does not represent IETF consensus.  The author
+   intends to request dispatch of this work (for example through the
+   SECDISPATCH working group) toward consideration by an appropriate
+   working group.  Review and comments are welcome.
+
+Status of This Memo
+
+   This Internet-Draft is submitted in full conformance with the
+   provisions of BCP 78 and BCP 79.
+
+   Internet-Drafts are working documents of the Internet Engineering
+   Task Force (IETF).  Note that other groups may also distribute
+   working documents as Internet-Drafts.  The list of current Internet-
+   Drafts is at https://datatracker.ietf.org/drafts/current/.
+
+
+
+
+Yossif                   Expires 23 January 2027                [Page 1]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+   Internet-Drafts are draft documents valid for a maximum of six months
+   and may be updated, replaced, or obsoleted by other documents at any
+   time.  It is inappropriate to use Internet-Drafts as reference
+   material or to cite them other than as "work in progress."
+
+   This Internet-Draft will expire on 23 January 2027.
+
+Copyright Notice
+
+   Copyright (c) 2026 IETF Trust and the persons identified as the
+   document authors.  All rights reserved.
+
+   This document is subject to BCP 78 and the IETF Trust's Legal
+   Provisions Relating to IETF Documents (https://trustee.ietf.org/
+   license-info) in effect on the date of publication of this document.
+   Please review these documents carefully, as they describe your rights
+   and restrictions with respect to this document.  Code Components
+   extracted from this document must include Revised BSD License text as
+   described in Section 4.e of the Trust Legal Provisions and are
+   provided without warranty as described in the Revised BSD License.
+
+Table of Contents
+
+   1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   3
+   2.  Requirements Language . . . . . . . . . . . . . . . . . . . .   3
+   3.  Terminology . . . . . . . . . . . . . . . . . . . . . . . . .   4
+   4.  The Uncovered Gap . . . . . . . . . . . . . . . . . . . . . .   5
+   5.  Why Existing Mechanisms Do Not Cover the Gap  . . . . . . . .   5
+     5.1.  OAuth Scopes and Static Grants  . . . . . . . . . . . . .   5
+     5.2.  Audit Logs  . . . . . . . . . . . . . . . . . . . . . . .   6
+     5.3.  Payment-Scoped Mandates . . . . . . . . . . . . . . . . .   6
+   6.  Requirements for Any Solution . . . . . . . . . . . . . . . .   6
+   7.  Relationship to draft-yossif-psea . . . . . . . . . . . . . .   8
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   8
+   9.  No Mechanism Defined  . . . . . . . . . . . . . . . . . . . .   9
+   10. IANA Considerations . . . . . . . . . . . . . . . . . . . . .   9
+   11. References  . . . . . . . . . . . . . . . . . . . . . . . . .   9
+     11.1.  Normative References . . . . . . . . . . . . . . . . . .   9
+     11.2.  Informative References . . . . . . . . . . . . . . . . .   9
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  10
+
+
+
+
+
+
+
+
+
+
+
+Yossif                   Expires 23 January 2027                [Page 2]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+1.  Introduction
+
+   Delegated authority for autonomous agents is granted and exercised at
+   two separated moments.  At an earlier moment, call it T0, a human
+   expresses an intent and authorizes an agent to act on that intent --
+   for example, to arrange travel within a budget, to reconcile a set of
+   invoices, or to negotiate and place orders within stated limits.  At
+   a later moment, call it T1, the agent executes one or more concrete
+   actions.  The temporal separation between T0 and T1 is the defining
+   characteristic of agent delegation: the human is, by design, not
+   present at T1.
+
+   An agent that reaches T1 carrying valid credentials and a valid
+   session demonstrates that _an agent is authorized to act_.  It does
+   not demonstrate that _this action is authorized_.  Session validity
+   answers "does the caller hold authority granted at some point in the
+   past?"; it does not answer "does the specific action now being
+   executed, with its specific parameters, fall within the constraints
+   the human signed at T0?".  Nothing in the credential or the session
+   carries the human's T0 constraints forward and binds them to the T1
+   action.  This is a confused-deputy condition: the agent wields the
+   human's authority over actions the human never individually bounded.
+
+   Human review does not naturally cover the gap, because throughput
+   scales the gap.  A human can meaningfully bound a handful of actions
+   per interaction; an autonomous agent can execute thousands.  The
+   larger the ratio of executed actions to human authorization events,
+   the larger the population of actions that no human individually
+   constrained.  A mechanism that requires a human decision per action
+   defeats the purpose of delegation, and a mechanism that requires no
+   per-action human constraint leaves every action after T0 unbounded.
+   The problem is to make the human's T0 constraints verifiable at T1
+   without requiring the human to be present at T1.
+
+   This document states that problem and the requirements a solution
+   must meet.  It deliberately describes no design.  Where the text uses
+   the word "requirement", it denotes a property any solution would have
+   to exhibit, not a specification of how to achieve it.  An explicit
+   non-goal statement appears in Section 9.
+
+2.  Requirements Language
+
+   The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+   "OPTIONAL" in this document are to be interpreted as described in
+   BCP 14 [RFC2119] [RFC8174] when, and only when, they appear in all
+   capitals, as shown here.  In this document they are used to state
+   requirements _on any solution to the stated problem_; this document
+
+
+
+Yossif                   Expires 23 January 2027                [Page 3]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+   itself specifies no protocol behavior.
+
+3.  Terminology
+
+   This document uses the following terms.
+
+   Principal  The natural person whose authority the agent exercises.
+      The Principal is present at T0 and, by assumption, absent at T1.
+
+   Agent  The autonomous software entity that executes actions at T1
+      under authority the Principal granted at T0.
+
+   T0 / authorization moment  The moment at which the Principal
+      expresses an intent and authorizes the Agent to act, producing the
+      mandate.
+
+   T1 / execution moment  The moment at which the Agent executes a
+      concrete action.  One authorization at T0 may govern many
+      executions at T1.
+
+   Mandate  The set of constraints the Principal authorizes at T0,
+      expressed as data the Principal signs.  A mandate bounds the
+      actions the Agent may execute on the Principal's behalf -- for
+      example by naming permitted operations, permitted counterparties,
+      value ceilings, or a validity window.  This document treats the
+      mandate as a signed constraint set; it does not define its
+      encoding, its constraint vocabulary, or how it is evaluated.
+
+   Action parameters  The concrete attributes of an action executed at
+      T1 (for example the operation name, the counterparty, and the
+      value) that a mandate's constraints range over.
+
+   Execution evidence  The verifiable artifact produced at T1 attesting
+      that a specific action was executed under stated authority.
+      Producing such evidence is the subject of [I-D.yossif-psea]; this
+      document treats it as the T1 counterpart to the T0 mandate and
+      does not re-specify it (Section 7).
+
+   Hard constraint (class)  A constraint class whose violation is not
+      permitted under any circumstance: crossing the boundary means the
+      action is outside the mandate.  A value ceiling that may never be
+      exceeded, or a counterparty set outside of which no action may be
+      directed, are hard constraints.  This document defines the class
+      conceptually only; it specifies no means of evaluating or
+      enforcing it.
+
+   Escalating constraint (class)  A constraint class whose crossing does
+
+
+
+
+Yossif                   Expires 23 January 2027                [Page 4]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+      not by itself place the action outside the mandate but instead
+      removes the action from the Agent's autonomous authority and
+      returns the decision to the Principal for fresh authorization.  An
+      escalating constraint demotes autonomy back to a human decision
+      rather than failing the action outright.  This document defines
+      the class conceptually only; it specifies no means of evaluating
+      it, no threshold semantics, and no interaction with the Principal.
+
+   The distinction between the two constraint classes is conceptual and
+   is stated here only to make the problem precise: a mandate's
+   constraints differ in what a solution must do when the boundary is
+   approached or crossed.  Defining an evaluation mechanism for either
+   class is out of scope (Section 9).
+
+4.  The Uncovered Gap
+
+   The gap is the absence of any binding between the action executed at
+   T1 and the constraint set the Principal signed at T0.  Concretely:
+
+   *  The Principal signs a constraint set at T0, but that signature
+      travels no further than T0 unless something carries it to T1.
+
+   *  The Agent arrives at T1 with credentials and a session that prove
+      authority in general, but carry no bound copy of the Principal's
+      constraints and no way for a verifying party to test the T1 action
+      against them.
+
+   *  The party that executes or authorizes the action at T1 therefore
+      verifies that an authorized agent asked, not that the Principal
+      authorized this action.
+
+   Because the two moments are separated and the Principal is absent at
+   T1, the gap cannot be closed by asking the Principal again without
+   defeating delegation.  It can only be closed by making the T0
+   constraints verifiable at T1.  The remainder of this document
+   examines why deployed mechanisms do not do so (Section 5) and what a
+   mechanism that did would have to satisfy (Section 6).
+
+5.  Why Existing Mechanisms Do Not Cover the Gap
+
+5.1.  OAuth Scopes and Static Grants
+
+   Delegated-authorization scopes (as in OAuth 2.0 [RFC6749] access
+   tokens) describe, at grant time, the categories of resource or
+   operation a token may reach.  A scope is static with respect to the
+   individual action: it states that the bearer may perform operations
+   of a class, not that a specific action instance -- this counterparty,
+   this value, this moment -- falls within constraints a Principal
+
+
+
+Yossif                   Expires 23 January 2027                [Page 5]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+   signed.  A scope carries no per-action parameter binding and no
+   representation of a value ceiling, a permitted-counterparty set, or
+   an escalation boundary tied to the individual action.  Two actions of
+   the same class but with very different parameters are
+   indistinguishable to the scope.  Scopes are necessary infrastructure
+   for expressing that an agent may act; they do not express that the
+   specific action is within the Principal's mandate.
+
+5.2.  Audit Logs
+
+   An audit log records that an action occurred.  It is written by the
+   same system that executed the action, after the fact, and its entries
+   are assertions by that system about its own behavior.  A log is
+   therefore an assertion, not evidence in the sense a third party can
+   independently appraise: it can attest that the system believes an
+   action was authorized, but it cannot, by itself, establish to an
+   independent verifier that the action fell within a constraint set the
+   Principal signed.  A log also acts after execution: it is a record of
+   what happened, not a gate that fails an action outside the mandate
+   before it takes effect.  Logging is essential for accountability but
+   does not close a gap that must be closed at or before the moment of
+   action.
+
+5.3.  Payment-Scoped Mandates
+
+   Recent work defines signed mandates for agent-initiated _payments_.
+   The Agent Payments Protocol ([AP2]) is representative: it lets a
+   human authorize an agent to make payments within stated bounds and
+   carries that authorization to the payment execution.  Such work is
+   directly relevant, but it is scoped to payment authorization.  Its
+   constraint vocabulary and its binding are defined for the payment
+   case -- amounts, payees, and payment instruments -- and it does not
+   generalize to the arbitrary action parameters of non-payment
+   operations (for example a data export, a configuration change, a
+   clinical or administrative action, or a message dispatched on the
+   Principal's behalf).  The gap this document states is the general
+   one: binding _any_ action's parameters to a Principal-signed
+   constraint set, of which payment mandates address one important but
+   bounded case.
+
+6.  Requirements for Any Solution
+
+   A mechanism that closes the gap of Section 4 would have to satisfy
+   the requirements in this section.  These are properties of a
+   solution, stated to scope the problem; this document does not
+   describe a solution that meets them.
+
+
+
+
+
+Yossif                   Expires 23 January 2027                [Page 6]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+   REQ-1 (Action-to-mandate binding).  A solution MUST cryptographically
+   bind the parameters of the action executed at T1 to the constraint
+   set the Principal signed at T0, such that the bound action cannot be
+   altered relative to the constraints it was checked against without
+   detection.  A binding that covers only the operation class, or only
+   some parameters, does not satisfy this requirement.
+
+   REQ-2 (Deterministic server-side verifiability).  A solution MUST
+   allow a party other than the Agent to determine, deterministically
+   and without consulting the Agent, whether a given T1 action lies
+   within the Principal's T0 constraints.  The determination MUST be
+   reproducible: the same action and the same mandate MUST yield the
+   same verdict at any verifier.
+
+   REQ-3 (Fail-closed on violation).  A solution MUST fail closed.  When
+   the action is outside the mandate's hard constraints, or the binding
+   of REQ-1 cannot be verified, the action MUST NOT be treated as
+   authorized.  Absence of a positive, verifiable within-mandate result
+   MUST be treated as outside the mandate, not as permission.
+
+   REQ-4 (Independently verifiable evidence output).  A solution MUST
+   produce evidence of the within-mandate determination that an
+   independent party can verify from the evidence and the mandate alone,
+   without trusting the executing system's own assertion and without a
+   shared secret with, or permission from, the executing system.
+
+   REQ-5 (Transport and format neutrality).  A solution MUST NOT depend
+   on a particular transport, a particular agent framework, or a
+   particular action-payload encoding.  The binding and the
+   verifiability requirements MUST hold regardless of how the action is
+   conveyed, so that the mechanism applies across the range of
+   operations an agent may execute rather than to a single vertical.
+
+   REQ-6 (Escalation without re-centralizing every action).  A solution
+   SHOULD support the escalating-constraint class of Section 3: it
+   SHOULD be able to return a specific action to the Principal for fresh
+   authorization when an escalating boundary is crossed, without
+   requiring the Principal to authorize every action individually.  A
+   solution that can only either allow all actions autonomously or
+   require a human decision on each one does not meet the throughput
+   reality described in Section 1.
+
+
+
+
+
+
+
+
+
+
+Yossif                   Expires 23 January 2027                [Page 7]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+7.  Relationship to draft-yossif-psea
+
+   This section is informative.  [I-D.yossif-psea] defines a token
+   profile for _execution evidence_: a signed, action-bound artifact
+   that a specific action was executed under a stated, user-
+   verification-gated authority at the moment of execution.  In the
+   terms of this document, that work addresses the T1 side -- producing
+   verifiable evidence at the execution moment -- and it binds what is
+   executed to what is signed at T1.
+
+   It does not address the T0 side.  It does not carry a Principal's
+   earlier-signed constraint set forward and test the T1 action against
+   it; the constraint set, its provenance, and the delegation
+   relationship between a Principal at T0 and an Agent at T1 are outside
+   its scope.  The gap this document states -- the delegation-constraint
+   layer that binds a T1 action to a T0 mandate -- is therefore
+   uncovered by that work and by the deployed mechanisms of Section 5.
+   A solution to the present problem would compose with, rather than
+   replace, execution evidence: execution evidence attests that an
+   action happened under some authority, and the missing layer attests
+   that the authority was the Principal's mandate.
+
+8.  Security Considerations
+
+   This document defines no mechanism, so it introduces no protocol-
+   specific vulnerabilities; the considerations below are sketched to
+   frame analysis of any future solution and are not exhaustive.
+
+   The core hazard is the confused-deputy condition of Section 1: an
+   Agent executing actions outside the Principal's intended constraints
+   while every downstream artifact -- the session, the credential, the
+   audit log -- still validates.  A solution that fails REQ-1 (binding)
+   or REQ-3 (fail-closed) leaves this hazard in place while appearing to
+   address it, which is more dangerous than an acknowledged gap.
+
+   Any solution moves the critical surface onto the mandate itself.  A
+   forged mandate, a mandate replayed to authorize an action the
+   Principal has since had reason to disallow, a mandate substituted for
+   the one the Principal signed, or a mandate whose constraints are
+   widened after signing, would each let an action pass as within-
+   mandate when it is not.  The provenance and freshness of the
+   Principal's signature at T0, and the integrity of the constraint set
+   between T0 and T1, are therefore central to any analysis; a solution
+   must specify them.
+
+   The absence of the Principal at T1 means a solution cannot fall back
+   on interactive human confirmation for every action; the escalating-
+   constraint class (REQ-6) exists precisely so that returning to the
+
+
+
+Yossif                   Expires 23 January 2027                [Page 8]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+   Principal is reserved for boundary cases rather than being the only
+   safe default.  A poorly chosen escalation boundary can fail in either
+   direction -- escalating so rarely that hard constraints are the only
+   real protection, or so often that delegation collapses into per-
+   action approval.  The rooting of any such solution in an enrollment
+   and key-binding assumption is itself a problem treated separately in
+   [I-D.yossif-enrollment-problem].
+
+9.  No Mechanism Defined
+
+   This document defines no protocol or mechanism.  It states a problem
+   and the requirements a solution must satisfy.  The constraint classes
+   of Section 3 are defined conceptually and carry no evaluation
+   procedure; the requirements of Section 6 are properties, not designs.
+   Any encoding, evaluation, binding construction, escalation procedure,
+   or wire format is deliberately left to a separate solution document.
+
+10.  IANA Considerations
+
+   This document has no IANA actions.
+
+11.  References
+
+11.1.  Normative References
+
+   [RFC2119]  Bradner, S., "Key words for use in RFCs to Indicate
+              Requirement Levels", BCP 14, RFC 2119, March 1997,
+              <https://www.rfc-editor.org/info/rfc2119>.
+
+   [RFC8174]  Leiba, B., "Ambiguity of Uppercase vs Lowercase in RFC
+              2119 Key Words", BCP 14, RFC 8174, May 2017,
+              <https://www.rfc-editor.org/info/rfc8174>.
+
+11.2.  Informative References
+
+   [RFC6749]  Hardt, D., Ed., "The OAuth 2.0 Authorization Framework",
+              RFC 6749, October 2012,
+              <https://www.rfc-editor.org/info/rfc6749>.
+
+   [I-D.yossif-psea]
+              Yossif, M. K., "PSEA Token Profile: An EAT Profile for
+              Action-Bound, User-Verification-Gated Transaction-
+              Confirmation Evidence", Work in Progress, Internet-Draft,
+              draft-yossif-psea-02, June 2026,
+              <https://datatracker.ietf.org/doc/draft-yossif-psea/>.
+
+
+
+
+
+
+Yossif                   Expires 23 January 2027                [Page 9]
+
+Internet-Draft       Agent Mandate Problem Statement           July 2026
+
+
+   [I-D.yossif-enrollment-problem]
+              Yossif, M. K., "Problem Statement: Enrollment and Key-
+              Binding Assumptions in Execution Authority Evidence", Work
+              in Progress, Internet-Draft, draft-yossif-enrollment-
+              problem-00, July 2026, <https://datatracker.ietf.org/doc/
+              draft-yossif-enrollment-problem/>.
+
+   [AP2]      Agent Payments Protocol Project, "Agent Payments Protocol
+              (AP2)", Open specification for agent-initiated payment
+              mandates, 2025,
+              <https://github.com/google-agentic-commerce/AP2>.
+
+Author's Address
+
+   Mohamad Khalil Yossif
+   Yuthent
+   Email: mohamad@yuthent.com
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                   Expires 23 January 2027               [Page 10]

@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE rfc [
+  <!ENTITY nbsp    "&#160;">
+  <!ENTITY zwsp   "&#8203;">
+  <!ENTITY nbhy   "&#8209;">
+  <!ENTITY wj     "&#8288;">
+]>
+<rfc version="3" ipr="trust200902" submissionType="IETF" category="info"
+     docName="draft-yossif-enrollment-problem-00"
+     xmlns:xi="http://www.w3.org/2001/XInclude">
+
+  <front>
+    <title abbrev="Enrollment Problem Statement">Problem Statement: Enrollment and Key-Binding Assumptions in Execution Authority Evidence</title>
+
+    <seriesInfo name="Internet-Draft" value="draft-yossif-enrollment-problem-00"/>
+
+    <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif">
+      <organization>Yuthent</organization>
+      <address>
+        <email>mohamad@yuthent.com</email>
+      </address>
+    </author>
+
+    <date year="2026" month="July" day="22"/>
+
+    <area>Security</area>
+
+    <keyword>enrollment</keyword>
+    <keyword>key binding</keyword>
+    <keyword>attestation</keyword>
+    <keyword>root of trust</keyword>
+    <keyword>problem statement</keyword>
+
+    <abstract>
+      <t>Any scheme that produces cryptographic evidence of execution authority roots its
+      entire trust chain in an enrollment: the moment at which a key becomes bound to a
+      subject and a device, and at which a verifier begins to treat signatures under that
+      key as meaningful.  Every downstream proof is only as trustworthy as that binding.
+      If an attacker substitutes a key of their choosing at enrollment, every subsequent
+      proof verifies correctly and yet attests to the wrong party.  This document is a
+      problem statement.  It describes the foundational key-substitution threat, records
+      the relevant public facts about consumer-platform biometric and key APIs that bound
+      what an enrollment can establish, and states the assumptions a verifier of execution
+      authority evidence must be able to make about the enrollment its proofs depend on.
+      Specific enrollment ceremonies are out of scope.  This document defines no protocol
+      or mechanism.</t>
+    </abstract>
+
+    <note removeInRFC="true">
+      <name>Note to Readers</name>
+      <t>This is an individual submission to the IETF.  "Informational" above is the
+      <em>intended</em> status; this document has not been adopted by any IETF working
+      group and does not represent IETF consensus.  The author intends to request
+      dispatch of this work (for example through the SECDISPATCH working group) toward
+      consideration by an appropriate working group.  Review and comments are welcome.</t>
+    </note>
+  </front>
+
+  <middle>
+
+    <section anchor="introduction" numbered="true" toc="default">
+      <name>Introduction</name>
+
+      <t>Execution-authority evidence -- a signed proof that a present, verified human
+      approved a specific action -- lets a verifier appraise a signature and conclude that
+      an enrolled key produced it.  The strength of that conclusion depends entirely on a
+      prior fact the proof itself does not carry: that the key was bound, at enrollment, to
+      the subject and device the verifier believes it belongs to.  A proof establishes
+      "this enrolled key signed this action"; it cannot establish "this key is the right
+      key" -- that is settled, or not, at enrollment.</t>
+
+      <t>Key substitution at enrollment is therefore the foundational threat.  If an
+      attacker causes a key of their choosing to be enrolled in place of, or alongside, the
+      legitimate subject's key, then every proof the attacker later produces verifies
+      correctly against the enrolled public key.  Signature verification, freshness checks,
+      action binding, replay counters, and lifecycle checks all pass, because they are all
+      evaluated relative to the enrolled key -- and the enrolled key is the attacker's.  No
+      amount of downstream cryptographic rigor recovers from a wrong binding at the root:
+      the entire evidence chain inherits the trust of its enrollment and can be no stronger.</t>
+
+      <t>This makes enrollment the security-critical joint of any execution-authority
+      scheme, and yet the point most often left to an unspecified, deployment-local
+      procedure.  A verifier that appraises proofs is implicitly relying on properties of
+      that procedure it did not observe and cannot re-derive from the proof.  This document
+      makes those reliances explicit.  It states the problem -- what a verifier must be able
+      to assume about enrollment, and what platform reality permits an enrollment to
+      establish -- and deliberately does not prescribe a solution.  The concrete steps of
+      any enrollment ceremony are out of scope (<xref target="out-of-scope"/>).</t>
+    </section>
+
+    <section anchor="requirements-language" numbered="true" toc="default">
+      <name>Requirements Language</name>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+      "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and
+      "OPTIONAL" in this document are to be interpreted as described in
+      BCP&nbsp;14 <xref target="RFC2119"/> <xref target="RFC8174"/> when, and
+      only when, they appear in all capitals, as shown here.  In this document
+      they are used to state assumptions a verifier must be able to make and
+      requirements <em>on any enrollment a verifier depends on</em>; this
+      document itself specifies no enrollment procedure.</t>
+    </section>
+
+    <section anchor="terminology" numbered="true" toc="default">
+      <name>Terminology</name>
+
+      <t>The verifier / attester / relying-party role terms are used in the sense of the
+      RATS architecture <xref target="RFC9334"/>.</t>
+
+      <dl>
+        <dt>Subject</dt>
+        <dd>The natural person whose presence and approval a downstream proof attests to.</dd>
+
+        <dt>Enrollment</dt>
+        <dd>The event that establishes a binding between a signing key, a subject, and a
+        device, and after which a verifier treats signatures under that key as evidence about
+        the subject.  This document treats enrollment as an abstract event with security
+        properties a verifier depends on; it does not define how enrollment is performed.</dd>
+
+        <dt>Key binding</dt>
+        <dd>The association between a public key (identified to a verifier by a key
+        identifier, "kid") and the subject and device it was enrolled for.  A verifier
+        resolves a proof's kid to an enrolled key and appraises the proof relative to that
+        binding.</dd>
+
+        <dt>Key-substitution attack</dt>
+        <dd>An attack in which a key controlled by an adversary is enrolled in place of, or in
+        addition to, the legitimate subject's key, so that adversary-produced proofs verify as
+        if they were the subject's.</dd>
+
+        <dt>Attestation evidence (at enrollment)</dt>
+        <dd>Evidence, available at enrollment, that the key being enrolled resides in and was
+        generated by a genuine, policy-conforming device key store.  This document refers to
+        the existence and appraisal of such evidence as an assumption; it does not specify its
+        format, its issuance, or the ceremony that captures it.</dd>
+
+        <dt>Lifecycle state</dt>
+        <dd>The status a verifier maintains for an enrollment -- at minimum active, suspended,
+        and revoked -- governing whether proofs under the enrolled key are currently honored.</dd>
+      </dl>
+    </section>
+
+    <section anchor="platform-reality" numbered="true" toc="default">
+      <name>Platform Reality</name>
+
+      <t>The assumptions a verifier would like to make about enrollment are bounded by what
+      consumer operating-system biometric and key-store APIs actually expose.  The facts in
+      this section are public properties of widely deployed mobile platforms and constrain
+      what any enrollment built on them can establish.  They are stated so that the
+      requirements of <xref target="assumptions"/> are grounded in what is achievable rather
+      than in what would be convenient.</t>
+
+      <section anchor="reality-match-only" numbered="true">
+        <name>Biometric APIs Report Match, Not Identity</name>
+        <t>Consumer-platform biometric authentication APIs return a match success or failure
+        result.  They do not report <em>which</em> enrolled biometric matched.  A successful
+        result establishes that some biometric enrolled on the device satisfied the platform's
+        matcher; it does not identify a particular finger, face, or other enrolled template,
+        and it does not distinguish among multiple enrolled biometrics.  An enrollment that
+        gates a key on biometric authentication therefore binds the key to "a biometric
+        enrolled on this device", not to a specific, individually identified biometric.</t>
+      </section>
+
+      <section anchor="reality-count" numbered="true">
+        <name>Enrollment Count Is Not Third-Party Readable</name>
+        <t>The number of distinct biometrics enrolled on a device is not exposed to a
+        third-party application.  An application cannot enumerate the enrolled set or read its
+        size; it can observe only the platform's authentication result and, where the platform
+        provides it, an opaque indicator that the set has changed (below).  An enrollment
+        procedure therefore cannot, from within a third-party application, establish that the
+        device holds exactly one enrolled biometric, nor attribute a match to a known member of
+        the set.</t>
+      </section>
+
+      <section anchor="reality-invalidation" numbered="true">
+        <name>Change-Invalidation Catches Only Post-Binding Additions</name>
+        <t>Platform key stores can invalidate a biometric-gated key when the device's enrolled
+        biometric set is modified after the key was created.  This mechanism detects
+        <em>changes made after</em> the key was bound: a biometric added, or the set otherwise
+        altered, subsequent to key creation causes the platform to invalidate the key.  It
+        does not, and cannot, retroactively characterize the biometrics already enrolled at the
+        moment of binding.  Whatever was present in the enrolled set when the key was created is
+        inside the binding from the start; only later modifications are observable as such.
+        Consequently, invalidation-on-change protects the integrity of an enrollment going
+        forward from binding time, but says nothing about the composition of the enrolled set at
+        binding time.</t>
+      </section>
+    </section>
+
+    <section anchor="assumptions" numbered="true" toc="default">
+      <name>Assumptions a Verifier Must Be Able to Make</name>
+
+      <t>A verifier of execution-authority evidence appraises each proof relative to an
+      enrollment it did not perform.  For that appraisal to be sound, the verifier must be
+      able to make the assumptions in this section about the enrollment.  These are stated as
+      requirements on any enrollment a verifier depends on, and as the corresponding facts the
+      verifier must be able to establish.  This document does not specify how an enrollment
+      satisfies them; it specifies only that a sound scheme must satisfy them.</t>
+
+      <t>ASSUME-1 (Key-binding provenance).  The verifier MUST be able to resolve a proof's kid
+      to an enrolled key whose binding to the subject and device has known, appraisable
+      provenance.  It MUST NOT have to accept, as the basis of appraisal, a kid-to-key binding
+      of unknown origin.  The provenance MUST be such that a substituted key
+      (<xref target="terminology"/>) is detectable at enrollment rather than being silently
+      accepted and honored on every later proof.</t>
+
+      <t>ASSUME-2 (Attestation evidence at enrollment).  The verifier MUST be able to assume
+      that, at enrollment, evidence was captured and appraised establishing that the enrolled
+      key resides in and was generated by a genuine, policy-conforming device key store, rather
+      than being an arbitrary key asserted by client software.  This document states the need
+      for such evidence and its appraisal; the specific evidence formats, the challenge or
+      freshness construction, and the ceremony that captures them are out of scope
+      (<xref target="out-of-scope"/>).</t>
+
+      <t>ASSUME-3 (Lifecycle states).  The verifier MUST maintain, and be able to rely on, an
+      authoritative lifecycle for each enrollment with at minimum the states active, suspended,
+      and revoked.  It MUST honor proofs only for an active enrollment and MUST be able to move
+      an enrollment out of the active state, so that a compromised or retired binding stops
+      being a valid root for new proofs.  Revocation SHOULD be terminal for the compromised
+      binding: recovering authority SHOULD require a fresh enrollment rather than reactivation
+      of the suspect binding.</t>
+
+      <t>ASSUME-4 (Invalidation on biometric-set change).  Where the enrollment gates the
+      signing key on biometric user verification, the verifier MUST be able to assume that a
+      modification of the device's enrolled biometric set after binding invalidates the key, so
+      that a biometric added after enrollment cannot silently gain the authority of the enrolled
+      key.  Per <xref target="reality-invalidation"/>, this assumption covers post-binding
+      modifications only; it does not extend to the composition of the enrolled set at binding
+      time, and a scheme MUST NOT assume otherwise.</t>
+
+      <t>The platform facts of <xref target="platform-reality"/> bound these assumptions.  In
+      particular, because a biometric match does not identify which biometric matched
+      (<xref target="reality-match-only"/>) and the enrolled count is not third-party readable
+      (<xref target="reality-count"/>), ASSUME-4 binds a key to "a biometric enrolled at binding
+      time and unchanged since", which is the strongest binding the platform permits and is
+      weaker than a binding to a specific, individually identified biometric.  A scheme's
+      analysis MUST reflect that limit rather than assume an identity-level biometric binding the
+      platform does not provide.</t>
+    </section>
+
+    <section anchor="relationship-psea" numbered="true" toc="default">
+      <name>Relationship to draft-yossif-psea</name>
+
+      <t>This section is informative.  <xref target="I-D.yossif-psea"/> defines a token profile
+      for execution-authority evidence and states explicitly that enrollment is the root of
+      trust while placing the enrollment procedure itself out of its scope.  That is a
+      deliberate and defensible scope boundary: a token profile can specify what a proof carries
+      and how a verifier appraises it without mandating a single enrollment ceremony.</t>
+
+      <t>The consequence, however, is that the profile's guarantees are conditional on
+      enrollment assumptions the profile does not itself state in full.  This document does not
+      change that scope boundary; it documents what the boundary assumes.  The assumptions of
+      <xref target="assumptions"/> are the reliances a verifier of such proofs is already making
+      implicitly, made explicit so that a deployment can be held to them and so that the
+      key-substitution threat of <xref target="introduction"/> is addressed where it actually
+      lives -- at the root -- rather than being obscured by the rigor of the downstream proof.
+      The delegation-constraint problem that sits above execution evidence is treated separately
+      in <xref target="I-D.yossif-agent-mandate-problem"/>.</t>
+    </section>
+
+    <section anchor="security-considerations" numbered="true" toc="default">
+      <name>Security Considerations</name>
+
+      <t>This document defines no mechanism; the considerations below frame analysis of any
+      enrollment a verifier depends on and are not exhaustive.</t>
+
+      <t>The dominant threat is key substitution at enrollment
+      (<xref target="introduction"/>): it is undetectable downstream by construction, because
+      every downstream check is evaluated relative to the enrolled key.  A scheme that hardens
+      the proof path while leaving enrollment provenance (ASSUME-1) or enrollment-time
+      attestation (ASSUME-2) unspecified concentrates all residual risk at the point it has left
+      unaddressed, and gains little assurance overall.  The strength of the whole chain is the
+      strength of the enrollment binding.</t>
+
+      <t>The platform limits of <xref target="platform-reality"/> are themselves security-relevant.
+      Because a biometric match does not identify the matching biometric and the enrolled set's
+      size is not readable, a deployment cannot assume that biometric gating binds a key to one
+      specific person's biometric to the exclusion of every other biometric enrolled on the
+      device; it binds to the enrolled set as it stood at binding time.  A biometric enrolled on
+      the device before the key was bound is inside the binding and is not caught by
+      change-invalidation (ASSUME-4, <xref target="reality-invalidation"/>).  A scheme that
+      overstates the biometric binding -- treating "a biometric on this device approved" as
+      "this specific individual approved" -- makes a claim the platform does not support.</t>
+
+      <t>Lifecycle handling (ASSUME-3) is the recovery path when a binding is found to be
+      compromised.  A verifier that cannot authoritatively suspend or revoke an enrollment, or
+      that permits a revoked binding to be reactivated rather than requiring fresh enrollment,
+      leaves a known-bad root able to produce honored proofs.  Because this document specifies no
+      ceremony, the freshness and provenance guarantees that a concrete enrollment would need are
+      not analyzed here and are deferred to a document that defines one.</t>
+    </section>
+
+    <section anchor="out-of-scope" numbered="true" toc="default">
+      <name>Out of Scope</name>
+      <t>Specific enrollment ceremonies are out of scope of this document.  It defines no
+      procedure by which a device and key are enrolled, no attestation-evidence format or its
+      freshness construction, no supervision or provisioning model, and no wire protocol.  It
+      states only the threat, the platform facts that bound what an enrollment can establish, and
+      the assumptions a verifier must be able to make about whatever enrollment a deployment
+      chooses.  Any concrete enrollment design is left to a separate document.</t>
+    </section>
+
+    <section anchor="iana" numbered="true" toc="default">
+      <name>IANA Considerations</name>
+      <t>This document has no IANA actions.</t>
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references>
+      <name>References</name>
+
+      <references>
+        <name>Normative References</name>
+
+        <reference anchor="RFC2119" target="https://www.rfc-editor.org/info/rfc2119">
+          <front><title>Key words for use in RFCs to Indicate Requirement Levels</title>
+            <author fullname="S. Bradner" initials="S." surname="Bradner"/>
+            <date year="1997" month="March"/></front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="2119"/>
+        </reference>
+
+        <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
+          <front><title>Ambiguity of Uppercase vs Lowercase in RFC 2119 Key Words</title>
+            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
+            <date year="2017" month="May"/></front>
+          <seriesInfo name="BCP" value="14"/>
+          <seriesInfo name="RFC" value="8174"/>
+        </reference>
+      </references>
+
+      <references>
+        <name>Informative References</name>
+
+        <reference anchor="RFC9334" target="https://www.rfc-editor.org/info/rfc9334">
+          <front><title>Remote ATtestation procedureS (RATS) Architecture</title>
+            <author fullname="H. Birkholz" initials="H." surname="Birkholz"/>
+            <author fullname="D. Thaler" initials="D." surname="Thaler"/>
+            <author fullname="M. Richardson" initials="M." surname="Richardson"/>
+            <author fullname="N. Smith" initials="N." surname="Smith"/>
+            <author fullname="W. Pan" initials="W." surname="Pan"/>
+            <date year="2023" month="January"/></front>
+          <seriesInfo name="RFC" value="9334"/>
+        </reference>
+
+        <reference anchor="I-D.yossif-psea" target="https://datatracker.ietf.org/doc/draft-yossif-psea/">
+          <front>
+            <title>PSEA Token Profile: An EAT Profile for Action-Bound, User-Verification-Gated Transaction-Confirmation Evidence</title>
+            <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif"/>
+            <date year="2026" month="June"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-yossif-psea-02"/>
+        </reference>
+
+        <reference anchor="I-D.yossif-agent-mandate-problem" target="https://datatracker.ietf.org/doc/draft-yossif-agent-mandate-problem/">
+          <front>
+            <title>Problem Statement: Verifiable Human Mandates for Autonomous Agent Actions</title>
+            <author fullname="Mohamad Khalil Yossif" initials="M. K." surname="Yossif"/>
+            <date year="2026" month="July"/>
+          </front>
+          <seriesInfo name="Internet-Draft" value="draft-yossif-agent-mandate-problem-00"/>
+        </reference>
+      </references>
+    </references>
+
+  </back>
+</rfc>
