@@ -224,11 +224,11 @@
 
       <section anchor="existing-payments" numbered="true">
         <name>Payment-Scoped Mandates</name>
-        <t>Recent work defines signed mandates for agent-initiated <em>payments</em>.  The
-        Agent Payments Protocol (<xref target="AP2"/>) is representative: it lets a human
-        authorize an agent to make payments within stated bounds and carries that
-        authorization to the payment execution.  Such work is directly relevant, but it is
-        scoped to payment authorization.  Its constraint vocabulary and its binding are
+        <t>Recent work defines signed mandates for agent-initiated <em>payments</em>.
+        Specialized frameworks such as <xref target="AP2"/> facilitate transaction-specific
+        consent, letting a human authorize an agent to make payments within stated bounds and
+        carrying that authorization to the payment execution.  Such work is directly relevant,
+        but it is scoped to payment authorization.  Its constraint vocabulary and its binding are
         defined for the payment case -- amounts, payees, and payment instruments -- and it
         does not generalize to the arbitrary action parameters of non-payment operations
         (for example a data export, a configuration change, a clinical or administrative
@@ -405,13 +405,12 @@
           <seriesInfo name="Internet-Draft" value="draft-yossif-enrollment-problem-00"/>
         </reference>
 
-        <reference anchor="AP2" target="https://github.com/google-agentic-commerce/AP2">
+        <reference anchor="AP2" target="https://ap2-protocol.org/">
           <front>
             <title>Agent Payments Protocol (AP2)</title>
-            <author><organization>Agent Payments Protocol Project</organization></author>
+            <author><organization>Google</organization></author>
             <date year="2025"/>
           </front>
-          <refcontent>Open specification for agent-initiated payment mandates</refcontent>
         </reference>
       </references>
     </references>

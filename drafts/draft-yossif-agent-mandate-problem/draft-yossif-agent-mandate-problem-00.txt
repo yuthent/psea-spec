@@ -308,19 +308,19 @@ Internet-Draft       Agent Mandate Problem Statement           July 2026
 5.3.  Payment-Scoped Mandates
 
    Recent work defines signed mandates for agent-initiated _payments_.
-   The Agent Payments Protocol ([AP2]) is representative: it lets a
-   human authorize an agent to make payments within stated bounds and
-   carries that authorization to the payment execution.  Such work is
-   directly relevant, but it is scoped to payment authorization.  Its
-   constraint vocabulary and its binding are defined for the payment
-   case -- amounts, payees, and payment instruments -- and it does not
-   generalize to the arbitrary action parameters of non-payment
-   operations (for example a data export, a configuration change, a
-   clinical or administrative action, or a message dispatched on the
-   Principal's behalf).  The gap this document states is the general
-   one: binding _any_ action's parameters to a Principal-signed
-   constraint set, of which payment mandates address one important but
-   bounded case.
+   Specialized frameworks such as [AP2] facilitate transaction-specific
+   consent, letting a human authorize an agent to make payments within
+   stated bounds and carrying that authorization to the payment
+   execution.  Such work is directly relevant, but it is scoped to
+   payment authorization.  Its constraint vocabulary and its binding are
+   defined for the payment case -- amounts, payees, and payment
+   instruments -- and it does not generalize to the arbitrary action
+   parameters of non-payment operations (for example a data export, a
+   configuration change, a clinical or administrative action, or a
+   message dispatched on the Principal's behalf).  The gap this document
+   states is the general one: binding _any_ action's parameters to a
+   Principal-signed constraint set, of which payment mandates address
+   one important but bounded case.
 
 6.  Requirements for Any Solution
 
@@ -513,16 +513,16 @@ Internet-Draft       Agent Mandate Problem Statement           July 2026
               problem-00, July 2026, <https://datatracker.ietf.org/doc/
               draft-yossif-enrollment-problem/>.
 
-   [AP2]      Agent Payments Protocol Project, "Agent Payments Protocol
-              (AP2)", Open specification for agent-initiated payment
-              mandates, 2025,
-              <https://github.com/google-agentic-commerce/AP2>.
+   [AP2]      Google, "Agent Payments Protocol (AP2)", 2025,
+              <https://ap2-protocol.org/>.
 
 Author's Address
 
    Mohamad Khalil Yossif
    Yuthent
    Email: mohamad@yuthent.com
+
+
 
 
 
