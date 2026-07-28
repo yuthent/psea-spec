@@ -19,14 +19,16 @@ jobs:
         working-directory: conformance
         run: python3 -m pip install --disable-pip-version-check -r requirements.txt
 
-      # run.py exits 0 even when rows fail: the three failures (N3, N11, M1) are
-      # known properties the profile does not have, documented in RESULTS.md.
-      # A non-zero exit here therefore means the harness itself broke.
-      - name: Run conformance harness
+      # check.py runs the suite in-process and asserts the verdict counts, the
+      # failing row set, and every row's refusal code against the committed
+      # baseline. run.py alone exits 0 whatever the rows do — the three failures
+      # (N3, N11, M1) are expected — so it cannot detect a row flipping.
+      # A failure here means the profile's behaviour moved.
+      - name: Check conformance against recorded state
         working-directory: conformance
         run: |
           set -euo pipefail
-          python3 src/run.py
+          python3 src/check.py
 
       - name: Verify RESULTS.md digest
         working-directory: conformance

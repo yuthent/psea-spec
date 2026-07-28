@@ -82,7 +82,8 @@ most.
 
     cd conformance
     python3 -m pip install -r requirements.txt
-    python3 src/run.py
+    python3 src/run.py       # report the rows
+    python3 src/check.py     # assert they still match the recorded state
 
 Output is a JSON report on stdout. The single dependency is
 [`cryptography`](https://pypi.org/project/cryptography/); there are no others,
@@ -93,6 +94,13 @@ tokens are not fixtures and cannot be replayed between runs. Consequently the
 JSON output is **not** byte-reproducible across runs — the per-row verdicts are
 the stable surface, not the bytes.
 
-Note that `src/run.py` exits 0 even when rows fail, because the three failures
-above are known and expected. A non-zero exit therefore means the harness itself
-broke, not that the profile regressed.
+`src/run.py` reports; it does not judge. It exits 0 whatever the rows do,
+because the three failures above are known and expected — so on its own it
+cannot tell you that a row flipped.
+
+`src/check.py` is the regression gate, and is what CI runs. It executes the
+suite in-process and asserts the verdict counts, the failing row set, and every
+row's refusal code against `results/psea-02-selfrun.json`, exiting 1 with a diff
+if any of them moved. The expected state is a single dict at the top of that
+file. It must be updated deliberately when the profile changes; re-baselining it
+to make a red build go green discards the only signal this suite produces.
