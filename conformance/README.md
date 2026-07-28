@@ -60,6 +60,10 @@ Full per-row detail, including the passing rows and the three digest-encoding
 rows, is in [RESULTS.md](RESULTS.md). The recorded run is in
 [results/psea-02-selfrun.json](results/psea-02-selfrun.json).
 
+[`interop-aae/`](interop-aae/) holds the PSEA side of a candidate two-way
+cross-run with draft-kroehl-agentic-trust-aae — one action, two proofs from
+different principals, three composition cases — and is **not frozen**.
+
 ## This is ONE implementation
 
 **Nothing here is a conformance claim.** Section 7 of
