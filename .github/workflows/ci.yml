@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  conformance:
+    name: Conformance harness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install harness dependencies
+        working-directory: conformance
+        run: python3 -m pip install --disable-pip-version-check -r requirements.txt
+
+      # run.py exits 0 even when rows fail: the three failures (N3, N11, M1) are
+      # known properties the profile does not have, documented in RESULTS.md.
+      # A non-zero exit here therefore means the harness itself broke.
+      - name: Run conformance harness
+        working-directory: conformance
+        run: |
+          set -euo pipefail
+          python3 src/run.py
+
+      - name: Verify RESULTS.md digest
+        working-directory: conformance
+        run: |
+          set -euo pipefail
+          sha256sum -c results/RESULTS.sha256
+
+  drafts:
+    name: Draft build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install xml2rfc
+        run: python3 -m pip install --disable-pip-version-check xml2rfc
+
+      # Builds to a scratch directory so the checked-in artifacts under drafts/
+      # are never rewritten by CI. xml2rfc exits non-zero on error; warnings
+      # (artwork width, over-long lines) do not fail the build.
+      #
+      # idnits is deliberately NOT run here yet. It emits ~60 line-length
+      # warnings from the JSON Schema block of draft-yossif-psea-02 and would
+      # fail every run. Add it once those are resolved in a future revision.
+      - name: Build every draft
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/draft-build
+          shopt -s nullglob
+          found=0
+          for xml in drafts/*/*.xml; do
+            found=1
+            echo "::group::xml2rfc --text $xml"
+            xml2rfc --text "$xml" -o "/tmp/draft-build/$(basename "${xml%.xml}").txt"
+            echo "::endgroup::"
+          done
+          if [ "$found" -eq 0 ]; then
+            echo "No draft XML found under drafts/*/*.xml" >&2
+            exit 1
+          fi

@@ -1,0 +1,198 @@
+{
+ "suite": "psea-02 vs composition-00 S5.2 WHO negative classes",
+ "profile": "draft-yossif-psea-02",
+ "target": "draft-mih-sato-agent-accountability-composition-00",
+ "implementations": 1,
+ "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",
+ "rows": [
+  {
+   "id": "N1",
+   "class": "semantically similar input, different canonical bytes",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "DIGEST_MISMATCH",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N2",
+   "class": "changed subject",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "DIGEST_MISMATCH",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N3",
+   "class": "changed authorizing-principal reference",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "ACCEPT",
+   "detail": "{'result': 'VERIFIED', 'uv_anchoring': 'attested', 'principal_ref': None, 'enrolled_principal': 'alice', 'digest_b64_std': 'xO32OZL4SXUZpCltNVnDcHf3q7P2lRmF+Cr3pRDekC8=', 'digest_octets': b'\\xc4\\xed\\xf69\\x92\\xf8Iu\\x19\\xa4)m5Y\\xc3pw\\xf7\\xab\\xb3\\xf6\\x95\\x19\\x85\\xf8*\\xf7\\xa5\\x10\\xde\\x90/'}",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "N4",
+   "class": "replay under a different action",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "OP_MISMATCH",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N5",
+   "class": "quorum: non-distinct principal fills two slots",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "NOT_REPRESENTABLE",
+   "detail": "profile defines no quorum construct",
+   "verdict": "NOT_APPLICABLE"
+  },
+  {
+   "id": "N6",
+   "class": "quorum: ordered quorum satisfied out of order",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "NOT_REPRESENTABLE",
+   "detail": "profile defines no quorum construct",
+   "verdict": "NOT_APPLICABLE"
+  },
+  {
+   "id": "N7",
+   "class": "quorum: threshold not met",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "NOT_REPRESENTABLE",
+   "detail": "profile defines no quorum construct",
+   "verdict": "NOT_APPLICABLE"
+  },
+  {
+   "id": "N8",
+   "class": "mismatched or absent signature",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SIG_INVALID",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N9",
+   "class": "signature verifies but does not cover the subject digest",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "NOT_REPRESENTABLE",
+   "detail": "digest is inside the signed payload by construction",
+   "verdict": "NOT_APPLICABLE"
+  },
+  {
+   "id": "N10",
+   "class": "stale receipt",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "EXPIRED",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N11",
+   "class": "post-hoc ratification presented as pre-execution authorization",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "ACCEPT",
+   "detail": "{'result': 'VERIFIED', 'uv_anchoring': 'attested', 'principal_ref': None, 'enrolled_principal': 'alice', 'digest_b64_std': 'xO32OZL4SXUZpCltNVnDcHf3q7P2lRmF+Cr3pRDekC8=', 'digest_octets': b'\\xc4\\xed\\xf69\\x92\\xf8Iu\\x19\\xa4)m5Y\\xc3pw\\xf7\\xab\\xb3\\xf6\\x95\\x19\\x85\\xf8*\\xf7\\xa5\\x10\\xde\\x90/'}",
+   "verdict": "FAIL"
+  },
+  {
+   "id": "N12a",
+   "class": "one-time authorization replayed",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "JTI_REPLAY",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N12b",
+   "class": "reusable authorization presented as one-time",
+   "source": "5.2",
+   "expected": "REFUSE",
+   "observed": "NOT_REPRESENTABLE",
+   "detail": "profile defines no reusable mode",
+   "verdict": "NOT_APPLICABLE"
+  },
+  {
+   "id": "N13",
+   "class": "unattested UV anchoring accepted for a high-assurance operation",
+   "source": "3.7.1",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "UV_UNATTESTED_HIGH_ASSURANCE",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N14",
+   "class": "psea_uv contradicted by platform attestation",
+   "source": "3.7.1",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "UV_CONTRADICTED_BY_ATTESTATION",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N15",
+   "class": "header alg none",
+   "source": "3.4",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "HEADER_ALG",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N16",
+   "class": "key taken from token-carried material instead of enrolled record",
+   "source": "3.4",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SIG_INVALID",
+   "verdict": "PASS"
+  },
+  {
+   "id": "E1",
+   "class": "same 32 octets, different encodings, compatible contexts",
+   "source": "join",
+   "expected": "JOIN",
+   "observed": "JOIN",
+   "detail": "octet-compare=True string-compare=False",
+   "verdict": "PASS"
+  },
+  {
+   "id": "E2",
+   "class": "same 32 octets, incompatible declared digest contexts",
+   "source": "INDETERMINATE",
+   "expected": "INDETERMINATE",
+   "observed": "INDETERMINATE",
+   "detail": "declared contexts differ; equality of octets is not equality of claim",
+   "verdict": "PASS"
+  },
+  {
+   "id": "E3",
+   "class": "ASCII-hex string compared as bytes against raw octets",
+   "source": "MISMATCH",
+   "expected": "MISMATCH",
+   "observed": "MISMATCH",
+   "detail": "len 64 vs 32",
+   "verdict": "PASS"
+  },
+  {
+   "id": "M1",
+   "class": "two artifacts verify, same action, different principals",
+   "source": "composition",
+   "expected": "REFUSE",
+   "observed": "ACCEPT",
+   "detail": "psea principal=bob grant principal=alice",
+   "verdict": "FAIL"
+  }
+ ]
+}

@@ -1,0 +1,4 @@
+# Sole dependency of the PSEA conformance harness.
+# Pinned so that a cross-run reproduces against a known implementation of
+# ECDSA P-256 / SHA-256 rather than whatever happens to be installed.
+cryptography==49.0.0

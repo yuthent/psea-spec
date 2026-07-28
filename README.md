@@ -103,10 +103,39 @@ These were earlier-revision or product/deployment concerns; they are out of
 scope of the pure token profile and live (if at all) in a deploying
 organization's own product, not in the standard.
 
+## Conformance
+
+A reference Attester and Verifier for `-02`, together with a vector suite run
+against the WHO negative classes of
+draft-mih-sato-agent-accountability-composition-00 Section 5.2, live in
+[`conformance/`](conformance/). The reference Verifier implements only what the
+draft states normatively (Sections 3.4, 3.7.1 and 3.13.2) and refuses where the
+draft is silent.
+
+The recorded run is **13 pass, 3 fail, 5 not applicable** across 21 rows. The
+three failures — a changed authorizing-principal reference, post-hoc
+ratification presented as pre-execution authorization, and two artifacts
+verifying for one action under different principals — are properties the profile
+does not have, and are reported as failures rather than as absences. See
+[`conformance/README.md`](conformance/README.md) and
+[`conformance/RESULTS.md`](conformance/RESULTS.md).
+
+**This is one implementation, and therefore not a conformance claim.** Section 7
+of the composition draft requires that a vector freeze only after at least two
+independent implementations have recomputed it.
+
+An earlier `test-vectors/` directory, together with two reference verifiers, was
+removed in commit `bb0a38e` (2026-05-27). Those twenty vectors were keyed to the
+`P`/`S`/`E`/`A` tier vocabulary and the proof-token wire format of an earlier
+revision — they described a wire format this draft no longer defines, and were
+deleted rather than left to mislead. The material under `conformance/` replaces
+them against the current `-02` format.
+
 ## Repository contents
 
 | Path | Purpose |
 |------|---------|
+| [`conformance/`](conformance/) | Reference Attester/Verifier and the WHO negative-class vector suite. Not a conformance claim — one implementation. |
 | [`docs/ietf/draft-yossif-psea-02.txt`](docs/ietf/draft-yossif-psea-02.txt) / [`.html`](docs/ietf/draft-yossif-psea-02.html) | **Authoritative specification.** |
 | `docs/ietf/draft-yossif-psea-02.xml` | xml2rfc source for the draft. |
 | `docs/ietf/draft-yossif-psea-00.*`, `draft-yossif-psea-01.*` | **Historical revisions only.** These were the earlier *Informational* PSEA security-model drafts; they are superseded by `-02` and are retained for provenance. They do **not** describe the current protocol. |
