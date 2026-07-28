@@ -12,7 +12,7 @@ engineers, and standards reviewers.
 
 | Type | Where | Notes |
 |------|-------|-------|
-| Specification clarifications and errata | `docs/ietf/draft-yossif-psea-02.{xml,txt,html}` | Open an issue first for any normative change; cite the affected section. The `.xml` is the xml2rfc source — text/HTML are regenerated from it. |
+| Specification clarifications and errata | `drafts/draft-yossif-psea/draft-yossif-psea-02.{xml,txt,html}` | Open an issue first for any normative change; cite the affected section. The `.xml` is the xml2rfc source — text/HTML are regenerated from it. |
 | Review comments on the protocol | issue tracker | Interoperability, security, and clarity feedback are especially valuable. |
 | Editorial / typo fixes | the draft source | Straightforward PRs welcome. |
 
@@ -33,7 +33,7 @@ engineers, and standards reviewers.
 1. **Open an issue** describing the proposed change. For normative changes,
    state the draft section and the rationale.
 2. **Fork** and create a topic branch.
-3. **Edit the draft source** (`draft-yossif-psea-02.xml`) and regenerate the
+3. **Edit the draft source** (`drafts/draft-yossif-psea/draft-yossif-psea-02.xml`) and regenerate the
    text/HTML renderings with `xml2rfc`.
 4. **Open a PR** against `main`, including a short summary and the draft
    section(s) the change relates to.

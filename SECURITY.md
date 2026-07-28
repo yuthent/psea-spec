@@ -8,7 +8,7 @@ production code, signing keys, or any deployable system.
 
 Reports in scope:
 
-- Errors in the draft (`docs/ietf/draft-yossif-psea-02.*`) that could lead an
+- Errors in the draft (`drafts/draft-yossif-psea/draft-yossif-psea-02.*`) that could lead an
   implementer to build an unsound Attester or Verifier — for example, a flaw
   that would let an attacker construct an accepted proof without a genuine,
   fresh user-verification event, or that breaks the action-payload or

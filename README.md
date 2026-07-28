@@ -10,9 +10,9 @@ authoritative, normative specification. Everything an independent party needs
 to build a conforming implementation is in the draft.
 
 > **Authoritative spec:**
-> [`docs/ietf/draft-yossif-psea-02.txt`](docs/ietf/draft-yossif-psea-02.txt)
+> [`drafts/draft-yossif-psea/draft-yossif-psea-02.txt`](drafts/draft-yossif-psea/draft-yossif-psea-02.txt)
 > (plain text) ·
-> [`docs/ietf/draft-yossif-psea-02.html`](docs/ietf/draft-yossif-psea-02.html)
+> [`drafts/draft-yossif-psea/draft-yossif-psea-02.html`](drafts/draft-yossif-psea/draft-yossif-psea-02.html)
 > (rendered)
 
 ## What PSEA is
@@ -136,9 +136,9 @@ them against the current `-02` format.
 | Path | Purpose |
 |------|---------|
 | [`conformance/`](conformance/) | Reference Attester/Verifier and the WHO negative-class vector suite. Not a conformance claim — one implementation. |
-| [`docs/ietf/draft-yossif-psea-02.txt`](docs/ietf/draft-yossif-psea-02.txt) / [`.html`](docs/ietf/draft-yossif-psea-02.html) | **Authoritative specification.** |
-| `docs/ietf/draft-yossif-psea-02.xml` | xml2rfc source for the draft. |
-| `docs/ietf/draft-yossif-psea-00.*`, `draft-yossif-psea-01.*` | **Historical revisions only.** These were the earlier *Informational* PSEA security-model drafts; they are superseded by `-02` and are retained for provenance. They do **not** describe the current protocol. |
+| [`drafts/draft-yossif-psea/draft-yossif-psea-02.txt`](drafts/draft-yossif-psea/draft-yossif-psea-02.txt) / [`.html`](drafts/draft-yossif-psea/draft-yossif-psea-02.html) | **Authoritative specification.** |
+| `drafts/draft-yossif-psea/draft-yossif-psea-02.xml` | xml2rfc source for the draft. |
+| `drafts/draft-yossif-psea/draft-yossif-psea-00.*`, `draft-yossif-psea-01.*` | **Historical revisions only.** These were the earlier *Informational* PSEA security-model drafts; they are superseded by `-02` and are retained for provenance. They do **not** describe the current protocol. |
 | [`CITATION.cff`](CITATION.cff) | How to cite this work. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to propose changes. |
 | [`SECURITY.md`](SECURITY.md) | How to report a security issue in the spec. |
