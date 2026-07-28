@@ -1,29 +1,21 @@
-# This is the PUBLIC PSEA specification repository.
-# Internal working notes, investigation scratch, and tooling logs MUST NOT
-# be published here. The patterns below keep them out of version control.
+# Files that are not part of the specification.
 
-# Internal investigation / analysis scratch
+# Working notes and generated logs
 gemini_investigation/
 docs/audits/
-
-# Third-party and pre-freeze working documents
-docs/SECDISPATCH/
-*.docx
-
-# Scratch logs and tracker output
 *.log
 tracker.log
 docs/ietf/tracker.log
-
-# git-filter-repo / history-rewrite scratch
 mailmap-fix.txt
 strip-trailers.txt
 
-# Python bytecode from the conformance harness
+# Documents not published from this repository
+docs/SECDISPATCH/
+*.docx
+
+# Build, editor, and OS artifacts
 __pycache__/
 *.pyc
-
-# Editor / OS noise
 .DS_Store
 Thumbs.db
 *.swp
