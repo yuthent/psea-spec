@@ -6,6 +6,10 @@
 gemini_investigation/
 docs/audits/
 
+# Third-party and pre-freeze working documents
+docs/SECDISPATCH/
+*.docx
+
 # Scratch logs and tracker output
 *.log
 tracker.log
