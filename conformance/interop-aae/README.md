@@ -104,16 +104,44 @@ not a PSEA verification failure; it is a composition-layer failure that neither
 profile detects alone. Nothing in this fixture should be read as PSEA claiming
 to close it.
 
+## The reference verifier now refuses these tokens
+
+The harness in `../src/psea.py` implements the Section 3.5 claim set. The two
+tokens in `psea-fixture-v0.json` predate that enforcement and do not satisfy it:
+both omit the REQUIRED `ueid` and `eat_profile` claims, and both carry
+`psea_proof_version` as the integer `1` where the schema declares the string
+`"1"`. Verifying either against the current reference returns
+`SCHEMA_MISSING_CLAIM: eat_profile, ueid`, not `VERIFIED`.
+
+**v0 is retained unchanged, and its digest is unchanged.** A cross-run computed
+against these bytes remains computable against these bytes. Replacing the
+fixture would invalidate work already done against it by a counterparty, which
+is a worse outcome than a fixture whose tokens the current reference declines.
+
+The fixture also cannot be re-signed. No private key material and no seed were
+retained; `enrolled_keys[]` publishes only the public coordinates. Correcting
+the tokens in place is therefore not a re-sign but a re-key: the `x`/`y` values
+change, and with them the fixture's identity rather than only its signatures.
+
+**The join key is unaffected either way.** It is
+`SHA-256( JCS(action_payload_cleartext) )` — computed over the action payload,
+not over the token — and reproduces as
+`d6583cbc62c1278311ad311a586da207189693a98143f773a8fc960ae59ac606` from the
+fixture's own cleartext independently of the tokens, their claim set, or the
+keys that signed them. The WHAT axis of the cross-run does not depend on any of
+what this section describes.
+
+Whether a v1 is minted, and on what terms, is a separate decision.
+
 ## Verifying the fixture
 
     cd conformance
     python3 -m pip install -r requirements.txt
     shasum -a 256 -c interop-aae/psea-fixture-v0.sha256
 
-The values were checked against this repository's own reference code before
-commit: the join key recomputed from `action_payload_cleartext` with
-`src/jcs.py` (matching both `octets_hex` and `psea_wire_value`, and matching
-the recorded `action_payload_jcs_utf8` byte-for-byte), and both tokens verified
-with `src/psea.py` against `enrolled_keys[]` at a timestamp inside the
-`iat`/`exp` window, each returning VERIFIED under the principal the fixture
-claims.
+The join key recomputes from `action_payload_cleartext` with `src/jcs.py`,
+matching both `octets_hex` and `psea_wire_value`, and matching the recorded
+`action_payload_jcs_utf8` byte-for-byte. The `psea_native_verdict: VERIFIED`
+recorded on each artifact was produced by the reference verifier as it stood
+when the fixture was built; see the section above for why the current reference
+returns a refusal instead.
