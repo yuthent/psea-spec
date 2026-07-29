@@ -121,7 +121,7 @@ Internet-Draft             PSEA Token Profile                  July 2026
      3.5.  JWS Payload Claim Set . . . . . . . . . . . . . . . . . .  18
      3.6.  Wire Transport Bodies . . . . . . . . . . . . . . . . . .  23
      3.7.  Human Presence via User-Verification-Gated Signature  . .  23
-       3.7.1.  User-Verification Claim (psea_uv) . . . . . . . . . .  24
+       3.7.1.  User-Verification Claim (psea_uv) . . . . . . . . . .  25
      3.8.  Subject Hash (psea_user_hash) . . . . . . . . . . . . . .  26
      3.9.  Device-State Submodule (submods.psea-device-state)  . . .  27
      3.10. Counter Model (Monotonic Replay Ordering) . . . . . . . .  27
@@ -201,7 +201,7 @@ Internet-Draft             PSEA Token Profile                  July 2026
        B.3.1.  Requirements  . . . . . . . . . . . . . . . . . . . .  61
      B.4.  Relying Party Conformance . . . . . . . . . . . . . . . .  63
    Appendix C.  Changes from draft-yossif-psea-02  . . . . . . . . .  63
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  63
+   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .  64
 
 1.  Introduction
 
@@ -1252,9 +1252,19 @@ Internet-Draft             PSEA Token Profile                  July 2026
    transit.  A Verifier MUST NOT use any unsigned transport-body field
    as an input to a security decision. integrityEvidence is appraised on
    its own cryptographic merits against the platform Endorsement (its
-   appraisal does not trust the envelope framing); requestId,
-   signalReport, and proofId are correlation and operational hints only
-   and confer no authority.
+   appraisal does not trust the envelope framing); requestId and proofId
+   are correlation and operational hints only and confer no authority.
+
+   signalReport is not unconditionally in that last category.  Where the
+   proof carries psea_signals_hash (Section 3.5), that claim commits to
+   the report, and a Verifier in such a deployment appraises the
+   received report against the claim by recomputing the digest over it —
+   the same relation actionPayload bears to psea_payload_hash.  A report
+   appraised in that way is a committed field rather than an unsigned
+   one, so the rule above is not engaged by it.  Where the claim is
+   absent, or where no such comparison has been made, signalReport is an
+   unsigned hint conferring no authority and the rule above applies to
+   it without qualification.
 
 3.7.  Human Presence via User-Verification-Gated Signature
 
@@ -1272,6 +1282,14 @@ Internet-Draft             PSEA Token Profile                  July 2026
    preceded by its own fresh user-verification event.  A configuration
    in which a single user-verification event authorizes signing for a
    time window or for multiple subsequent signatures (duration- or
+
+
+
+Yossif                   Expires 30 January 2027               [Page 23]
+
+Internet-Draft             PSEA Token Profile                  July 2026
+
+
    window-based authentication) is NOT RECOMMENDED for any signing and
    is non-conformant for proof signing: it would let a compromised host
    pre-compute a batch of proofs from one ceremony (see Section 6.4.1,
@@ -1282,14 +1300,6 @@ Internet-Draft             PSEA Token Profile                  July 2026
    way of example, the following common platform configurations are non-
    conformant for proof signing, and only their per-operation
    counterparts conform: a PIV-class smartcard in PIN-once mode (only a
-
-
-
-Yossif                   Expires 30 January 2027               [Page 23]
-
-Internet-Draft             PSEA Token Profile                  July 2026
-
-
    PIN-always / per-signature PIN policy conforms); an Android Keystore
    key with a non-zero user-authentication validity timeout (only a
    timeout of 0 — authentication required for every use — conforms); and
@@ -1329,6 +1339,13 @@ Internet-Draft             PSEA Token Profile                  July 2026
    proof signature plus the hardware-protected-key attestation against
    which it is cross-checked.
 
+
+
+Yossif                   Expires 30 January 2027               [Page 24]
+
+Internet-Draft             PSEA Token Profile                  July 2026
+
+
 3.7.1.  User-Verification Claim (psea_uv)
 
    Every PSEA proof MUST carry a signed psea_uv claim:
@@ -1336,15 +1353,6 @@ Internet-Draft             PSEA Token Profile                  July 2026
    *  psea_uv.verified — a boolean asserting that a contemporaneous
       user-verification event gated the signing operation that produced
       this proof.
-
-
-
-
-
-Yossif                   Expires 30 January 2027               [Page 24]
-
-Internet-Draft             PSEA Token Profile                  July 2026
-
 
    *  psea_uv.method — a string identifying the user-verification
       method.  The value space is extensible; suggested baseline values
@@ -1386,6 +1394,14 @@ Internet-Draft             PSEA Token Profile                  July 2026
    normative — the specific mechanism is out of scope): a phone with an
    attested UV-gated hardware key whose key attestation conveys an auth-
    enforced / user-authentication-required property; a PIN-gated
+
+
+
+Yossif                   Expires 30 January 2027               [Page 25]
+
+Internet-Draft             PSEA Token Profile                  July 2026
+
+
    smartcard whose attested key properties indicate a PIN-verified
    signing operation.  In each case the conforming Attester emits
    psea_uv and the Verifier cross-checks it against that authenticator's
@@ -1394,13 +1410,6 @@ Internet-Draft             PSEA Token Profile                  July 2026
    different envelope, but a FIDO authenticator does not itself emit a
    PSEA proof (Section 1); consuming a FIDO assertion's UV signal would
    require the separate, out-of-scope FIDO-assertion binding.
-
-
-
-Yossif                   Expires 30 January 2027               [Page 25]
-
-Internet-Draft             PSEA Token Profile                  July 2026
-
 
    Verification depth (known limitation): where the authenticator's
    platform attestation conveys UV-enforcement (for example, a hardware-
@@ -1442,6 +1451,13 @@ Internet-Draft             PSEA Token Profile                  July 2026
    NOT emit a bare SHA-256 of a globally stable subject identifier (see
    Section 7.2).
 
+
+
+Yossif                   Expires 30 January 2027               [Page 26]
+
+Internet-Draft             PSEA Token Profile                  July 2026
+
+
    A Verifier MUST NOT make an authorization decision based on the per-
    proof psea_user_hash claim of a PSEA proof.  Subject attribution is
    for ledger and audit purposes only.  The cryptographic chain of
@@ -1449,14 +1465,6 @@ Internet-Draft             PSEA Token Profile                  July 2026
    the monotonic counter, and the presence Evidence (Section 3.7); the
    Attester's commitment to a subject identifier is an additional audit-
    trail property, not a security gate.
-
-
-
-
-Yossif                   Expires 30 January 2027               [Page 26]
-
-Internet-Draft             PSEA Token Profile                  July 2026
-
 
    The per-proof psea_user_hash is distinct from any enrollment-bound
    subject binding a deployment records at enrollment time; that
@@ -1499,14 +1507,6 @@ Internet-Draft             PSEA Token Profile                  July 2026
    stored value for that scope MUST cause the Verifier to reject the
    proof.
 
-   An Attester MAY maintain a single counter or several independent
-   counter scopes, and emits in psea_counter the value of the scope the
-   proof is produced under.  The number of scopes, and the mapping of an
-   application's actions to scopes, is deployment-specific and out of
-   scope of this profile.  Independent scopes serve only to preserve
-   independent offline progress: if proofs produced offline under
-   different scopes drew every value from one shared sequence, an
-
 
 
 Yossif                   Expires 30 January 2027               [Page 27]
@@ -1514,6 +1514,13 @@ Yossif                   Expires 30 January 2027               [Page 27]
 Internet-Draft             PSEA Token Profile                  July 2026
 
 
+   An Attester MAY maintain a single counter or several independent
+   counter scopes, and emits in psea_counter the value of the scope the
+   proof is produced under.  The number of scopes, and the mapping of an
+   application's actions to scopes, is deployment-specific and out of
+   scope of this profile.  Independent scopes serve only to preserve
+   independent offline progress: if proofs produced offline under
+   different scopes drew every value from one shared sequence, an
    offline-signed proof would collide on submission with a proof signed
    under another scope after the first was composed but before it was
    synced.  Independent scopes let each progress without colliding.
@@ -1549,19 +1556,12 @@ Internet-Draft             PSEA Token Profile                  July 2026
    finalized jti values for less than the exp window reopens the replay
    surface this check exists to close.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+   *Atomicity (normative).* A Verifier MUST perform the counter
+   comparison-and-advance and the jti finalization atomically —
+   serialized per (Attester, counter scope) — within a single
+   transaction: read the stored counter, compare, and conditionally
+   advance in one atomic step that also records the jti.  The counter
+   value compared MUST be the value read inside that transaction (not a
 
 
 
@@ -1570,12 +1570,6 @@ Yossif                   Expires 30 January 2027               [Page 28]
 Internet-Draft             PSEA Token Profile                  July 2026
 
 
-   *Atomicity (normative).* A Verifier MUST perform the counter
-   comparison-and-advance and the jti finalization atomically —
-   serialized per (Attester, counter scope) — within a single
-   transaction: read the stored counter, compare, and conditionally
-   advance in one atomic step that also records the jti.  The counter
-   value compared MUST be the value read inside that transaction (not a
    value read earlier), and the stored value MUST be advanced only when
    the submitted counter is strictly greater than it.  A blind last-
    write-wins advance is non-conformant.  This guarantees that two
@@ -1618,6 +1612,12 @@ Internet-Draft             PSEA Token Profile                  July 2026
    finalizes exactly once, and the OPTIONAL eat_nonce (when the Verifier
    issued a challenge) binds the proof to that challenge.  A deployment
    that produces proofs offline for deferred submission MUST choose an
+   exp margin wide enough to cover its expected offline-to-sync
+   interval; the freshness anchor for such proofs is then the counter
+   and the jti uniqueness check rather than a narrow exp window.
+
+
+
 
 
 
@@ -1625,10 +1625,6 @@ Yossif                   Expires 30 January 2027               [Page 29]
 
 Internet-Draft             PSEA Token Profile                  July 2026
 
-
-   exp margin wide enough to cover its expected offline-to-sync
-   interval; the freshness anchor for such proofs is then the counter
-   and the jti uniqueness check rather than a narrow exp window.
 
    When a Verifier issued a challenge, it MUST correlate the returned
    proof to the issued challenge using only the signed eat_nonce claim
@@ -1671,6 +1667,10 @@ Internet-Draft             PSEA Token Profile                  July 2026
    chain is consequently specified here as an optional deployment
    feature rather than a mandatory wire element, and a self-contained
    conforming Verifier (Appendix B.3) is not required to implement it.
+
+
+
+
 
 
 
@@ -3461,11 +3461,11 @@ Internet-Draft             PSEA Token Profile                  July 2026
       proofs whose enrollment is not active (Section 3.14).
 
    *  MUST NOT use any unsigned transport-body field (for example
-      requestId, proofId, signalReport) as an input to any security
-      decision (Section 3.6).
-
-   *  MUST reject non-conforming proofs; the concrete rejection
-      vocabulary is deployment-specific.
+      requestId or proofId) as an input to any security decision
+      (Section 3.6); signalReport is such a field unless the proof
+      carries psea_signals_hash and the Verifier has appraised the
+      report against that claim, in which case it is a committed field
+      rather than an unsigned one.
 
 
 
@@ -3473,6 +3473,9 @@ Yossif                   Expires 30 January 2027               [Page 62]
 
 Internet-Draft             PSEA Token Profile                  July 2026
 
+
+   *  MUST reject non-conforming proofs; the concrete rejection
+      vocabulary is deployment-specific.
 
    *  MUST produce integrity-protected Attestation Results for non-co-
       located Relying Parties (Section 3.13.3).
@@ -3488,10 +3491,14 @@ B.4.  Relying Party Conformance
 
 Appendix C.  Changes from draft-yossif-psea-02
 
-   This revision states one known limitation and corrects two claim-set
-   descriptions against the reference implementation.  It adds no new
-   requirement, defines no new mechanism, and alters no existing
-   normative text.
+   This revision states one known limitation and corrects three claim-
+   set descriptions against the reference implementation.  It adds no
+   new requirement and defines no new mechanism.  No normative
+   requirement is changed: the Section 3.6 prohibition on using unsigned
+   transport-body fields as security-decision inputs, and the Verifier
+   obligations of Appendix B.3, retain their force unaltered; the only
+   edits to either are to the illustrative lists that named a field
+   incorrectly.
 
    *  Added Section 6.8.4, stating that the profile does not establish
       that a signature preceded the effect it authorizes, that
@@ -3511,6 +3518,23 @@ Appendix C.  Changes from draft-yossif-psea-02
       Where a deployment binds a relying-party request context, the
       claim carries that binding and is appraised.
 
+   *  Corrected the transport-body enumeration in Section 3.6 and the
+      matching Verifier obligation in Appendix B.3, both of which listed
+      signalReport unconditionally among the fields that confer no
+      authority.  Where psea_signals_hash commits to the report and a
+
+
+
+Yossif                   Expires 30 January 2027               [Page 63]
+
+Internet-Draft             PSEA Token Profile                  July 2026
+
+
+      Verifier has appraised it against that claim, the report is a
+      committed field, as actionPayload is under psea_payload_hash.  The
+      prohibition itself is unchanged; only the enumeration of which
+      fields it reaches is corrected.
+
 Author's Address
 
    Mohamad Khalil Yossif
@@ -3525,4 +3549,36 @@ Author's Address
 
 
 
-Yossif                   Expires 30 January 2027               [Page 63]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Yossif                   Expires 30 January 2027               [Page 64]

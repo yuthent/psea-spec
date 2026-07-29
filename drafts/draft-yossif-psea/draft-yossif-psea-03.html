@@ -2589,8 +2589,16 @@ entirely.
         <code>proofId</code> — are unsigned and attacker-mutable in transit. A Verifier <span class="bcp14">MUST NOT</span>
         use any unsigned transport-body field as an input to a security decision. <code>integrityEvidence</code>
         is appraised on its own cryptographic merits against the platform Endorsement (its appraisal does
-        not trust the envelope framing); <code>requestId</code>, <code>signalReport</code>, and <code>proofId</code>
-        are correlation and operational hints only and confer no authority.<a href="#section-3.6-2" class="pilcrow">¶</a></p>
+        not trust the envelope framing); <code>requestId</code> and <code>proofId</code> are correlation and
+        operational hints only and confer no authority.<a href="#section-3.6-2" class="pilcrow">¶</a></p>
+<p id="section-3.6-3"><code>signalReport</code> is not unconditionally in that last category. Where the proof carries
+        <code>psea_signals_hash</code> (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>), that claim commits to the report, and a
+        Verifier in such a deployment appraises the received report against the claim by recomputing the
+        digest over it — the same relation <code>actionPayload</code> bears to <code>psea_payload_hash</code>. A
+        report appraised in that way is a committed field rather than an unsigned one, so the rule above is
+        not engaged by it. Where the claim is absent, or where no such comparison has been made,
+        <code>signalReport</code> is an unsigned hint conferring no authority and the rule above applies to it
+        without qualification.<a href="#section-3.6-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="presence-via-signature">
@@ -4478,9 +4486,11 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             revoked) as the trust gate, and MUST reject proofs whose enrollment is not active
             (<a href="#enrollment-lifecycle" class="auto internal xref">Section 3.14</a>).<a href="#appendix-B.3.1-2.15" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.16">MUST NOT use any unsigned transport-body field (for example <code>requestId</code>,
-            <code>proofId</code>, <code>signalReport</code>) as an input to any security decision
-            (<a href="#envelope-schemas" class="auto internal xref">Section 3.6</a>).<a href="#appendix-B.3.1-2.16" class="pilcrow">¶</a>
+            <li class="normal" id="appendix-B.3.1-2.16">MUST NOT use any unsigned transport-body field (for example <code>requestId</code>
+            or <code>proofId</code>) as an input to any security decision
+            (<a href="#envelope-schemas" class="auto internal xref">Section 3.6</a>); <code>signalReport</code> is such a field unless the proof
+            carries <code>psea_signals_hash</code> and the Verifier has appraised the report against that
+            claim, in which case it is a committed field rather than an unsigned one.<a href="#appendix-B.3.1-2.16" class="pilcrow">¶</a>
 </li>
             <li class="normal" id="appendix-B.3.1-2.17">MUST reject non-conforming proofs; the concrete rejection vocabulary is
             deployment-specific.<a href="#appendix-B.3.1-2.17" class="pilcrow">¶</a>
@@ -4514,9 +4524,12 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
       <h2 id="name-changes-from-draft-yossif-p">
 <a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-changes-from-draft-yossif-p" class="section-name selfRef">Changes from draft-yossif-psea-02</a>
       </h2>
-<p id="appendix-C-1">This revision states one known limitation and corrects two claim-set descriptions against the
-      reference implementation. It adds no new requirement, defines no new mechanism, and alters no
-      existing normative text.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+<p id="appendix-C-1">This revision states one known limitation and corrects three claim-set descriptions against the
+      reference implementation. It adds no new requirement and defines no new mechanism. No normative
+      requirement is changed: the <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> prohibition on using unsigned
+      transport-body fields as security-decision inputs, and the Verifier obligations of
+      <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>, retain their force unaltered; the only edits to either are to
+      the illustrative lists that named a field incorrectly.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="appendix-C-2.1">Added <a href="#open-ordering" class="auto internal xref">Section 6.8.4</a>, stating that the profile does not establish that a
         signature preceded the effect it authorizes, that authenticating the artifact is not the criterion
@@ -4532,6 +4545,14 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         which was grouped with the diagnostic extension members as carrying no Verifier appraisal
         obligation and being ignorable. Where a deployment binds a relying-party request context, the
         claim carries that binding and is appraised.<a href="#appendix-C-2.3" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-2.4">Corrected the transport-body enumeration in <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> and the matching
+        Verifier obligation in <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>, both of which listed
+        <code>signalReport</code> unconditionally among the fields that confer no authority. Where
+        <code>psea_signals_hash</code> commits to the report and a Verifier has appraised it against that
+        claim, the report is a committed field, as <code>actionPayload</code> is under
+        <code>psea_payload_hash</code>. The prohibition itself is unchanged; only the enumeration of which
+        fields it reaches is corrected.<a href="#appendix-C-2.4" class="pilcrow">¶</a>
 </li>
       </ul>
 </section>

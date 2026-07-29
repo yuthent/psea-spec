@@ -911,8 +911,17 @@ entirely.
         <tt>proofId</tt> — are unsigned and attacker-mutable in transit. A Verifier <bcp14>MUST NOT</bcp14>
         use any unsigned transport-body field as an input to a security decision. <tt>integrityEvidence</tt>
         is appraised on its own cryptographic merits against the platform Endorsement (its appraisal does
-        not trust the envelope framing); <tt>requestId</tt>, <tt>signalReport</tt>, and <tt>proofId</tt>
-        are correlation and operational hints only and confer no authority.</t>
+        not trust the envelope framing); <tt>requestId</tt> and <tt>proofId</tt> are correlation and
+        operational hints only and confer no authority.</t>
+
+        <t><tt>signalReport</tt> is not unconditionally in that last category. Where the proof carries
+        <tt>psea_signals_hash</tt> (<xref target="proof-schema"/>), that claim commits to the report, and a
+        Verifier in such a deployment appraises the received report against the claim by recomputing the
+        digest over it — the same relation <tt>actionPayload</tt> bears to <tt>psea_payload_hash</tt>. A
+        report appraised in that way is a committed field rather than an unsigned one, so the rule above is
+        not engaged by it. Where the claim is absent, or where no such comparison has been made,
+        <tt>signalReport</tt> is an unsigned hint conferring no authority and the rule above applies to it
+        without qualification.</t>
       </section>
 
       <section anchor="presence-via-signature" numbered="true">
@@ -2630,9 +2639,11 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             <li>MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended,
             revoked) as the trust gate, and MUST reject proofs whose enrollment is not active
             (<xref target="enrollment-lifecycle"/>).</li>
-            <li>MUST NOT use any unsigned transport-body field (for example <tt>requestId</tt>,
-            <tt>proofId</tt>, <tt>signalReport</tt>) as an input to any security decision
-            (<xref target="envelope-schemas"/>).</li>
+            <li>MUST NOT use any unsigned transport-body field (for example <tt>requestId</tt>
+            or <tt>proofId</tt>) as an input to any security decision
+            (<xref target="envelope-schemas"/>); <tt>signalReport</tt> is such a field unless the proof
+            carries <tt>psea_signals_hash</tt> and the Verifier has appraised the report against that
+            claim, in which case it is a committed field rather than an unsigned one.</li>
             <li>MUST reject non-conforming proofs; the concrete rejection vocabulary is
             deployment-specific.</li>
             <li>MUST produce integrity-protected Attestation Results for non-co-located Relying
@@ -2655,9 +2666,12 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
     <section anchor="changes-from-02" numbered="true">
       <name>Changes from draft-yossif-psea-02</name>
 
-      <t>This revision states one known limitation and corrects two claim-set descriptions against the
-      reference implementation. It adds no new requirement, defines no new mechanism, and alters no
-      existing normative text.</t>
+      <t>This revision states one known limitation and corrects three claim-set descriptions against the
+      reference implementation. It adds no new requirement and defines no new mechanism. No normative
+      requirement is changed: the <xref target="envelope-schemas"/> prohibition on using unsigned
+      transport-body fields as security-decision inputs, and the Verifier obligations of
+      <xref target="conformance-verifier"/>, retain their force unaltered; the only edits to either are to
+      the illustrative lists that named a field incorrectly.</t>
 
       <ul>
         <li>Added <xref target="open-ordering"/>, stating that the profile does not establish that a
@@ -2672,6 +2686,13 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         which was grouped with the diagnostic extension members as carrying no Verifier appraisal
         obligation and being ignorable. Where a deployment binds a relying-party request context, the
         claim carries that binding and is appraised.</li>
+        <li>Corrected the transport-body enumeration in <xref target="envelope-schemas"/> and the matching
+        Verifier obligation in <xref target="conformance-verifier"/>, both of which listed
+        <tt>signalReport</tt> unconditionally among the fields that confer no authority. Where
+        <tt>psea_signals_hash</tt> commits to the report and a Verifier has appraised it against that
+        claim, the report is a committed field, as <tt>actionPayload</tt> is under
+        <tt>psea_payload_hash</tt>. The prohibition itself is unchanged; only the enumeration of which
+        fields it reaches is corrected.</li>
       </ul>
     </section>
 
