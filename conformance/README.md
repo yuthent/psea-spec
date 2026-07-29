@@ -1,6 +1,6 @@
 # PSEA conformance harness
 
-A reference Attester and Verifier for **draft-yossif-psea-02**, and a vector
+A reference Attester and Verifier for **draft-yossif-psea-03**, and a vector
 suite that runs the profile against the WHO negative classes of
 draft-mih-sato-agent-accountability-composition-00, Section 5.2.
 
@@ -12,14 +12,31 @@ is reported as a **failure of the profile**, not smoothed into an absence.
 
 ## Scope: only what the draft states normatively
 
-The reference Verifier implements only what draft-yossif-psea-02 states
-normatively:
+The reference Verifier implements the sections listed below, and only those.
+The table is the whole of what it covers — a section absent from it is not
+implemented, and a row here is a claim about the harness rather than about the
+profile.
 
 | Draft section | What is implemented |
 |---|---|
 | Section 3.4 | JOSE header hardening — `alg`/`typ` pinning, `crit` and `b64:false` rejection, and key resolution from the enrolled record only, never from token-carried `jwk`/`jku`/`x5u` |
+| Section 3.5 | JWS payload claim set — the declared set is exhaustive (`additionalProperties: false`), so an undeclared claim is refused rather than ignored; the thirteen REQUIRED claims must be present; `eat_profile` must carry the profile identifier; `psea_proof_version` is the string `"1"` |
 | Section 3.7.1 | User-verification claim anchoring — `psea_uv.verified == true` required; cross-checked against attested UV-enforcement where the enrolment record conveys it; refused for high-assurance operations where it does not |
 | Section 3.13.2 | Fail-closed action binding — re-canonicalize, SHA-256, byte-compare against `psea_payload_hash`, refuse on mismatch or missing payload |
+
+Section 3.5 was added to the harness after an audit found the Verifier ignoring
+undeclared claims and omitting two REQUIRED ones (`ueid`, `eat_profile`) that
+the reference Attester never emitted, while comparing `psea_proof_version`
+against the integer `1` where the schema declares the string `"1"`. Attester and
+Verifier were corrected together in one change. No recorded row moved, because
+no row in the suite exercised any of those paths — which is itself the finding:
+a harness cannot detect a defect in a rule it does not implement.
+
+The Attester emits the thirteen REQUIRED claims and nothing else. It does not
+emit `psea_signals_hash`, which the profile declares OPTIONAL: the reference
+carries no auxiliary transport document for that claim to commit to, and putting
+a claim on the wire that no part of this harness appraises would misrepresent
+the coverage above.
 
 **Where the draft is silent, the implementation refuses rather than guessing.**
 That is deliberate. A harness that invents behaviour to fill a specification gap

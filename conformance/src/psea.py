@@ -1,4 +1,4 @@
-"""Reference Attester and Verifier for draft-yossif-psea-02.
+"""Reference Attester and Verifier for draft-yossif-psea-03.
 
 Implements only what the draft states normatively.  Where the draft is silent
 the verifier refuses rather than guessing, per Section 3.13.2 (fail-closed).
@@ -10,11 +10,42 @@ from cryptography.exceptions import InvalidSignature
 from jcs import canonicalize, NonConformingPayload
 
 TYP = "psea-proof+jwt"
-PROOF_VERSION = 1
+PROOF_VERSION = "1"
+EAT_PROFILE = "urn:ietf:params:psea:eat-profile:1"
+
+# Section 3.5.  The schema sets additionalProperties: false, so the declared set
+# is exhaustive: a claim outside it is a refusal, not an ignorable extension.
+# psea_signals_hash is declared OPTIONAL by the profile but is deliberately not
+# emitted by the Attester below — the reference carries no auxiliary transport
+# document for it to commit to, and inventing one would put a claim on the wire
+# that no part of this harness appraises.
+DECLARED_CLAIMS = frozenset({
+    "jti", "aud", "iss", "iat", "exp", "ueid", "eat_nonce", "submods",
+    "eat_profile", "psea_tier", "psea_op", "psea_counter", "psea_payload_hash",
+    "psea_chain_prev", "psea_uv", "psea_proof_version", "psea_caller_package",
+    "psea_sdk_version", "psea_signals_hash", "psea_user_hash",
+    "psea_chain_pending", "psea_last_confirmed_head", "psea_rp_context_hash",
+})
+
+REQUIRED_CLAIMS = frozenset({
+    "jti", "aud", "iss", "iat", "exp", "ueid", "eat_profile", "psea_tier",
+    "psea_op", "psea_counter", "psea_payload_hash", "psea_uv",
+    "psea_proof_version",
+})
 
 
 def b64u(b: bytes) -> str:
     return base64.urlsafe_b64encode(b).decode().rstrip("=")
+
+
+def eat_ueid(device_id: str, iss: str) -> str:
+    """RFC 9711 Sec 4.2.1 RAND-type UEID.
+
+    base64url (no padding) of the 33 octets 0x01 || SHA-256(deviceId || iss).
+    Per-issuer by construction, so the same device yields a distinct ueid per
+    iss.  The leading 0x01 is the RAND type tag.
+    """
+    return b64u(b"\x01" + hashlib.sha256((device_id + iss).encode()).digest())
 
 
 def b64u_dec(s: str) -> bytes:
@@ -52,9 +83,12 @@ class Enrollment:
 
 
 class Attester:
-    def __init__(self, kid, privkey):
+    def __init__(self, kid, privkey, device_id=None):
         self.kid = kid
         self.priv = privkey
+        # The reference models no hardware, so the device identifier the ueid
+        # commits to defaults to the kid.  Only its stability matters here.
+        self.device_id = device_id if device_id is not None else kid
         self.counter = 0
 
     def sign(self, *, action, op, tier, aud, iss, uv=True, uv_method="biometric",
@@ -71,6 +105,8 @@ class Attester:
             "iat": iat if iat is not None else now,
             "exp": exp if exp is not None else now + 300,
             "jti": jti or b64u(hashlib.sha256(repr((action, self.counter)).encode()).digest()[:12]),
+            "ueid": eat_ueid(self.device_id, iss),
+            "eat_profile": EAT_PROFILE,
             "psea_op": op,
             "psea_tier": tier,
             "psea_payload_hash": override_payload_hash or payload_hash(action),
@@ -99,7 +135,8 @@ class Refusal(Exception):
 
 
 class Verifier:
-    """Section 3.4 header hardening, 3.7.1 UV anchoring, 3.13.2 fail-closed."""
+    """Section 3.4 header hardening, 3.5 claim set, 3.7.1 UV anchoring,
+    3.13.2 fail-closed."""
 
     def __init__(self, enrollment: Enrollment, expected_iss, expected_aud,
                  high_assurance=False):
@@ -154,9 +191,24 @@ class Verifier:
         except InvalidSignature:
             raise Refusal("SIG_INVALID")
 
+        # --- Section 3.5 claim set ---
+        # Runs on the payload only after the signature over it verifies, and
+        # before any claim is given meaning.  additionalProperties: false makes
+        # the declared set exhaustive, so an undeclared claim is a refusal
+        # rather than something a Verifier may ignore; the profile is
+        # deliberately lock-step rather than ignore-unknown.
+        unknown = sorted(set(body) - DECLARED_CLAIMS)
+        if unknown:
+            raise Refusal("SCHEMA_UNKNOWN_CLAIM", ", ".join(unknown))
+        missing = sorted(REQUIRED_CLAIMS - set(body))
+        if missing:
+            raise Refusal("SCHEMA_MISSING_CLAIM", ", ".join(missing))
+        if body.get("eat_profile") != EAT_PROFILE:
+            raise Refusal("EAT_PROFILE_MISMATCH", repr(body.get("eat_profile")))
+
         # --- version ---
         if body.get("psea_proof_version") != PROOF_VERSION:
-            raise Refusal("UNKNOWN_VERSION", str(body.get("psea_proof_version")))
+            raise Refusal("UNKNOWN_VERSION", repr(body.get("psea_proof_version")))
 
         # --- cross-replay binding ---
         if body.get("iss") != self.iss:
