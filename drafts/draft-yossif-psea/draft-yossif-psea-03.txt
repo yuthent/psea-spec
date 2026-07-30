@@ -114,7 +114,7 @@ Yossif                   Expires 30 January 2027                [Page 2]
 Internet-Draft             PSEA Token Profile                  July 2026
 
 
-       3.1.1.  EAT Profile Definition (per RFC 9711, Section 7)  . .  13
+       3.1.1.  EAT Profile Definition (per RFC 9711, Section 6)  . .  13
      3.2.  Top-Level Structure . . . . . . . . . . . . . . . . . . .  14
      3.3.  Single Authoritative Payload (No Envelope Duplicates) . .  17
      3.4.  JOSE Header Hardening (Normative) . . . . . . . . . . . .  18
@@ -639,10 +639,10 @@ Internet-Draft             PSEA Token Profile                  July 2026
 3.1.  PSEA as an EAT Profile
 
    The PSEA proof is a profile of the Entity Attestation Token
-   ([RFC9711]), as that term is used in [RFC9711], Section 7.  The token
+   ([RFC9711]), as that term is used in [RFC9711], Section 6.  The token
    is a compact JWS ([RFC7515]) signed with ES256 (ECDSA P-256 with SHA-
    256) whose payload is an EAT-JSON claims-set.  A conforming PSEA
-   proof MUST carry the eat_profile claim ([RFC9711], Section 4.3.4)
+   proof MUST carry the eat_profile claim ([RFC9711], Section 4.3.2)
    with the stable profile identifier https://datatracker.ietf.org/doc/
    draft-yossif-psea/. The claim carries a URI or an OID and [RFC9711]
    defines no registry for profile identifiers, so this identifier
@@ -685,14 +685,14 @@ Internet-Draft             PSEA Token Profile                  July 2026
    normatively in Section 3.  The eat_profile claim signals to a
    consumer which extension semantics apply.
 
-3.1.1.  EAT Profile Definition (per RFC 9711, Section 7)
+3.1.1.  EAT Profile Definition (per RFC 9711, Section 6)
 
-   This subsection states the profile in the form [RFC9711], Section 7
+   This subsection states the profile in the form [RFC9711], Section 6
    calls for, so the eat_profile commitment is auditable in one place.
    A token claiming https://datatracker.ietf.org/doc/draft-yossif-psea/
    MUST satisfy all of the following.
 
-   Profile identifier  The eat_profile claim ([RFC9711], Section 4.3.4)
+   Profile identifier  The eat_profile claim ([RFC9711], Section 4.3.2)
       MUST equal the URI https://datatracker.ietf.org/doc/draft-yossif-
       psea/. This document fixes exactly one value for this claim, and
       that value requires no registration (Section 8.1).
@@ -818,7 +818,7 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- eat_profile   ; "https://datatracker.ietf.org/doc/
   |                 ;    draft-yossif-psea/"  -- one string; wrapped
   |                 ;    here only to fit the diagram
-  |                 ;   (RFC 9711 Sec 4.3.4); REQUIRED
+  |                 ;   (RFC 9711 Sec 4.3.2); REQUIRED
   PSEA-private extension claims
   +-- psea_tier            ; capability/assurance indicator (opaque;
   |                        ;   deployment-defined value space)
@@ -1137,7 +1137,7 @@ Internet-Draft             PSEA Token Profile                  July 2026
          "enum": [
            "https://datatracker.ietf.org/doc/draft-yossif-psea/"
          ],
-                 "description": "EAT profile identifier (RFC 9711 Sec 4.3.4).
+                 "description": "EAT profile identifier (RFC 9711 Sec 4.3.2).
                                  REQUIRED. This document fixes
                                  exactly one value for this claim.
                                  The claim carries a URI or an OID
@@ -3185,7 +3185,7 @@ Internet-Draft             PSEA Token Profile                  July 2026
 
    [RFC9711]  Lundblade, L., Mandyam, G., O'Donoghue, J., and C.
               Wallace, "The Entity Attestation Token (EAT)", RFC 9711,
-              December 2024, <https://www.rfc-editor.org/info/rfc9711>.
+              April 2025, <https://www.rfc-editor.org/info/rfc9711>.
 
 
 
@@ -3606,24 +3606,24 @@ Internet-Draft             PSEA Token Profile                  July 2026
       conforms to [RFC9711], Section 1.2 is under discussion on the IETF
       RATS mailing list.  The rule itself is unchanged in this revision.
 
+   *  Corrected seven [RFC9711] section citations that pointed at the
+      wrong sections of the published RFC.  The eat_profile claim is
+      Section 4.3.2, not Section 4.3.4 (four occurrences: Section 3.1,
+      the _Profile identifier_ entry and the claim-tree annotation, and
+      the claim-set schema).  EAT profiles are Section 6, not Section 7
+      (three occurrences, including the heading of Section 3.1.1);
+      Section 7 of [RFC9711] is "Encoding and Collected CDDL" and is
+      unrelated.  The publication date in the [RFC9711] reference entry
+      is also corrected to April 2025.  No requirement is affected:
+      every corrected citation is a pointer, and the normative text it
+      accompanies is unchanged.
+
 Author's Address
 
    Mohamad Khalil Yossif
    Yuthent
    Email: mohamad@yuthent.com
    URI:   https://yuthent.com/psea
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

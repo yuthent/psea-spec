@@ -1399,7 +1399,7 @@ li > p:last-of-type:only-child {
                 <p id="section-toc.1-1.3.2.1.1"><a href="#section-3.1" class="auto internal xref">3.1</a>.  <a href="#name-psea-as-an-eat-profile" class="internal xref">PSEA as an EAT Profile</a></p>
 <ul class="compact toc ulBare ulEmpty">
 <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.3.2.1.2.1">
-                    <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-eat-profile-definition-per-" class="internal xref">EAT Profile Definition (per RFC 9711, Section 7)</a></p>
+                    <p id="section-toc.1-1.3.2.1.2.1.1"><a href="#section-3.1.1" class="auto internal xref">3.1.1</a>.  <a href="#name-eat-profile-definition-per-" class="internal xref">EAT Profile Definition (per RFC 9711, Section 6)</a></p>
 </li>
                 </ul>
 </li>
@@ -2033,11 +2033,11 @@ li > p:last-of-type:only-child {
 <a href="#section-3.1" class="section-number selfRef">3.1. </a><a href="#name-psea-as-an-eat-profile" class="section-name selfRef">PSEA as an EAT Profile</a>
         </h3>
 <p id="section-3.1-1">The PSEA proof is a profile of the Entity Attestation Token
-        (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>), as that term is used in <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 7. The
+        (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>), as that term is used in <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 6. The
         token is a compact JWS (<span>[<a href="#RFC7515" class="cite xref">RFC7515</a>]</span>) signed with ES256 (ECDSA P-256 with SHA-256)
         whose payload is an EAT-JSON claims-set. A conforming PSEA proof
         <span class="bcp14">MUST</span> carry the <code>eat_profile</code> claim (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>,
-        Section 4.3.4) with the stable profile identifier
+        Section 4.3.2) with the stable profile identifier
         <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code>. The claim carries a URI or an OID
         and <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> defines no registry for profile identifiers, so this identifier
         requires no registration and carries no dependency on the publication stream this document
@@ -2077,15 +2077,15 @@ li > p:last-of-type:only-child {
 <div id="eat-profile-definition">
 <section id="section-3.1.1">
           <h4 id="name-eat-profile-definition-per-">
-<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-eat-profile-definition-per-" class="section-name selfRef">EAT Profile Definition (per RFC 9711, Section 7)</a>
+<a href="#section-3.1.1" class="section-number selfRef">3.1.1. </a><a href="#name-eat-profile-definition-per-" class="section-name selfRef">EAT Profile Definition (per RFC 9711, Section 6)</a>
           </h4>
-<p id="section-3.1.1-1">This subsection states the profile in the form <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 7 calls for,
+<p id="section-3.1.1-1">This subsection states the profile in the form <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 6 calls for,
           so the <code>eat_profile</code> commitment is auditable in one place. A token claiming
           <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code> <span class="bcp14">MUST</span> satisfy all of
           the following.<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-3.1.1-2">
             <dt id="section-3.1.1-2.1">Profile identifier</dt>
-            <dd style="margin-left: 1.5em" id="section-3.1.1-2.2">The <code>eat_profile</code> claim (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.3.4)
+            <dd style="margin-left: 1.5em" id="section-3.1.1-2.2">The <code>eat_profile</code> claim (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.3.2)
             <span class="bcp14">MUST</span> equal the URI
             <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code>. This document fixes exactly one
             value for this claim, and that value requires no registration
@@ -2219,7 +2219,7 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- eat_profile   ; "https://datatracker.ietf.org/doc/
   |                 ;    draft-yossif-psea/"  -- one string; wrapped
   |                 ;    here only to fit the diagram
-  |                 ;   (RFC 9711 Sec 4.3.4); REQUIRED
+  |                 ;   (RFC 9711 Sec 4.3.2); REQUIRED
   PSEA-private extension claims
   +-- psea_tier            ; capability/assurance indicator (opaque;
   |                        ;   deployment-defined value space)
@@ -2479,7 +2479,7 @@ entirely.
       "enum": [
         "https://datatracker.ietf.org/doc/draft-yossif-psea/"
       ],
-              "description": "EAT profile identifier (RFC 9711 Sec 4.3.4).
+              "description": "EAT profile identifier (RFC 9711 Sec 4.3.2).
                               REQUIRED. This document fixes
                               exactly one value for this claim.
                               The claim carries a URI or an OID
@@ -4191,7 +4191,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 <dd class="break"></dd>
 <dt id="RFC9711">[RFC9711]</dt>
         <dd>
-<span class="refAuthor">Lundblade, L.</span>, <span class="refAuthor">Mandyam, G.</span>, <span class="refAuthor">O'Donoghue, J.</span>, and <span class="refAuthor">C. Wallace</span>, <span class="refTitle">"The Entity Attestation Token (EAT)"</span>, <span class="seriesInfo">RFC 9711</span>, <time datetime="2024-12" class="refDate">December 2024</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9711">https://www.rfc-editor.org/info/rfc9711</a>&gt;</span>. </dd>
+<span class="refAuthor">Lundblade, L.</span>, <span class="refAuthor">Mandyam, G.</span>, <span class="refAuthor">O'Donoghue, J.</span>, and <span class="refAuthor">C. Wallace</span>, <span class="refTitle">"The Entity Attestation Token (EAT)"</span>, <span class="seriesInfo">RFC 9711</span>, <time datetime="2025-04" class="refDate">April 2025</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc9711">https://www.rfc-editor.org/info/rfc9711</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="FIPS180-4">[FIPS180-4]</dt>
       <dd>
@@ -4572,6 +4572,16 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         whether this profile's strict rejection of undeclared claims conforms to
         <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 1.2 is under discussion on the IETF RATS mailing list. The rule
         itself is unchanged in this revision.<a href="#appendix-C-3.7" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.8">Corrected seven <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> section citations that pointed at the wrong sections
+        of the published RFC. The <code>eat_profile</code> claim is Section 4.3.2, not Section 4.3.4 (four
+        occurrences: <a href="#eat-profile" class="auto internal xref">Section 3.1</a>, the <em>Profile identifier</em> entry and the
+        claim-tree annotation, and the claim-set schema). EAT profiles are Section 6, not Section 7
+        (three occurrences, including the heading of <a href="#eat-profile-definition" class="auto internal xref">Section 3.1.1</a>); Section 7
+        of <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> is "Encoding and Collected CDDL" and is unrelated. The publication
+        date in the <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> reference entry is also corrected to April 2025. No
+        requirement is affected: every corrected citation is a pointer, and the normative text it
+        accompanies is unchanged.<a href="#appendix-C-3.8" class="pilcrow">¶</a>
 </li>
       </ul>
 </section>
