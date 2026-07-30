@@ -204,12 +204,15 @@
       (<xref target="proof-token-format"/>), as is any Verifier acknowledgement a deployment defines (that
       artifact's format is out of scope of this profile); a JWS signature covers the received wire octets
       directly, so canonical encoding is therefore not load-bearing for verifying those JWS objects.
-      It is normative (a <bcp14>MUST</bcp14>) for exactly one use, in which the producer and the Verifier
-      independently hash canonical JSON bytes with SHA-256 and compare the result:</t>
+      It is normative (a <bcp14>MUST</bcp14>) for exactly two uses, in each of which the producer and the
+      Verifier independently hash canonical JSON bytes with SHA-256 and compare the result:</t>
       <ul>
         <li>the action-payload binding -- the SHA-256 over the canonical <tt>actionPayload</tt> that
         produces the signed <tt>psea_payload_hash</tt> claim, which the Verifier independently re-computes
-        and compares (<xref target="action-binding"/>).</li>
+        and compares (<xref target="action-binding"/>);</li>
+        <li>the <tt>ueid</tt> derivation -- the SHA-256 over the canonical two-member JSON object that
+        encodes the <tt>deviceId</tt> and <tt>iss</tt> inputs, which the Verifier independently re-computes
+        for its own <tt>iss</tt> (<xref target="privacy-ueid"/>).</li>
       </ul>
       <t>For this use, implementations that deviate from the rules below will produce byte sequences that
       fail the payload-binding comparison on peer platforms.</t>
@@ -392,9 +395,10 @@
         whose payload is an EAT-JSON claims-set. A conforming PSEA proof
         <bcp14>MUST</bcp14> carry the <tt>eat_profile</tt> claim (<xref target="RFC9711"/>,
         Section 4.3.4) with the stable profile identifier
-        <tt>urn:ietf:params:psea:eat-profile:1</tt> (or the fallback identifier of
-        <xref target="iana-urn-namespace"/> if the URN registration is not granted in the publication
-        stream). A Verifier <bcp14>MUST</bcp14> reject a
+        <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt>. The claim carries a URI or an OID
+        and <xref target="RFC9711"/> defines no registry for profile identifiers, so this identifier
+        requires no registration and carries no dependency on the publication stream this document
+        appears in. A Verifier <bcp14>MUST</bcp14> reject a
         proof whose <tt>eat_profile</tt> claim is absent or carries any other value.</t>
 
         <t>The profile is composed of three claim families:</t>
@@ -429,14 +433,15 @@
           <name>EAT Profile Definition (per RFC 9711, Section 7)</name>
           <t>This subsection states the profile in the form <xref target="RFC9711"/>, Section 7 calls for,
           so the <tt>eat_profile</tt> commitment is auditable in one place. A token claiming
-          <tt>urn:ietf:params:psea:eat-profile:1</tt> <bcp14>MUST</bcp14> satisfy all of the following.</t>
+          <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt> <bcp14>MUST</bcp14> satisfy all of
+          the following.</t>
           <dl>
             <dt>Profile identifier</dt>
             <dd>The <tt>eat_profile</tt> claim (<xref target="RFC9711"/>, Section 4.3.4)
-            <bcp14>MUST</bcp14> equal the URI <tt>urn:ietf:params:psea:eat-profile:1</tt> — or, if the
-            <tt>urn:ietf:params:psea</tt> registration is not granted in the publication stream, the single
-            fallback URI fixed by the published document (<xref target="iana-urn-namespace"/>). A published
-            document fixes exactly one value for this claim.</dd>
+            <bcp14>MUST</bcp14> equal the URI
+            <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt>. This document fixes exactly one
+            value for this claim, and that value requires no registration
+            (<xref target="iana-registries-overview"/>).</dd>
             <dt>Serialization</dt>
             <dd>The token <bcp14>MUST</bcp14> be a JWS Compact Serialization (<xref target="RFC7515"/>)
             whose payload is an EAT-JSON claims-set. A CBOR/COSE representation is out of scope of this
@@ -486,7 +491,10 @@
             revision that defines it; the wire format is versioned as a whole rather than extended in
             place. This departs from the ignore-unknown extensibility customary for EAT and JWT consumers,
             and is chosen so that the set of claims a Verifier appraises is exactly the set the profile
-            revision specifies.</dd>
+            revision specifies. Whether a profile may narrow EAT this far — <xref target="RFC9711"/>,
+            Section 1.2 states that no claims are mandatory and that claims not recognized should be
+            ignored — is under discussion on the IETF RATS mailing list at the time of writing, and a
+            future revision may narrow this rule.</dd>
           </dl>
         </section>
       </section>
@@ -522,16 +530,23 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- exp   ; NumericDate, epoch SECONDS
   EAT claims (RFC 9711)
   +-- ueid          ; base64url no-pad of the RAND-type UEID byte
-  |                 ;   string: 0x01 || SHA-256(deviceId || iss),
-  |                 ;   33 bytes; per-issuer (pairwise): the same
-  |                 ;   device yields a distinct ueid per deployment
+  |                 ;   string, 33 bytes:
+  |                 ;     0x01 || SHA-256(JCS({"deviceId": <deviceId>,
+  |                 ;                          "iss": <iss>}))
+  |                 ;   The two inputs are encoded as a canonical JSON
+  |                 ;   object (RFC 8785), not concatenated, so the
+  |                 ;   pair cannot be read two ways.
+  |                 ;   Per-issuer (pairwise): the same device yields
+  |                 ;   a distinct ueid per deployment
   |                 ;   (RFC 9711 Sec 4.2.1; 0x01 = RAND type tag)
   [+-- eat_nonce]   ; OPTIONAL server nonce for push-initiated
   |                 ;   freshness; omitted entirely when absent
   [+-- submods]     ; OPTIONAL; { "psea-device-state": {...} } --
   |                 ;   device-state appraisal input; contents
   |                 ;   out of scope of this document
-  +-- eat_profile   ; "urn:ietf:params:psea:eat-profile:1"
+  +-- eat_profile   ; "https://datatracker.ietf.org/doc/
+  |                 ;    draft-yossif-psea/"  -- one string; wrapped
+  |                 ;    here only to fit the diagram
   |                 ;   (RFC 9711 Sec 4.3.4); REQUIRED
   PSEA-private extension claims
   +-- psea_tier            ; capability/assurance indicator (opaque;
@@ -758,11 +773,19 @@ entirely.
     "ueid": { "type": "string", "pattern": "^[A-Za-z0-9_-]{44}$",
               "description": "RFC 9711 Sec 4.2.1 RAND-type UEID: base64url
                               (no padding) of the 33-byte string
-                              0x01 || SHA-256(deviceId || iss). Per-issuer
-                              (pairwise): the same device yields a distinct
-                              ueid per iss, preventing cross-deployment
-                              correlation. The leading 0x01 is the RAND
-                              type tag. See Privacy Considerations." },
+                              0x01 || SHA-256(JCS({\"deviceId\":
+                              <deviceId>, \"iss\": <iss>})).
+                              JCS is the RFC 8785 canonical
+                              form of that two-member object;
+                              the inputs are encoded, not
+                              concatenated, so the pair cannot
+                              be read two ways. Per-issuer
+                              (pairwise): the same device
+                              yields a distinct ueid per iss,
+                              preventing cross-deployment
+                              correlation. The leading 0x01 is
+                              the RAND type tag. See Privacy
+                              Considerations." },
     "eat_nonce": { "type": "string",
               "description": "OPTIONAL. Server nonce for push-initiated
                               freshness. Omitted entirely when absent." },
@@ -779,15 +802,17 @@ entirely.
                               that cannot produce device-state omits submods
                               entirely." },
     "eat_profile": { "type": "string",
-              "enum": ["urn:ietf:params:psea:eat-profile:1"],
+      "enum": [
+        "https://datatracker.ietf.org/doc/draft-yossif-psea/"
+      ],
               "description": "EAT profile identifier (RFC 9711 Sec 4.3.4).
-                              REQUIRED. The enum value is the requested
-                              primary identifier; if the urn:ietf:params:psea
-                              registration is not granted in the publication
-                              stream, the published document fixes the single
-                              fallback URI instead (see the IANA URN
-                              sub-namespace section). A published document
-                              fixes exactly one value." },
+                              REQUIRED. This document fixes
+                              exactly one value for this claim.
+                              The claim carries a URI or an OID
+                              and RFC 9711 defines no registry
+                              for profile identifiers, so no
+                              registration is requested for
+                              this value." },
     "psea_tier": { "type": "string", "minLength": 1, "maxLength": 128,
               "description": "Capability/assurance-level binding. Opaque to
                               this profile; deployment-defined value space
@@ -1976,8 +2001,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
         <t>To prevent the same physical device from being correlated <em>across</em> deployments, the
         <tt>ueid</tt> <bcp14>MUST</bcp14> be derived pairwise per issuer: the UEID byte string is
-        <tt>0x01 || SHA-256(deviceId || iss)</tt> (<xref target="proof-top-level"/>), so the same device
-        yields a different <tt>ueid</tt> for each distinct <tt>iss</tt>. Because <tt>iss</tt> is itself a
+        <tt>0x01 || SHA-256(JCS({"deviceId": &lt;deviceId&gt;, "iss": &lt;iss&gt;}))</tt>
+        (<xref target="proof-top-level"/>), where <tt>JCS()</tt> denotes the JSON Canonicalization Scheme
+        (<xref target="RFC8785"/>) form of that two-member JSON object, taken under the canonical-encoding
+        rules of <xref target="canonical-encoding"/>, so the same device
+        yields a different <tt>ueid</tt> for each distinct <tt>iss</tt>. The two inputs are encoded as a
+        canonical JSON object rather than concatenated because a bare concatenation of two
+        variable-length strings is ambiguous: the pairs <tt>("acme", "corp.example")</tt> and
+        <tt>("acmecorp", ".example")</tt> concatenate to identical octets and would derive one
+        <tt>ueid</tt> for two distinct deployments, defeating the very separation the pairwise derivation
+        exists to provide. Because <tt>iss</tt> is itself a
         signed claim bound into the proof, the derivation is verifiable: a Verifier recomputes the
         expected <tt>ueid</tt> for its own <tt>iss</tt> from the enrolled device-id input. The privacy
         rationale is that a single, globally-shared device identifier would let independent Relying
@@ -1989,8 +2022,9 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         (<tt>0x01</tt>). This is a deliberate, disclosed design choice, not an oversight, and it warrants an
         explicit justification because the RAND type tag nominally denotes a randomly generated UEID
         (<xref target="RFC9711"/>, Section 4.2.1), whereas the value this profile places under that tag is
-        the deterministic derivation <tt>SHA-256(deviceId || iss)</tt>. The cross-issuer unlinkability this
-        profile requires is supplied here by the per-issuer derivation (a distinct, non-correlatable
+        the deterministic derivation stated above over the <tt>deviceId</tt> and <tt>iss</tt> inputs. The
+        cross-issuer unlinkability this profile requires is supplied here by the per-issuer derivation
+        (a distinct, non-correlatable
         value per <tt>iss</tt>), not by randomness; within a single issuer the value is intentionally
         stable, because this profile depends on binding a device's successive proofs to one
         enrollment. The semantically purer vehicle for a stable-but-pairwise identifier of this kind is the
@@ -2023,9 +2057,11 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <t>The same "hashing is not anonymization" caution that applies to <tt>psea_user_hash</tt>
         (<xref target="privacy-hashing"/>) applies to the <tt>deviceId</tt> input of the <tt>ueid</tt>
         derivation. If <tt>deviceId</tt> is a low-entropy or enumerable value (for example a hardware
-        serial number or other guessable platform identifier), then <tt>SHA-256(deviceId || iss)</tt> with
-        a known <tt>iss</tt> is recoverable by brute force, defeating the confinement the per-issuer
-        derivation is meant to provide. A deployment <bcp14>SHOULD</bcp14> use a high-entropy,
+        serial number or other guessable platform identifier), then the derived <tt>ueid</tt> is
+        recoverable by brute force from a known <tt>iss</tt>, defeating the confinement the per-issuer
+        derivation is meant to provide; encoding the inputs unambiguously prevents one derived
+        <tt>ueid</tt> from standing for two input pairs, and does not raise the entropy of either input.
+        A deployment <bcp14>SHOULD</bcp14> use a high-entropy,
         per-enrollment random value as <tt>deviceId</tt> (a value generated at enrollment and not derived
         from a stable hardware identifier), so that the derived <tt>ueid</tt> is not recoverable from
         guessable inputs and is not a globally stable value computable by any other party.</t>
@@ -2074,12 +2110,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
       <section anchor="iana-registries-overview" numbered="true">
         <name>Summary of Requested Registrations</name>
-        <t>This document requests IANA to register one media type and register a URN sub-namespace:</t>
+        <t>This document requests IANA to register one media type:</t>
         <ul>
           <li>One media-type registration (<xref target="iana-media-types"/>).</li>
-          <li>Registration of the <tt>urn:ietf:params:psea</tt> URN sub-namespace
-          (<xref target="iana-urn-namespace"/>).</li>
         </ul>
+        <t>This document requests no URN sub-namespace and no registration of any kind for its
+        <tt>eat_profile</tt> identifier. The <tt>eat_profile</tt> claim carries a URI or an OID and
+        <xref target="RFC9711"/> defines no registry for profile identifiers, so the identifier this
+        profile uses — the HTTPS URI <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt>
+        (<xref target="eat-profile"/>) — requires no registration action and does not depend on the stream
+        this document is published on.</t>
         <t>This document does not request registration of the <tt>psea_*</tt> claims in the JSON Web Token
         Claims registry (<xref target="RFC7519"/>, Section 10.1) or in the CBOR Web Token (CWT) Claims
         registry. The <tt>psea_*</tt> claims are profile-private extension claims whose semantics are
@@ -2147,38 +2187,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         register a <tt>+cose</tt> media type.</t>
       </section>
 
-      <section anchor="iana-urn-namespace" numbered="true">
-        <name>URN Sub-namespace Registration (urn:ietf:params:psea)</name>
-        <t>This document requests that IANA register the <tt>psea</tt> sub-namespace within the
-        <tt>urn:ietf:params</tt> hierarchy, per the procedures of <xref target="RFC3553"/> (BCP 73). The
-        registration enables stable, IANA-managed identifiers under <tt>urn:ietf:params:psea</tt>, of
-        which the EAT profile identifier <tt>urn:ietf:params:psea:eat-profile:1</tt>
-        (<xref target="eat-profile"/>) is the first assignment.</t>
-        <t>The registration template (per <xref target="RFC3553"/>, Section 4.3) is:</t>
-        <dl>
-          <dt>Registry name</dt>
-          <dd>PSEA (Post-Session Execution Assurance)</dd>
-          <dt>Specification</dt>
-          <dd>This document.</dd>
-          <dt>Repository</dt>
-          <dd>Identifier strings assigned under <tt>urn:ietf:params:psea</tt> by this and future PSEA
-          documents.</dd>
-          <dt>Index value</dt>
-          <dd>Sub-strings of the form <tt>urn:ietf:params:psea:&lt;class&gt;:&lt;id&gt;</tt> are assigned
-          by Specification Required <xref target="RFC8126"/>. The initial assignment is
-          <tt>urn:ietf:params:psea:eat-profile:1</tt>.</dd>
-        </dl>
-        <t>The <tt>urn:ietf:params</tt> hierarchy is managed conservatively and its sub-namespace
-        registrations are normally associated with the IETF document stream. If this document is published
-        on a stream for which a <tt>urn:ietf:params:psea</tt> sub-namespace registration is not granted, or
-        if the registration is otherwise not completed, the profile identifier
-        <bcp14>MUST</bcp14> fall back to the stable HTTPS URI
-        <tt>https://yuthent.com/psea/eat-profile/1</tt>, under a namespace the author controls, carrying
-        identical semantics. Conforming implementations <bcp14>MUST</bcp14> treat whichever single value
-        this document's final published form fixes as the canonical <tt>eat_profile</tt> value; the two
-        forms are not interchangeable on the wire within one deployment. The remainder of this document
-        uses the <tt>urn:ietf:params:psea:eat-profile:1</tt> form as the requested primary identifier.</t>
-      </section>
     </section>
     <section anchor="algorithm-agility" numbered="true" toc="default">
       <name>Algorithm Agility and Operational Defaults</name>
@@ -2272,17 +2280,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           <seriesInfo name="RFC" value="4648"/>
         </reference>
 
-        <reference anchor="RFC3553" target="https://www.rfc-editor.org/info/rfc3553">
-          <front><title>An IETF URN Sub-namespace for Registered Protocol Parameters</title>
-            <author fullname="M. Mealling" initials="M." surname="Mealling"/>
-            <author fullname="L. Masinter" initials="L." surname="Masinter"/>
-            <author fullname="T. Hardie" initials="T." surname="Hardie"/>
-            <author fullname="G. Klyne" initials="G." surname="Klyne"/>
-            <date year="2003" month="June"/></front>
-          <seriesInfo name="BCP" value="73"/>
-          <seriesInfo name="RFC" value="3553"/>
-        </reference>
-
         <reference anchor="RFC6838" target="https://www.rfc-editor.org/info/rfc6838">
           <front><title>Media Type Specifications and Registration Procedures</title>
             <author fullname="N. Freed" initials="N." surname="Freed"/>
@@ -2323,16 +2320,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
             <author fullname="M. Jones" initials="M." surname="Jones"/>
             <date year="2016" month="February"/></front>
           <seriesInfo name="RFC" value="7797"/>
-        </reference>
-
-        <reference anchor="RFC8126" target="https://www.rfc-editor.org/info/rfc8126">
-          <front><title>Guidelines for Writing an IANA Considerations Section in RFCs</title>
-            <author fullname="M. Cotton" initials="M." surname="Cotton"/>
-            <author fullname="B. Leiba" initials="B." surname="Leiba"/>
-            <author fullname="T. Narten" initials="T." surname="Narten"/>
-            <date year="2017" month="June"/></front>
-          <seriesInfo name="BCP" value="26"/>
-          <seriesInfo name="RFC" value="8126"/>
         </reference>
 
         <reference anchor="RFC8174" target="https://www.rfc-editor.org/info/rfc8174">
@@ -2590,7 +2577,8 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             <li>MUST verify the ECDSA P-256 / SHA-256 signature against the enrolled public key, and
             thereafter read claims only from the verified payload.</li>
             <li>MUST reject a proof whose <tt>eat_profile</tt> claim is absent or is not
-            <tt>urn:ietf:params:psea:eat-profile:1</tt> (<xref target="eat-profile"/>), and a proof whose
+            <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt> (<xref target="eat-profile"/>),
+            and a proof whose
             <tt>psea_proof_version</tt> is an unknown value (<xref target="proof-versioning"/>).</li>
             <li>MUST validate freshness per <xref target="freshness"/>: reject a proof whose <tt>exp</tt>
             is in the past or whose <tt>iat</tt> is implausibly in the future, applying only a small
@@ -2666,12 +2654,20 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
     <section anchor="changes-from-02" numbered="true">
       <name>Changes from draft-yossif-psea-02</name>
 
-      <t>This revision states one known limitation and corrects three claim-set descriptions against the
-      reference implementation. It adds no new requirement and defines no new mechanism. No normative
-      requirement is changed: the <xref target="envelope-schemas"/> prohibition on using unsigned
+      <t>This revision states one known limitation, corrects three claim-set descriptions against the
+      reference implementation, corrects the <tt>ueid</tt> derivation, and withdraws the URN
+      sub-namespace registration request. Apart from the <tt>ueid</tt> derivation, it adds no new
+      requirement and defines no new mechanism, and no normative requirement is changed: the
+      <xref target="envelope-schemas"/> prohibition on using unsigned
       transport-body fields as security-decision inputs, and the Verifier obligations of
       <xref target="conformance-verifier"/>, retain their force unaltered; the only edits to either are to
       the illustrative lists that named a field incorrectly.</t>
+
+      <t><strong>The <tt>ueid</tt> change is a wire-format correction, not an editorial one.</strong> A
+      conforming Attester built against -02 and one built against this revision derive different
+      <tt>ueid</tt> values from the same <tt>deviceId</tt> and <tt>iss</tt>, so an implementation and any
+      enrolled record that stores or recomputes a <tt>ueid</tt> must be updated together. The defect was
+      found in review by Thomas Fossati on the IETF RATS mailing list.</t>
 
       <ul>
         <li>Added <xref target="open-ordering"/>, stating that the profile does not establish that a
@@ -2693,6 +2689,29 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         claim, the report is a committed field, as <tt>actionPayload</tt> is under
         <tt>psea_payload_hash</tt>. The prohibition itself is unchanged; only the enumeration of which
         fields it reaches is corrected.</li>
+        <li>Corrected the <tt>ueid</tt> derivation (<xref target="proof-top-level"/>,
+        <xref target="proof-schema"/>, <xref target="privacy-ueid"/>). Through -02 the derivation was
+        <tt>0x01 || SHA-256(deviceId || iss)</tt>, a bare concatenation of two variable-length strings and
+        therefore ambiguous: <tt>("acme", "corp.example")</tt> and <tt>("acmecorp", ".example")</tt> hash
+        identically, so two distinct deployments could share one <tt>ueid</tt> — the opposite of what the
+        pairwise derivation exists to achieve. The two inputs are now encoded as a canonical JSON object
+        (<xref target="RFC8785"/>) before hashing, reusing the canonicalization this profile already
+        requires (<xref target="canonical-encoding"/>) rather than introducing a second one. The pairwise
+        approach itself is unchanged and remains the one <xref target="RFC9711"/>, Section 8.1 sanctions.</li>
+        <li>Withdrew the request to register the <tt>urn:ietf:params:psea</tt> URN sub-namespace, and
+        removed with it the fallback profile identifier written for the case where that registration was
+        not granted (<xref target="iana-registries-overview"/>). The <tt>urn:ietf:params</tt> policy would
+        have made the profile identifier depend on an IETF-stream publication decision, whereas EAT
+        deliberately requires no registration for profile identifiers. The <tt>eat_profile</tt> value is
+        now the HTTPS URI <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt>
+        (<xref target="eat-profile"/>). With no registration requested there is no non-grant case and
+        nothing to fall back from, so the fallback clause is removed rather than restated. This changes the
+        <tt>eat_profile</tt> value on the wire; Attester and Verifier must be updated together. Withdrawing
+        the request was recommended in review by Thomas Fossati on the IETF RATS mailing list.</li>
+        <li>Recorded in the "Extensibility model" entry of <xref target="eat-profile-definition"/> that
+        whether this profile's strict rejection of undeclared claims conforms to
+        <xref target="RFC9711"/>, Section 1.2 is under discussion on the IETF RATS mailing list. The rule
+        itself is unchanged in this revision.</li>
       </ul>
     </section>
 

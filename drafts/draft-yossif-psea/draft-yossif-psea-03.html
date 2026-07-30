@@ -1583,9 +1583,6 @@ li > p:last-of-type:only-child {
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.2">
                 <p id="section-toc.1-1.8.2.2.1"><a href="#section-8.2" class="auto internal xref">8.2</a>.  <a href="#name-media-type-registration" class="internal xref">Media Type Registration</a></p>
 </li>
-              <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.8.2.3">
-                <p id="section-toc.1-1.8.2.3.1"><a href="#section-8.3" class="auto internal xref">8.3</a>.  <a href="#name-urn-sub-namespace-registrat" class="internal xref">URN Sub-namespace Registration (urn:ietf:params:psea)</a></p>
-</li>
             </ul>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.9">
@@ -1820,12 +1817,16 @@ li > p:last-of-type:only-child {
       (<a href="#proof-token-format" class="auto internal xref">Section 3</a>), as is any Verifier acknowledgement a deployment defines (that
       artifact's format is out of scope of this profile); a JWS signature covers the received wire octets
       directly, so canonical encoding is therefore not load-bearing for verifying those JWS objects.
-      It is normative (a <span class="bcp14">MUST</span>) for exactly one use, in which the producer and the Verifier
-      independently hash canonical JSON bytes with SHA-256 and compare the result:<a href="#section-2-1" class="pilcrow">¶</a></p>
+      It is normative (a <span class="bcp14">MUST</span>) for exactly two uses, in each of which the producer and the
+      Verifier independently hash canonical JSON bytes with SHA-256 and compare the result:<a href="#section-2-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-2-2.1">the action-payload binding -- the SHA-256 over the canonical <code>actionPayload</code> that
         produces the signed <code>psea_payload_hash</code> claim, which the Verifier independently re-computes
-        and compares (<a href="#action-binding" class="auto internal xref">Section 3.13</a>).<a href="#section-2-2.1" class="pilcrow">¶</a>
+        and compares (<a href="#action-binding" class="auto internal xref">Section 3.13</a>);<a href="#section-2-2.1" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="section-2-2.2">the <code>ueid</code> derivation -- the SHA-256 over the canonical two-member JSON object that
+        encodes the <code>deviceId</code> and <code>iss</code> inputs, which the Verifier independently re-computes
+        for its own <code>iss</code> (<a href="#privacy-ueid" class="auto internal xref">Section 7.1</a>).<a href="#section-2-2.2" class="pilcrow">¶</a>
 </li>
       </ul>
 <p id="section-2-3">For this use, implementations that deviate from the rules below will produce byte sequences that
@@ -2037,9 +2038,10 @@ li > p:last-of-type:only-child {
         whose payload is an EAT-JSON claims-set. A conforming PSEA proof
         <span class="bcp14">MUST</span> carry the <code>eat_profile</code> claim (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>,
         Section 4.3.4) with the stable profile identifier
-        <code>urn:ietf:params:psea:eat-profile:1</code> (or the fallback identifier of
-        <a href="#iana-urn-namespace" class="auto internal xref">Section 8.3</a> if the URN registration is not granted in the publication
-        stream). A Verifier <span class="bcp14">MUST</span> reject a
+        <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code>. The claim carries a URI or an OID
+        and <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> defines no registry for profile identifiers, so this identifier
+        requires no registration and carries no dependency on the publication stream this document
+        appears in. A Verifier <span class="bcp14">MUST</span> reject a
         proof whose <code>eat_profile</code> claim is absent or carries any other value.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.1-2">The profile is composed of three claim families:<a href="#section-3.1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
@@ -2079,14 +2081,15 @@ li > p:last-of-type:only-child {
           </h4>
 <p id="section-3.1.1-1">This subsection states the profile in the form <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 7 calls for,
           so the <code>eat_profile</code> commitment is auditable in one place. A token claiming
-          <code>urn:ietf:params:psea:eat-profile:1</code> <span class="bcp14">MUST</span> satisfy all of the following.<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
+          <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code> <span class="bcp14">MUST</span> satisfy all of
+          the following.<a href="#section-3.1.1-1" class="pilcrow">¶</a></p>
 <span class="break"></span><dl class="dlParallel" id="section-3.1.1-2">
             <dt id="section-3.1.1-2.1">Profile identifier</dt>
             <dd style="margin-left: 1.5em" id="section-3.1.1-2.2">The <code>eat_profile</code> claim (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.3.4)
-            <span class="bcp14">MUST</span> equal the URI <code>urn:ietf:params:psea:eat-profile:1</code> — or, if the
-            <code>urn:ietf:params:psea</code> registration is not granted in the publication stream, the single
-            fallback URI fixed by the published document (<a href="#iana-urn-namespace" class="auto internal xref">Section 8.3</a>). A published
-            document fixes exactly one value for this claim.<a href="#section-3.1.1-2.2" class="pilcrow">¶</a>
+            <span class="bcp14">MUST</span> equal the URI
+            <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code>. This document fixes exactly one
+            value for this claim, and that value requires no registration
+            (<a href="#iana-registries-overview" class="auto internal xref">Section 8.1</a>).<a href="#section-3.1.1-2.2" class="pilcrow">¶</a>
 </dd>
             <dd class="break"></dd>
 <dt id="section-3.1.1-2.3">Serialization</dt>
@@ -2154,7 +2157,10 @@ li > p:last-of-type:only-child {
             revision that defines it; the wire format is versioned as a whole rather than extended in
             place. This departs from the ignore-unknown extensibility customary for EAT and JWT consumers,
             and is chosen so that the set of claims a Verifier appraises is exactly the set the profile
-            revision specifies.<a href="#section-3.1.1-2.20" class="pilcrow">¶</a>
+            revision specifies. Whether a profile may narrow EAT this far — <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>,
+            Section 1.2 states that no claims are mandatory and that claims not recognized should be
+            ignored — is under discussion on the IETF RATS mailing list at the time of writing, and a
+            future revision may narrow this rule.<a href="#section-3.1.1-2.20" class="pilcrow">¶</a>
 </dd>
           <dd class="break"></dd>
 </dl>
@@ -2196,16 +2202,23 @@ Payload (the claim set; base64url-encoded, no padding)
   +-- exp   ; NumericDate, epoch SECONDS
   EAT claims (RFC 9711)
   +-- ueid          ; base64url no-pad of the RAND-type UEID byte
-  |                 ;   string: 0x01 || SHA-256(deviceId || iss),
-  |                 ;   33 bytes; per-issuer (pairwise): the same
-  |                 ;   device yields a distinct ueid per deployment
+  |                 ;   string, 33 bytes:
+  |                 ;     0x01 || SHA-256(JCS({"deviceId": &lt;deviceId&gt;,
+  |                 ;                          "iss": &lt;iss&gt;}))
+  |                 ;   The two inputs are encoded as a canonical JSON
+  |                 ;   object (RFC 8785), not concatenated, so the
+  |                 ;   pair cannot be read two ways.
+  |                 ;   Per-issuer (pairwise): the same device yields
+  |                 ;   a distinct ueid per deployment
   |                 ;   (RFC 9711 Sec 4.2.1; 0x01 = RAND type tag)
   [+-- eat_nonce]   ; OPTIONAL server nonce for push-initiated
   |                 ;   freshness; omitted entirely when absent
   [+-- submods]     ; OPTIONAL; { "psea-device-state": {...} } --
   |                 ;   device-state appraisal input; contents
   |                 ;   out of scope of this document
-  +-- eat_profile   ; "urn:ietf:params:psea:eat-profile:1"
+  +-- eat_profile   ; "https://datatracker.ietf.org/doc/
+  |                 ;    draft-yossif-psea/"  -- one string; wrapped
+  |                 ;    here only to fit the diagram
   |                 ;   (RFC 9711 Sec 4.3.4); REQUIRED
   PSEA-private extension claims
   +-- psea_tier            ; capability/assurance indicator (opaque;
@@ -2434,11 +2447,19 @@ entirely.
     "ueid": { "type": "string", "pattern": "^[A-Za-z0-9_-]{44}$",
               "description": "RFC 9711 Sec 4.2.1 RAND-type UEID: base64url
                               (no padding) of the 33-byte string
-                              0x01 || SHA-256(deviceId || iss). Per-issuer
-                              (pairwise): the same device yields a distinct
-                              ueid per iss, preventing cross-deployment
-                              correlation. The leading 0x01 is the RAND
-                              type tag. See Privacy Considerations." },
+                              0x01 || SHA-256(JCS({\"deviceId\":
+                              &lt;deviceId&gt;, \"iss\": &lt;iss&gt;})).
+                              JCS is the RFC 8785 canonical
+                              form of that two-member object;
+                              the inputs are encoded, not
+                              concatenated, so the pair cannot
+                              be read two ways. Per-issuer
+                              (pairwise): the same device
+                              yields a distinct ueid per iss,
+                              preventing cross-deployment
+                              correlation. The leading 0x01 is
+                              the RAND type tag. See Privacy
+                              Considerations." },
     "eat_nonce": { "type": "string",
               "description": "OPTIONAL. Server nonce for push-initiated
                               freshness. Omitted entirely when absent." },
@@ -2455,15 +2476,17 @@ entirely.
                               that cannot produce device-state omits submods
                               entirely." },
     "eat_profile": { "type": "string",
-              "enum": ["urn:ietf:params:psea:eat-profile:1"],
+      "enum": [
+        "https://datatracker.ietf.org/doc/draft-yossif-psea/"
+      ],
               "description": "EAT profile identifier (RFC 9711 Sec 4.3.4).
-                              REQUIRED. The enum value is the requested
-                              primary identifier; if the urn:ietf:params:psea
-                              registration is not granted in the publication
-                              stream, the published document fixes the single
-                              fallback URI instead (see the IANA URN
-                              sub-namespace section). A published document
-                              fixes exactly one value." },
+                              REQUIRED. This document fixes
+                              exactly one value for this claim.
+                              The claim carries a URI or an OID
+                              and RFC 9711 defines no registry
+                              for profile identifiers, so no
+                              registration is requested for
+                              this value." },
     "psea_tier": { "type": "string", "minLength": 1, "maxLength": 128,
               "description": "Capability/assurance-level binding. Opaque to
                               this profile; deployment-defined value space
@@ -3776,8 +3799,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         depends on the Verifier being able to bind successive proofs to one enrollment.<a href="#section-7.1-1" class="pilcrow">¶</a></p>
 <p id="section-7.1-2">To prevent the same physical device from being correlated <em>across</em> deployments, the
         <code>ueid</code> <span class="bcp14">MUST</span> be derived pairwise per issuer: the UEID byte string is
-        <code>0x01 || SHA-256(deviceId || iss)</code> (<a href="#proof-top-level" class="auto internal xref">Section 3.2</a>), so the same device
-        yields a different <code>ueid</code> for each distinct <code>iss</code>. Because <code>iss</code> is itself a
+        <code>0x01 || SHA-256(JCS({"deviceId": &lt;deviceId&gt;, "iss": &lt;iss&gt;}))</code>
+        (<a href="#proof-top-level" class="auto internal xref">Section 3.2</a>), where <code>JCS()</code> denotes the JSON Canonicalization Scheme
+        (<span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>) form of that two-member JSON object, taken under the canonical-encoding
+        rules of <a href="#canonical-encoding" class="auto internal xref">Section 2</a>, so the same device
+        yields a different <code>ueid</code> for each distinct <code>iss</code>. The two inputs are encoded as a
+        canonical JSON object rather than concatenated because a bare concatenation of two
+        variable-length strings is ambiguous: the pairs <code>("acme", "corp.example")</code> and
+        <code>("acmecorp", ".example")</code> concatenate to identical octets and would derive one
+        <code>ueid</code> for two distinct deployments, defeating the very separation the pairwise derivation
+        exists to provide. Because <code>iss</code> is itself a
         signed claim bound into the proof, the derivation is verifiable: a Verifier recomputes the
         expected <code>ueid</code> for its own <code>iss</code> from the enrolled device-id input. The privacy
         rationale is that a single, globally-shared device identifier would let independent Relying
@@ -3788,8 +3819,9 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         (<code>0x01</code>). This is a deliberate, disclosed design choice, not an oversight, and it warrants an
         explicit justification because the RAND type tag nominally denotes a randomly generated UEID
         (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.1), whereas the value this profile places under that tag is
-        the deterministic derivation <code>SHA-256(deviceId || iss)</code>. The cross-issuer unlinkability this
-        profile requires is supplied here by the per-issuer derivation (a distinct, non-correlatable
+        the deterministic derivation stated above over the <code>deviceId</code> and <code>iss</code> inputs. The
+        cross-issuer unlinkability this profile requires is supplied here by the per-issuer derivation
+        (a distinct, non-correlatable
         value per <code>iss</code>), not by randomness; within a single issuer the value is intentionally
         stable, because this profile depends on binding a device's successive proofs to one
         enrollment. The semantically purer vehicle for a stable-but-pairwise identifier of this kind is the
@@ -3819,9 +3851,11 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 <p id="section-7.1-6">The same "hashing is not anonymization" caution that applies to <code>psea_user_hash</code>
         (<a href="#privacy-hashing" class="auto internal xref">Section 7.2</a>) applies to the <code>deviceId</code> input of the <code>ueid</code>
         derivation. If <code>deviceId</code> is a low-entropy or enumerable value (for example a hardware
-        serial number or other guessable platform identifier), then <code>SHA-256(deviceId || iss)</code> with
-        a known <code>iss</code> is recoverable by brute force, defeating the confinement the per-issuer
-        derivation is meant to provide. A deployment <span class="bcp14">SHOULD</span> use a high-entropy,
+        serial number or other guessable platform identifier), then the derived <code>ueid</code> is
+        recoverable by brute force from a known <code>iss</code>, defeating the confinement the per-issuer
+        derivation is meant to provide; encoding the inputs unambiguously prevents one derived
+        <code>ueid</code> from standing for two input pairs, and does not raise the entropy of either input.
+        A deployment <span class="bcp14">SHOULD</span> use a high-entropy,
         per-enrollment random value as <code>deviceId</code> (a value generated at enrollment and not derived
         from a stable hardware identifier), so that the derived <code>ueid</code> is not recoverable from
         guessable inputs and is not a globally stable value computable by any other party.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
@@ -3879,15 +3913,18 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <h3 id="name-summary-of-requested-regist">
 <a href="#section-8.1" class="section-number selfRef">8.1. </a><a href="#name-summary-of-requested-regist" class="section-name selfRef">Summary of Requested Registrations</a>
         </h3>
-<p id="section-8.1-1">This document requests IANA to register one media type and register a URN sub-namespace:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
+<p id="section-8.1-1">This document requests IANA to register one media type:<a href="#section-8.1-1" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-8.1-2.1">One media-type registration (<a href="#iana-media-types" class="auto internal xref">Section 8.2</a>).<a href="#section-8.1-2.1" class="pilcrow">¶</a>
 </li>
-          <li class="normal" id="section-8.1-2.2">Registration of the <code>urn:ietf:params:psea</code> URN sub-namespace
-          (<a href="#iana-urn-namespace" class="auto internal xref">Section 8.3</a>).<a href="#section-8.1-2.2" class="pilcrow">¶</a>
-</li>
         </ul>
-<p id="section-8.1-3">This document does not request registration of the <code>psea_*</code> claims in the JSON Web Token
+<p id="section-8.1-3">This document requests no URN sub-namespace and no registration of any kind for its
+        <code>eat_profile</code> identifier. The <code>eat_profile</code> claim carries a URI or an OID and
+        <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> defines no registry for profile identifiers, so the identifier this
+        profile uses — the HTTPS URI <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code>
+        (<a href="#eat-profile" class="auto internal xref">Section 3.1</a>) — requires no registration action and does not depend on the stream
+        this document is published on.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+<p id="section-8.1-4">This document does not request registration of the <code>psea_*</code> claims in the JSON Web Token
         Claims registry (<span>[<a href="#RFC7519" class="cite xref">RFC7519</a>]</span>, Section 10.1) or in the CBOR Web Token (CWT) Claims
         registry. The <code>psea_*</code> claims are profile-private extension claims whose semantics are
         meaningful only to a consumer that understands this <code>eat_profile</code>
@@ -3896,7 +3933,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         document (<a href="#eat-profile-definition" class="auto internal xref">Section 3.1.1</a>). A future revision <span class="bcp14">MAY</span> register
         one or more <code>psea_*</code> claims in the JWT Claims registry should cross-profile reuse warrant a
         globally-managed name; this revision intentionally does not, to avoid reserving global names for
-        semantics that are defined only relative to this profile.<a href="#section-8.1-3" class="pilcrow">¶</a></p>
+        semantics that are defined only relative to this profile.<a href="#section-8.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="iana-media-types">
@@ -3996,50 +4033,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 <p id="section-8.2-3">A CWT/COSE representation (<span>[<a href="#RFC9052" class="cite xref">RFC9052</a>]</span>) carrying the same EAT
         (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>) and <code>psea_*</code> claim set is future work; this revision does not
         register a <code>+cose</code> media type.<a href="#section-8.2-3" class="pilcrow">¶</a></p>
-</section>
-</div>
-<div id="iana-urn-namespace">
-<section id="section-8.3">
-        <h3 id="name-urn-sub-namespace-registrat">
-<a href="#section-8.3" class="section-number selfRef">8.3. </a><a href="#name-urn-sub-namespace-registrat" class="section-name selfRef">URN Sub-namespace Registration (urn:ietf:params:psea)</a>
-        </h3>
-<p id="section-8.3-1">This document requests that IANA register the <code>psea</code> sub-namespace within the
-        <code>urn:ietf:params</code> hierarchy, per the procedures of <span>[<a href="#RFC3553" class="cite xref">RFC3553</a>]</span> (BCP 73). The
-        registration enables stable, IANA-managed identifiers under <code>urn:ietf:params:psea</code>, of
-        which the EAT profile identifier <code>urn:ietf:params:psea:eat-profile:1</code>
-        (<a href="#eat-profile" class="auto internal xref">Section 3.1</a>) is the first assignment.<a href="#section-8.3-1" class="pilcrow">¶</a></p>
-<p id="section-8.3-2">The registration template (per <span>[<a href="#RFC3553" class="cite xref">RFC3553</a>]</span>, Section 4.3) is:<a href="#section-8.3-2" class="pilcrow">¶</a></p>
-<span class="break"></span><dl class="dlParallel" id="section-8.3-3">
-          <dt id="section-8.3-3.1">Registry name</dt>
-          <dd style="margin-left: 1.5em" id="section-8.3-3.2">PSEA (Post-Session Execution Assurance)<a href="#section-8.3-3.2" class="pilcrow">¶</a>
-</dd>
-          <dd class="break"></dd>
-<dt id="section-8.3-3.3">Specification</dt>
-          <dd style="margin-left: 1.5em" id="section-8.3-3.4">This document.<a href="#section-8.3-3.4" class="pilcrow">¶</a>
-</dd>
-          <dd class="break"></dd>
-<dt id="section-8.3-3.5">Repository</dt>
-          <dd style="margin-left: 1.5em" id="section-8.3-3.6">Identifier strings assigned under <code>urn:ietf:params:psea</code> by this and future PSEA
-          documents.<a href="#section-8.3-3.6" class="pilcrow">¶</a>
-</dd>
-          <dd class="break"></dd>
-<dt id="section-8.3-3.7">Index value</dt>
-          <dd style="margin-left: 1.5em" id="section-8.3-3.8">Sub-strings of the form <code>urn:ietf:params:psea:&lt;class&gt;:&lt;id&gt;</code> are assigned
-          by Specification Required <span>[<a href="#RFC8126" class="cite xref">RFC8126</a>]</span>. The initial assignment is
-          <code>urn:ietf:params:psea:eat-profile:1</code>.<a href="#section-8.3-3.8" class="pilcrow">¶</a>
-</dd>
-        <dd class="break"></dd>
-</dl>
-<p id="section-8.3-4">The <code>urn:ietf:params</code> hierarchy is managed conservatively and its sub-namespace
-        registrations are normally associated with the IETF document stream. If this document is published
-        on a stream for which a <code>urn:ietf:params:psea</code> sub-namespace registration is not granted, or
-        if the registration is otherwise not completed, the profile identifier
-        <span class="bcp14">MUST</span> fall back to the stable HTTPS URI
-        <code>https://yuthent.com/psea/eat-profile/1</code>, under a namespace the author controls, carrying
-        identical semantics. Conforming implementations <span class="bcp14">MUST</span> treat whichever single value
-        this document's final published form fixes as the canonical <code>eat_profile</code> value; the two
-        forms are not interchangeable on the wire within one deployment. The remainder of this document
-        uses the <code>urn:ietf:params:psea:eat-profile:1</code> form as the requested primary identifier.<a href="#section-8.3-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 </section>
@@ -4156,10 +4149,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <dd>
 <span class="refAuthor">Josefsson, S.</span>, <span class="refTitle">"The Base16, Base32, and Base64 Data Encodings"</span>, <span class="seriesInfo">RFC 4648</span>, <time datetime="2006-10" class="refDate">October 2006</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc4648">https://www.rfc-editor.org/info/rfc4648</a>&gt;</span>. </dd>
 <dd class="break"></dd>
-<dt id="RFC3553">[RFC3553]</dt>
-        <dd>
-<span class="refAuthor">Mealling, M.</span>, <span class="refAuthor">Masinter, L.</span>, <span class="refAuthor">Hardie, T.</span>, and <span class="refAuthor">G. Klyne</span>, <span class="refTitle">"An IETF URN Sub-namespace for Registered Protocol Parameters"</span>, <span class="seriesInfo">BCP 73</span>, <span class="seriesInfo">RFC 3553</span>, <time datetime="2003-06" class="refDate">June 2003</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc3553">https://www.rfc-editor.org/info/rfc3553</a>&gt;</span>. </dd>
-<dd class="break"></dd>
 <dt id="RFC6838">[RFC6838]</dt>
         <dd>
 <span class="refAuthor">Freed, N.</span>, <span class="refAuthor">Klensin, J.</span>, and <span class="refAuthor">T. Hansen</span>, <span class="refTitle">"Media Type Specifications and Registration Procedures"</span>, <span class="seriesInfo">BCP 13</span>, <span class="seriesInfo">RFC 6838</span>, <time datetime="2013-01" class="refDate">January 2013</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc6838">https://www.rfc-editor.org/info/rfc6838</a>&gt;</span>. </dd>
@@ -4179,10 +4168,6 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 <dt id="RFC7797">[RFC7797]</dt>
         <dd>
 <span class="refAuthor">Jones, M.</span>, <span class="refTitle">"JSON Web Signature (JWS) Unencoded Payload Option"</span>, <span class="seriesInfo">RFC 7797</span>, <time datetime="2016-02" class="refDate">February 2016</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc7797">https://www.rfc-editor.org/info/rfc7797</a>&gt;</span>. </dd>
-<dd class="break"></dd>
-<dt id="RFC8126">[RFC8126]</dt>
-        <dd>
-<span class="refAuthor">Cotton, M.</span>, <span class="refAuthor">Leiba, B.</span>, and <span class="refAuthor">T. Narten</span>, <span class="refTitle">"Guidelines for Writing an IANA Considerations Section in RFCs"</span>, <span class="seriesInfo">BCP 26</span>, <span class="seriesInfo">RFC 8126</span>, <time datetime="2017-06" class="refDate">June 2017</time>, <span>&lt;<a href="https://www.rfc-editor.org/info/rfc8126">https://www.rfc-editor.org/info/rfc8126</a>&gt;</span>. </dd>
 <dd class="break"></dd>
 <dt id="RFC8174">[RFC8174]</dt>
         <dd>
@@ -4424,7 +4409,8 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             thereafter read claims only from the verified payload.<a href="#appendix-B.3.1-2.2" class="pilcrow">¶</a>
 </li>
             <li class="normal" id="appendix-B.3.1-2.3">MUST reject a proof whose <code>eat_profile</code> claim is absent or is not
-            <code>urn:ietf:params:psea:eat-profile:1</code> (<a href="#eat-profile" class="auto internal xref">Section 3.1</a>), and a proof whose
+            <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code> (<a href="#eat-profile" class="auto internal xref">Section 3.1</a>),
+            and a proof whose
             <code>psea_proof_version</code> is an unknown value (<a href="#proof-versioning" class="auto internal xref">Section 3.15</a>).<a href="#appendix-B.3.1-2.3" class="pilcrow">¶</a>
 </li>
             <li class="normal" id="appendix-B.3.1-2.4">MUST validate freshness per <a href="#freshness" class="auto internal xref">Section 3.11</a>: reject a proof whose <code>exp</code>
@@ -4524,35 +4510,68 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
       <h2 id="name-changes-from-draft-yossif-p">
 <a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-changes-from-draft-yossif-p" class="section-name selfRef">Changes from draft-yossif-psea-02</a>
       </h2>
-<p id="appendix-C-1">This revision states one known limitation and corrects three claim-set descriptions against the
-      reference implementation. It adds no new requirement and defines no new mechanism. No normative
-      requirement is changed: the <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> prohibition on using unsigned
+<p id="appendix-C-1">This revision states one known limitation, corrects three claim-set descriptions against the
+      reference implementation, corrects the <code>ueid</code> derivation, and withdraws the URN
+      sub-namespace registration request. Apart from the <code>ueid</code> derivation, it adds no new
+      requirement and defines no new mechanism, and no normative requirement is changed: the
+      <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> prohibition on using unsigned
       transport-body fields as security-decision inputs, and the Verifier obligations of
       <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>, retain their force unaltered; the only edits to either are to
       the illustrative lists that named a field incorrectly.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+<p id="appendix-C-2"><strong>The <code>ueid</code> change is a wire-format correction, not an editorial one.</strong> A
+      conforming Attester built against -02 and one built against this revision derive different
+      <code>ueid</code> values from the same <code>deviceId</code> and <code>iss</code>, so an implementation and any
+      enrolled record that stores or recomputes a <code>ueid</code> must be updated together. The defect was
+      found in review by Thomas Fossati on the IETF RATS mailing list.<a href="#appendix-C-2" class="pilcrow">¶</a></p>
 <ul class="normal">
-<li class="normal" id="appendix-C-2.1">Added <a href="#open-ordering" class="auto internal xref">Section 6.8.4</a>, stating that the profile does not establish that a
+<li class="normal" id="appendix-C-3.1">Added <a href="#open-ordering" class="auto internal xref">Section 6.8.4</a>, stating that the profile does not establish that a
         signature preceded the effect it authorizes, that authenticating the artifact is not the criterion
-        for showing that it did, and that no ordering input is defined at this revision.<a href="#appendix-C-2.1" class="pilcrow">¶</a>
+        for showing that it did, and that no ordering input is defined at this revision.<a href="#appendix-C-3.1" class="pilcrow">¶</a>
 </li>
-        <li class="normal" id="appendix-C-2.2">Declared the OPTIONAL <code>psea_signals_hash</code> claim in the claim-set schema
+        <li class="normal" id="appendix-C-3.2">Declared the OPTIONAL <code>psea_signals_hash</code> claim in the claim-set schema
         (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>). The claim was already produced by Attesters and appraised by
         Verifiers in the reference implementation; under <code>additionalProperties: false</code> its absence
         from the schema meant a deployment following the reference implementation emitted proofs the
-        published schema rejected.<a href="#appendix-C-2.2" class="pilcrow">¶</a>
+        published schema rejected.<a href="#appendix-C-3.2" class="pilcrow">¶</a>
 </li>
-        <li class="normal" id="appendix-C-2.3">Corrected the description of <code>psea_rp_context_hash</code> (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>),
+        <li class="normal" id="appendix-C-3.3">Corrected the description of <code>psea_rp_context_hash</code> (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>),
         which was grouped with the diagnostic extension members as carrying no Verifier appraisal
         obligation and being ignorable. Where a deployment binds a relying-party request context, the
-        claim carries that binding and is appraised.<a href="#appendix-C-2.3" class="pilcrow">¶</a>
+        claim carries that binding and is appraised.<a href="#appendix-C-3.3" class="pilcrow">¶</a>
 </li>
-        <li class="normal" id="appendix-C-2.4">Corrected the transport-body enumeration in <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> and the matching
+        <li class="normal" id="appendix-C-3.4">Corrected the transport-body enumeration in <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> and the matching
         Verifier obligation in <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>, both of which listed
         <code>signalReport</code> unconditionally among the fields that confer no authority. Where
         <code>psea_signals_hash</code> commits to the report and a Verifier has appraised it against that
         claim, the report is a committed field, as <code>actionPayload</code> is under
         <code>psea_payload_hash</code>. The prohibition itself is unchanged; only the enumeration of which
-        fields it reaches is corrected.<a href="#appendix-C-2.4" class="pilcrow">¶</a>
+        fields it reaches is corrected.<a href="#appendix-C-3.4" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.5">Corrected the <code>ueid</code> derivation (<a href="#proof-top-level" class="auto internal xref">Section 3.2</a>,
+        <a href="#proof-schema" class="auto internal xref">Section 3.5</a>, <a href="#privacy-ueid" class="auto internal xref">Section 7.1</a>). Through -02 the derivation was
+        <code>0x01 || SHA-256(deviceId || iss)</code>, a bare concatenation of two variable-length strings and
+        therefore ambiguous: <code>("acme", "corp.example")</code> and <code>("acmecorp", ".example")</code> hash
+        identically, so two distinct deployments could share one <code>ueid</code> — the opposite of what the
+        pairwise derivation exists to achieve. The two inputs are now encoded as a canonical JSON object
+        (<span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>) before hashing, reusing the canonicalization this profile already
+        requires (<a href="#canonical-encoding" class="auto internal xref">Section 2</a>) rather than introducing a second one. The pairwise
+        approach itself is unchanged and remains the one <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 8.1 sanctions.<a href="#appendix-C-3.5" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.6">Withdrew the request to register the <code>urn:ietf:params:psea</code> URN sub-namespace, and
+        removed with it the fallback profile identifier written for the case where that registration was
+        not granted (<a href="#iana-registries-overview" class="auto internal xref">Section 8.1</a>). The <code>urn:ietf:params</code> policy would
+        have made the profile identifier depend on an IETF-stream publication decision, whereas EAT
+        deliberately requires no registration for profile identifiers. The <code>eat_profile</code> value is
+        now the HTTPS URI <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code>
+        (<a href="#eat-profile" class="auto internal xref">Section 3.1</a>). With no registration requested there is no non-grant case and
+        nothing to fall back from, so the fallback clause is removed rather than restated. This changes the
+        <code>eat_profile</code> value on the wire; Attester and Verifier must be updated together. Withdrawing
+        the request was recommended in review by Thomas Fossati on the IETF RATS mailing list.<a href="#appendix-C-3.6" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.7">Recorded in the "Extensibility model" entry of <a href="#eat-profile-definition" class="auto internal xref">Section 3.1.1</a> that
+        whether this profile's strict rejection of undeclared claims conforms to
+        <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 1.2 is under discussion on the IETF RATS mailing list. The rule
+        itself is unchanged in this revision.<a href="#appendix-C-3.7" class="pilcrow">¶</a>
 </li>
       </ul>
 </section>
