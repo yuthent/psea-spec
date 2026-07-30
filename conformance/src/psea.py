@@ -11,7 +11,7 @@ from jcs import canonicalize, NonConformingPayload
 
 TYP = "psea-proof+jwt"
 PROOF_VERSION = "1"
-EAT_PROFILE = "urn:ietf:params:psea:eat-profile:1"
+EAT_PROFILE = "https://datatracker.ietf.org/doc/draft-yossif-psea/"
 
 # Section 3.5.  The schema sets additionalProperties: false, so the declared set
 # is exhaustive: a claim outside it is a refusal, not an ignorable extension.
