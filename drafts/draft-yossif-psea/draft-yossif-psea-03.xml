@@ -538,7 +538,7 @@ Payload (the claim set; base64url-encoded, no padding)
   |                 ;   pair cannot be read two ways.
   |                 ;   Per-issuer (pairwise): the same device yields
   |                 ;   a distinct ueid per deployment
-  |                 ;   (RFC 9711 Sec 4.2.1; 0x01 = RAND type tag)
+  |                 ;   (RFC 9711 Sec 4.2.1.1; 0x01 = RAND type tag)
   [+-- eat_nonce]   ; OPTIONAL server nonce for push-initiated
   |                 ;   freshness; omitted entirely when absent
   [+-- submods]     ; OPTIONAL; { "psea-device-state": {...} } --
@@ -771,8 +771,9 @@ entirely.
     "exp":  { "type": "integer", "minimum": 0,
               "description": "NumericDate; epoch SECONDS." },
     "ueid": { "type": "string", "pattern": "^[A-Za-z0-9_-]{44}$",
-              "description": "RFC 9711 Sec 4.2.1 RAND-type UEID: base64url
-                              (no padding) of the 33-byte string
+              "description": "RFC 9711 Sec 4.2.1.1 RAND-type
+                              UEID: base64url (no padding) of
+                              the 33-byte string
                               0x01 || SHA-256(JCS({\"deviceId\":
                               <deviceId>, \"iss\": <iss>})).
                               JCS is the RFC 8785 canonical
@@ -2021,7 +2022,8 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <t>This profile carries a deterministic per-issuer value under the RFC 9711 RAND type tag
         (<tt>0x01</tt>). This is a deliberate, disclosed design choice, not an oversight, and it warrants an
         explicit justification because the RAND type tag nominally denotes a randomly generated UEID
-        (<xref target="RFC9711"/>, Section 4.2.1), whereas the value this profile places under that tag is
+        (<xref target="RFC9711"/>, Section 4.2.1.1, Table 1), whereas the value this profile places under
+        that tag is
         the deterministic derivation stated above over the <tt>deviceId</tt> and <tt>iss</tt> inputs. The
         cross-issuer unlinkability this profile requires is supplied here by the per-issuer derivation
         (a distinct, non-correlatable
@@ -2721,6 +2723,13 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         date in the <xref target="RFC9711"/> reference entry is also corrected to April 2025. No
         requirement is affected: every corrected citation is a pointer, and the normative text it
         accompanies is unchanged.</li>
+        <li>Narrowed three citations that named <xref target="RFC9711"/>, Section 4.2.1 for the RAND type
+        tag to Section 4.2.1.1, where Table 1 defines the type byte (<xref target="proof-top-level"/>,
+        <xref target="proof-schema"/>, <xref target="privacy-ueid"/>). Section 4.2.1 defines the
+        <tt>ueid</tt> claim and does not mention the RAND type at all, so a reader checking the
+        RAND-tag rationale of <xref target="privacy-ueid"/> against Section 4.2.1 would not find it
+        there. The citation of Section 4.2.1 in <xref target="eat-profile"/> is for the <tt>ueid</tt>
+        claim itself and is unchanged.</li>
       </ul>
     </section>
 
