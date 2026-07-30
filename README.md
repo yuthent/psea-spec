@@ -26,7 +26,7 @@ authentication standards leave unspecified.
 
 A PSEA proof is a compact **JWS** ([RFC 7515](https://www.rfc-editor.org/rfc/rfc7515))
 signed with **ES256** (ECDSA on P-256 with SHA-256), carrying a canonical JSON
-payload and the `eat_profile` claim `urn:ietf:params:psea:eat-profile:1`. Its
+payload and the `eat_profile` claim `https://datatracker.ietf.org/doc/draft-yossif-psea/`. Its
 media type is `application/psea+jwt`.
 
 The profile is **device-agnostic and self-contained**: it names no vendor,
@@ -71,7 +71,7 @@ JSON Schema):
 | `aud` | **Audience** — the intended Verifier. |
 | `iat` | Issued-at time. |
 | `ueid` | **Pairwise, per-issuer** entity identifier (RFC 9711 RAND type, tag `0x01`). The same device yields a *distinct* `ueid` per issuer; it is not a global device identifier. |
-| `eat_profile` | REQUIRED. `urn:ietf:params:psea:eat-profile:1`. |
+| `eat_profile` | REQUIRED. `https://datatracker.ietf.org/doc/draft-yossif-psea/`. |
 | `psea_payload_hash` | Binds the proof to the exact action payload being authorized. |
 | `psea_op` | Operation / authority-context discriminator (the named action). |
 | `psea_tier` | **Opaque** capability / assurance-level indicator. It is a free string scoped by the deployment — **not** a fixed product tier. |
