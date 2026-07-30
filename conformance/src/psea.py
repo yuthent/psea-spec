@@ -41,11 +41,20 @@ def b64u(b: bytes) -> str:
 def eat_ueid(device_id: str, iss: str) -> str:
     """RFC 9711 Sec 4.2.1 RAND-type UEID.
 
-    base64url (no padding) of the 33 octets 0x01 || SHA-256(deviceId || iss).
-    Per-issuer by construction, so the same device yields a distinct ueid per
-    iss.  The leading 0x01 is the RAND type tag.
+    base64url (no padding) of the 33 octets
+    0x01 || SHA-256(JCS({"deviceId": <deviceId>, "iss": <iss>})).
+
+    The two inputs are encoded as a canonical JSON object (RFC 8785, via the
+    canonicalizer this harness already uses for psea_payload_hash) rather than
+    concatenated.  Through -02 the derivation was SHA-256(deviceId || iss), a
+    bare concatenation of two variable-length strings and therefore ambiguous:
+    ("acme", "corp.example") and ("acmecorp", ".example") hashed identically,
+    so two deployments the pairwise derivation exists to separate could share
+    one ueid.  Per-issuer by construction, so the same device yields a distinct
+    ueid per iss.  The leading 0x01 is the RAND type tag.
     """
-    return b64u(b"\x01" + hashlib.sha256((device_id + iss).encode()).digest())
+    inputs = canonicalize({"deviceId": device_id, "iss": iss})
+    return b64u(b"\x01" + hashlib.sha256(inputs).digest())
 
 
 def b64u_dec(s: str) -> bytes:
