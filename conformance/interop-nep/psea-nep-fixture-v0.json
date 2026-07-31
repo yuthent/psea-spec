@@ -1,0 +1,107 @@
+{
+ "@version": "PSEA-NEP-COMPOSITION-v0",
+ "note": "PSEA side of the NEP composition fixture. Real signed PSEA proofs replace the placeholder digest strings, so commit_subject_hash is a psea_payload_hash produced by a verified proof. Built against the corrected reference (Section 3.5 claim set, JCS ueid derivation). Not frozen.",
+ "psea_profile": "draft-yossif-psea-03 (unsubmitted; reference implementation at this commit)",
+ "join_rule": {
+  "commit_subject_hash": "SHA-256 over JCS (RFC 8785) of the action payload - identical to the psea_payload_hash claim inside the signed proof",
+  "comparison": "compare the 32 octets; PSEA carries the value as standard base64 with padding",
+  "constraint": "integers only in the action payload"
+ },
+ "context": {
+  "iss": "as.nep-interop.example",
+  "aud": "rs.nep-interop.example",
+  "psea_op": "payment.execute",
+  "psea_tier": "high",
+  "iat": 1785300000,
+  "exp": 1785303600
+ },
+ "enrolled_keys": [
+  {
+   "kty": "EC",
+   "crv": "P-256",
+   "kid": "psea-key-alice",
+   "x": "cmiHbhnbfXplHVXV880IsPFPDy2ZrDg9VucFzFiy3gk",
+   "y": "Jy80YNEIRNnYp3wPb1dUyOHH-jpYxmcfkZnYcQr0OHg"
+  },
+  {
+   "kty": "EC",
+   "crv": "P-256",
+   "kid": "psea-key-mallory",
+   "x": "Mfxf_T6GMG2483gyp9xKwLraALfuRKLwv7J_4o7nRB4",
+   "y": "3t3VsyRwMgNT-5IE2m0bcAlCLGZaS0Ek3hlGD8UnbVQ"
+  }
+ ],
+ "enrollment_bindings": {
+  "psea-key-alice": "alice",
+  "psea-key-mallory": "mallory"
+ },
+ "artifacts": [
+  {
+   "id": "PSEA-ALICE",
+   "signer_principal": "alice",
+   "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6InBzZWEtcHJvb2Yrand0Iiwia2lkIjoicHNlYS1rZXktYWxpY2UifQ.eyJpc3MiOiJhcy5uZXAtaW50ZXJvcC5leGFtcGxlIiwiYXVkIjoicnMubmVwLWludGVyb3AuZXhhbXBsZSIsImlhdCI6MTc4NTMwMDAwMCwiZXhwIjoxNzg1MzAzNjAwLCJqdGkiOiJwc2VhLW5lcC1yb3cxIiwidWVpZCI6IkFiV0czaVpkcGRSZnRWZzdObUdaNkxMWWR2WUkxSHhHb1hjOG4yQXRMOGtrIiwiZWF0X3Byb2ZpbGUiOiJodHRwczovL2RhdGF0cmFja2VyLmlldGYub3JnL2RvYy9kcmFmdC15b3NzaWYtcHNlYS8iLCJwc2VhX29wIjoicGF5bWVudC5leGVjdXRlIiwicHNlYV90aWVyIjoiaGlnaCIsInBzZWFfcGF5bG9hZF9oYXNoIjoidXRlbUlCQytXNllyRXZLclJHOExVRTlDNEh2OUc4Tys1aGJiSW5oQ0Nqdz0iLCJwc2VhX2NvdW50ZXIiOjEsInBzZWFfdXYiOnsidmVyaWZpZWQiOnRydWUsIm1ldGhvZCI6ImJpb21ldHJpYyJ9LCJwc2VhX3Byb29mX3ZlcnNpb24iOiIxIn0._XcWScj5YPYSB-egBMvJyEr4ruaLqFY8L4N29ExRhBWnjB4qqPKsk51LZTze4Bi81Up5Y9QfXJ4Y8DCND3pA2g",
+   "action_payload": {
+    "operation": "transfer",
+    "principal": "alice",
+    "amount_minor": 50000,
+    "currency": "EUR"
+   },
+   "action_payload_jcs": "{\"amount_minor\":50000,\"currency\":\"EUR\",\"operation\":\"transfer\",\"principal\":\"alice\"}",
+   "commit_subject_hash_hex": "bad7a62010be5ba62b12f2ab446f0b504f42e07bfd1bc3bee616db2278420a3c",
+   "psea_payload_hash_wire": "utemIBC+W6YrEvKrRG8LUE9C4Hv9G8O+5hbbInhCCjw=",
+   "psea_native_verdict": "VERIFIED",
+   "uv_anchoring": "attested"
+  },
+  {
+   "id": "PSEA-MALLORY",
+   "signer_principal": "mallory",
+   "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6InBzZWEtcHJvb2Yrand0Iiwia2lkIjoicHNlYS1rZXktbWFsbG9yeSJ9.eyJpc3MiOiJhcy5uZXAtaW50ZXJvcC5leGFtcGxlIiwiYXVkIjoicnMubmVwLWludGVyb3AuZXhhbXBsZSIsImlhdCI6MTc4NTMwMDAwMCwiZXhwIjoxNzg1MzAzNjAwLCJqdGkiOiJwc2VhLW5lcC1yb3czIiwidWVpZCI6IkFUMUJITkNBZDl4YTlVb0g2LVU0ZFBfaGROQ2tOR0VGQWJVcFVrbHdYeTlzIiwiZWF0X3Byb2ZpbGUiOiJodHRwczovL2RhdGF0cmFja2VyLmlldGYub3JnL2RvYy9kcmFmdC15b3NzaWYtcHNlYS8iLCJwc2VhX29wIjoicGF5bWVudC5leGVjdXRlIiwicHNlYV90aWVyIjoiaGlnaCIsInBzZWFfcGF5bG9hZF9oYXNoIjoiOXVrSFM3aFhQSVJaa3d2YXdUZXY0VDN6NmNzQXZ4VjNNQWJBamVCcEovaz0iLCJwc2VhX2NvdW50ZXIiOjEsInBzZWFfdXYiOnsidmVyaWZpZWQiOnRydWUsIm1ldGhvZCI6ImJpb21ldHJpYyJ9LCJwc2VhX3Byb29mX3ZlcnNpb24iOiIxIn0.HXzNUlMBTN5sa7kk9M3J8cbhZJujyvPb9FrDHIMnn_OBFoU-JaVpoTMJwui8nEJsWqbMl6mLY2HnGpfgC0-q3A",
+   "action_payload": {
+    "operation": "transfer",
+    "principal": "mallory",
+    "amount_minor": 99999900,
+    "currency": "EUR"
+   },
+   "action_payload_jcs": "{\"amount_minor\":99999900,\"currency\":\"EUR\",\"operation\":\"transfer\",\"principal\":\"mallory\"}",
+   "commit_subject_hash_hex": "f6e9074bb8573c8459930bdac137afe13df3e9cb00bf15773006c08de06927f9",
+   "psea_payload_hash_wire": "9ukHS7hXPIRZkwvawTev4T3z6csAvxV3MAbAjeBpJ/k=",
+   "psea_native_verdict": "VERIFIED",
+   "uv_anchoring": "attested"
+  }
+ ],
+ "rows": [
+  {
+   "row": 1,
+   "commit_subject_hash": "bad7a62010be5ba62b12f2ab446f0b504f42e07bfd1bc3bee616db2278420a3c",
+   "artifact": "PSEA-ALICE",
+   "psea_native": "VERIFIED",
+   "expected_nep": "ok",
+   "note": "anchor before effect; both halves hold"
+  },
+  {
+   "row": 2,
+   "commit_subject_hash": "bad7a62010be5ba62b12f2ab446f0b504f42e07bfd1bc3bee616db2278420a3c",
+   "artifact": "PSEA-ALICE",
+   "psea_native": "VERIFIED",
+   "expected_nep": "NEP-E0205 COMMIT_ANCHOR_TOO_LATE",
+   "note": "post-hoc ratification. PSEA alone accepts this - failure N11 in the PSEA suite. The refusal comes entirely from the ordering layer."
+  },
+  {
+   "row": 3,
+   "commit_subject_hash": "bad7a62010be5ba62b12f2ab446f0b504f42e07bfd1bc3bee616db2278420a3c",
+   "artifact": "PSEA-MALLORY",
+   "psea_native": "VERIFIED",
+   "expected_nep": "NEP-E0503 ANCHOR_SUBJECT_DIGEST_MISMATCH",
+   "note": "the mallory proof verifies natively and commits to a different digest; distinct from row 2 and mechanically distinguishable"
+  },
+  {
+   "row": 4,
+   "commit_subject_hash": "bad7a62010be5ba62b12f2ab446f0b504f42e07bfd1bc3bee616db2278420a3c",
+   "artifact": "PSEA-ALICE",
+   "psea_native": "VERIFIED",
+   "expected_nep_ordering_claim": "ok",
+   "expected_nep_rule_binding_claim": "INEXPRESSIBLE",
+   "note": "no DECLARE. The rule-binding claim is not false but inexpressible - no declare_hash exists to ask the question of."
+  }
+ ]
+}
