@@ -144,6 +144,22 @@ them against the current `-02` format.
 | [`SECURITY.md`](SECURITY.md) | How to report a security issue in the spec. |
 | [`LICENSE`](LICENSE) | License (MIT). |
 
+## Related problem statements, housed separately
+
+Two IETF problem statements by the same author state gaps that PSEA depends on
+or sits beside. Neither is a PSEA companion document: both describe problems
+that arise for any scheme of their kind, and each has its own repository and
+issue tracker so that review lands where the document lives rather than here.
+
+| Draft | Repository | Datatracker |
+|---|---|---|
+| *Problem Statement: Verifiable Human Mandates for Autonomous Agent Actions* | [yuthent/agent-mandate-problem](https://github.com/yuthent/agent-mandate-problem) | [draft-yossif-agent-mandate-problem](https://datatracker.ietf.org/doc/draft-yossif-agent-mandate-problem/) |
+| *Problem Statement: Enrollment and Key-Binding Assumptions in Execution Authority Evidence* | [yuthent/enrollment-problem](https://github.com/yuthent/enrollment-problem) | [draft-yossif-enrollment-problem](https://datatracker.ietf.org/doc/draft-yossif-enrollment-problem/) |
+
+Both were previously kept under `drafts/` in this repository and were moved out
+with their history intact. Nothing in this repository or in
+`draft-yossif-psea-03` depends on their being here.
+
 ## Relationship to other standards
 
 PSEA is an **EAT profile** (RFC 9711) carried as a JWS (RFC 7515). It
