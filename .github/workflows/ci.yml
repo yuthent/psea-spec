@@ -30,16 +30,22 @@ jobs:
           set -euo pipefail
           python3 src/check.py
 
-      # Both .sha256 files list a bare filename, so each is checked from its
-      # own directory. The interop fixture is the PSEA side of a candidate
-      # cross-run: if its bytes drift silently the other implementation
+      # Every .sha256 file lists a bare filename, so each is checked from its
+      # own directory. The interop fixtures are the PSEA side of candidate
+      # cross-runs: if their bytes drift silently the other implementation
       # recomputes against something we are no longer publishing.
+      #
+      # The interop-nep pin was added with the fixture but not to this step, so
+      # it was recorded and never checked for one commit. Every .sha256 in
+      # conformance/ is listed here; adding a pin without adding it here leaves
+      # a file that looks verified and is not.
       - name: Verify recorded digests
         working-directory: conformance
         run: |
           set -euo pipefail
           sha256sum -c results/RESULTS.sha256
           ( cd interop-aae && sha256sum -c psea-fixture-v0.sha256 )
+          ( cd interop-nep && sha256sum -c psea-nep-fixture-v0.sha256 )
 
   drafts:
     name: Draft build

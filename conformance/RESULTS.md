@@ -36,10 +36,10 @@ The sha256 of this file is pinned in [`results/RESULTS.sha256`](results/RESULTS.
 and checked in CI, so it changes whenever the recorded run changes. Both recorded
 states:
 
-| Rows | pass / fail / n-a | sha256 of RESULTS.md | Recorded in |
-|---|---|---|---|
-| 21 | 13 / 3 / 5 | `cd96b4602b4c6cecdb8554772f4fc54fb986e2d5e9786f1369e385048cbea6d9` | commit `7956977`, 2026-07-28 |
-| 31 | 23 / 3 / 5 | `b60a07665a067b1928564165495d9a0120943e9ad3c2863151714a7330f93062` | commit `2a85e7e`, 2026-08-01 |
+| Rows | pass / fail / n-a | sha256 of RESULTS.md | Recorded in | Published |
+|---|---|---|---|---|
+| 21 | 13 / 3 / 5 | `cd96b4602b4c6cecdb8554772f4fc54fb986e2d5e9786f1369e385048cbea6d9` | commit `7956977`, 2026-07-28 | agent2agent, 2026-07-30 |
+| 31 | 23 / 3 / 5 | `b60a07665a067b1928564165495d9a0120943e9ad3c2863151714a7330f93062` | commit `2a85e7e`, 2026-08-01 | — |
 
 Each value is the digest of this file as it stood at that commit. The current
 value is whatever `results/RESULTS.sha256` records and is deliberately not
@@ -53,10 +53,11 @@ sub-member, and a repeated JSON member name. All ten pass.
 
 **N3, N11 and M1 fail in both states, with identical recorded detail, and no
 pre-existing row changed verdict or detail.** The suite grew; nothing in it
-moved. A reader holding `cd96b460…` and finding a mismatch today is seeing the
-ten added rows and nothing else, and can confirm that by diffing the `rows`
-array of [`results/psea-02-selfrun.json`](results/psea-02-selfrun.json) between
-the two commits.
+moved. A reader holding `cd96b460…` — the value carried in the agent2agent mail
+of 2026-07-30 — and finding a mismatch today is seeing the ten added rows and
+nothing else, and can confirm that by diffing the `rows` array of
+[`results/psea-02-selfrun.json`](results/psea-02-selfrun.json) between the two
+commits.
 
 ## Failures
 
