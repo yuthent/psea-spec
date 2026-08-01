@@ -12,10 +12,11 @@ is reported as a **failure of the profile**, not smoothed into an absence.
 
 ## Scope: only what the draft states normatively
 
-The reference Verifier implements the sections listed below, and only those.
-The table is the whole of what it covers — a section absent from it is not
-implemented, and a row here is a claim about the harness rather than about the
-profile.
+The reference Verifier implements the rules listed below, and only those. The
+right-hand column is the claim, not the left: a section named here is **not**
+asserted to be implemented in full, only to the extent the row states. A draft
+section absent from the table is not implemented at all. Every row is a claim
+about the harness rather than about the profile.
 
 | Draft section | What is implemented |
 |---|---|

@@ -30,6 +30,34 @@ The ten S rows were added after a review of the reference by Iman Schrock
 fail: claim shape is orthogonal to the principal-reference, ordering and
 composition gaps that N3, N11 and M1 record.
 
+## Result history
+
+The sha256 of this file is pinned in [`results/RESULTS.sha256`](results/RESULTS.sha256)
+and checked in CI, so it changes whenever the recorded run changes. Both recorded
+states:
+
+| Rows | pass / fail / n-a | sha256 of RESULTS.md | Recorded in |
+|---|---|---|---|
+| 21 | 13 / 3 / 5 | `cd96b4602b4c6cecdb8554772f4fc54fb986e2d5e9786f1369e385048cbea6d9` | commit `7956977`, 2026-07-28 |
+| 31 | 23 / 3 / 5 | `b60a07665a067b1928564165495d9a0120943e9ad3c2863151714a7330f93062` | commit `2a85e7e`, 2026-08-01 |
+
+Each value is the digest of this file as it stood at that commit. The current
+value is whatever `results/RESULTS.sha256` records and is deliberately not
+restated here — a file cannot contain its own digest, so any value written into
+this table is a past one by construction.
+
+The difference between the two states is ten added rows, S1–S10: schema-
+validation negatives contributed by Iman Schrock / EMILIA Protocol, exercising
+Section 3.5 claim shape — declared type, pattern and minimum, a required
+sub-member, and a repeated JSON member name. All ten pass.
+
+**N3, N11 and M1 fail in both states, with identical recorded detail, and no
+pre-existing row changed verdict or detail.** The suite grew; nothing in it
+moved. A reader holding `cd96b460…` and finding a mismatch today is seeing the
+ten added rows and nothing else, and can confirm that by diffing the `rows`
+array of [`results/psea-02-selfrun.json`](results/psea-02-selfrun.json) between
+the two commits.
+
 ## Failures
 
 | ID | Class | Expected | Observed | Refusal code |
