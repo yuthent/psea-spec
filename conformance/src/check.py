@@ -31,9 +31,11 @@ import run as run_suite  # noqa: E402  (path must be set first)
 # expectation.  Re-baselining to silence a failure discards the only signal
 # this suite produces.
 EXPECTED = {
-    "row_count": 21,
-    "verdicts": {"PASS": 13, "FAIL": 3, "NOT_APPLICABLE": 5},
+    "row_count": 31,
+    "verdicts": {"PASS": 23, "FAIL": 3, "NOT_APPLICABLE": 5},
     # The three properties the profile does not have.  See RESULTS.md.
+    # Unchanged by the Section 3.5 work: S1-S10 exercise claim shape, which is
+    # orthogonal to the principal-reference, ordering and composition gaps.
     "failing_rows": {"N3", "N11", "M1"},
     # Per-row observed value and refusal code are pinned to this file.
     "baseline": os.path.join("results", "psea-02-selfrun.json"),

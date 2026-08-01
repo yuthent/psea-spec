@@ -1,10 +1,13 @@
 """Cross-run: draft-yossif-psea-02 against the WHO negative classes of
 draft-mih-sato-agent-accountability-composition-00 Section 5.2, plus the three
-digest-encoding rows and the multi-artifact principal-divergence case.
+digest-encoding rows, the multi-artifact principal-divergence case, and the
+Section 3.5 claim-shape rows.
 
 Every row states the expected result BEFORE the run.  A row whose expected
 result is REFUSE and whose observed result is anything else is a failure of
 the profile, and is reported as such.
+
+Negative cases contributed by Iman Schrock / EMILIA Protocol.
 """
 import base64, hashlib, json, sys, time
 sys.path.insert(0, __import__("os").path.dirname(__file__))
@@ -41,6 +44,26 @@ def run(v, tok, action=ACTION, op=OP, tier=TIER):
         return ("ACCEPT", r)
     except Refusal as e:
         return ("REFUSE", e.code)
+
+
+def run_schema(v, tok, action=ACTION, op=OP, tier=TIER):
+    """run() for the Section 3.5 rows, recording the refusal detail too.
+
+    Several of those rows share a refusal code -- four are SCHEMA_TYPE -- so the
+    code alone would not tell one recorded row from another.  The pre-existing
+    rows keep run() and their recorded details unchanged.
+    """
+    try:
+        r = v.verify(tok, action=action, op=op, tier=tier)
+        return ("ACCEPT", r)
+    except Refusal as e:
+        return ("REFUSE", f"{e.code}: {e.detail}" if e.detail else e.code)
+
+
+def malformed(att, **claims):
+    """A signed proof carrying claims of the wrong shape."""
+    return att.sign(action=ACTION, op=OP, tier=TIER, aud=AUD, iss=ISS,
+                    claims_override=claims)
 
 
 # ---------- Section 5.2 WHO negative classes ----------
@@ -215,6 +238,89 @@ def _():
         return ("ACCEPT" if not same else "REFUSE",
                 f"psea principal={r['enrolled_principal']} grant principal={standing_grant_principal}")
     return (ok, r)
+
+
+# ---------- Section 3.5 claim shape (contributed by Iman Schrock / EMILIA) ----------
+#
+# Every row here carries a valid ES256 signature over a well-formed JWS whose
+# payload declares exactly the claims the profile declares.  What is wrong is
+# the shape of one claim.  Before these rows existed the Verifier checked that
+# claims were present and were not undeclared, and nothing about their declared
+# type, pattern, range or required sub-members -- so all ten were accepted, and
+# S9 raised an uncaught TypeError, which under Section 3.13.2 is worse than an
+# acceptance because an exception is not a refusal.
+
+
+@row("S1", "ueid does not match the declared pattern", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, ueid="not-a-valid-ueid"))
+
+
+@row("S2", "psea_uv missing the required method member", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, psea_uv={"verified": True}))
+
+
+@row("S3", "psea_counter below the declared minimum", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, psea_counter=-1))
+
+
+@row("S4", "psea_counter as a string rather than an integer", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, psea_counter="1"))
+
+
+@row("S5", "jti not a string", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, jti=12345))
+
+
+@row("S6", "psea_user_hash does not match the declared pattern", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, psea_user_hash="short"))
+
+
+@row("S7", "psea_signals_hash does not match the declared pattern", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, psea_signals_hash="nope"))
+
+
+@row("S8", "submods not an object", "3.5", "REFUSE")
+def _():
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, submods="not-an-object"))
+
+
+@row("S9", "exp not an integer", "3.5", "REFUSE")
+def _():
+    # Before Section 3.5 shape validation this reached the freshness comparison
+    # and raised TypeError out of verify().  Fail-open: the caller got a crash
+    # rather than a verdict.
+    a, v, _ = fresh()
+    return run_schema(v, malformed(a, exp="not-a-number"))
+
+
+@row("S10", "repeated JSON member name in the payload", "3.5", "REFUSE")
+def _():
+    # json.loads keeps the last of a repeated member and drops the earlier one
+    # without complaint, so a producer and a Verifier reading the same signed
+    # bytes with different parsers can disagree about what was signed.  The
+    # signature covers both copies and settles nothing.
+    a, v, _ = fresh()
+    signed = base(a)
+    raw = base64.urlsafe_b64decode(
+        signed.split(".")[1] + "=" * (-len(signed.split(".")[1]) % 4)).decode()
+    dup = raw[:-1] + ',"psea_counter":99}'
+    return run_schema(v, a.sign(action=ACTION, op=OP, tier=TIER, aud=AUD, iss=ISS,
+                                raw_payload=dup.encode()))
 
 
 def main():

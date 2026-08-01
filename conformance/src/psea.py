@@ -3,7 +3,7 @@
 Implements only what the draft states normatively.  Where the draft is silent
 the verifier refuses rather than guessing, per Section 3.13.2 (fail-closed).
 """
-import base64, hashlib, json, time
+import base64, hashlib, json, re, time
 from cryptography.hazmat.primitives.asymmetric import ec, utils as asym_utils
 from cryptography.hazmat.primitives import hashes
 from cryptography.exceptions import InvalidSignature
@@ -13,25 +13,82 @@ TYP = "psea-proof+jwt"
 PROOF_VERSION = "1"
 EAT_PROFILE = "https://datatracker.ietf.org/doc/draft-yossif-psea/"
 
-# Section 3.5.  The schema sets additionalProperties: false, so the declared set
-# is exhaustive: a claim outside it is a refusal, not an ignorable extension.
+# 2^53-1, the schema's declared maximum for psea_counter.
+MAX_SAFE_INTEGER = 9007199254740991
+
+# Patterns transcribed from the Section 3.5 JSON Schema, verbatim.
+P_JTI = r"^[A-Za-z0-9._-]+$"
+P_UEID = r"^[A-Za-z0-9_-]{44}$"
+P_B64_STD_DIGEST = r"^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$"
+P_B64URL_DIGEST = r"^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$"
+P_HEX64 = r"^[0-9a-f]{64}$"
+
+# Section 3.5, the declared claim set.  This table is a transcription of the
+# JSON Schema block in draft-yossif-psea-03 Section 3.5 and is the whole of what
+# the Verifier enforces about claim shape; keeping it as data rather than as
+# scattered `if` statements is what makes it checkable against the draft.
+#
+# The schema sets additionalProperties: false, so the declared set is exhaustive:
+# a claim outside it is a refusal, not an ignorable extension.  An empty spec
+# ({}) is the schema's empty schema -- any JSON value is valid.
+#
 # psea_signals_hash is declared OPTIONAL by the profile but is deliberately not
-# emitted by the Attester below — the reference carries no auxiliary transport
+# emitted by the Attester below -- the reference carries no auxiliary transport
 # document for it to commit to, and inventing one would put a claim on the wire
 # that no part of this harness appraises.
-DECLARED_CLAIMS = frozenset({
-    "jti", "aud", "iss", "iat", "exp", "ueid", "eat_nonce", "submods",
-    "eat_profile", "psea_tier", "psea_op", "psea_counter", "psea_payload_hash",
-    "psea_chain_prev", "psea_uv", "psea_proof_version", "psea_caller_package",
-    "psea_sdk_version", "psea_signals_hash", "psea_user_hash",
-    "psea_chain_pending", "psea_last_confirmed_head", "psea_rp_context_hash",
-})
+CLAIM_SCHEMA = {
+    "jti": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": P_JTI},
+    "aud": {"type": "string", "minLength": 1, "maxLength": 256},
+    "iss": {"type": "string", "minLength": 1, "maxLength": 128},
+    "iat": {"type": "integer", "minimum": 0},
+    "exp": {"type": "integer", "minimum": 0},
+    "ueid": {"type": "string", "pattern": P_UEID},
+    "eat_nonce": {"type": "string"},
+    "submods": {"type": "object",
+                "properties": {"psea-device-state": {"type": "object"}}},
+    "eat_profile": {"type": "string", "enum": [EAT_PROFILE]},
+    "psea_tier": {"type": "string", "minLength": 1, "maxLength": 128},
+    "psea_op": {"type": "string", "minLength": 1, "maxLength": 128},
+    "psea_counter": {"type": "integer", "minimum": 0, "maximum": MAX_SAFE_INTEGER},
+    "psea_payload_hash": {"type": "string", "pattern": P_B64_STD_DIGEST},
+    "psea_chain_prev": {"type": "string", "pattern": P_HEX64},
+    "psea_uv": {"type": "object",
+                "required": ["verified", "method"],
+                "properties": {"verified": {"type": "boolean"},
+                               "method": {"type": "string"}}},
+    "psea_proof_version": {"type": "string", "enum": [PROOF_VERSION]},
+    "psea_caller_package": {"type": "string", "minLength": 1, "maxLength": 256},
+    "psea_sdk_version": {"type": "string", "maxLength": 64},
+    "psea_signals_hash": {"type": "string", "pattern": P_B64_STD_DIGEST},
+    "psea_user_hash": {"type": "string", "pattern": P_B64URL_DIGEST},
+    "psea_chain_pending": {},
+    "psea_last_confirmed_head": {},
+    "psea_rp_context_hash": {},
+}
+
+DECLARED_CLAIMS = frozenset(CLAIM_SCHEMA)
 
 REQUIRED_CLAIMS = frozenset({
     "jti", "aud", "iss", "iat", "exp", "ueid", "eat_profile", "psea_tier",
     "psea_op", "psea_counter", "psea_payload_hash", "psea_uv",
     "psea_proof_version",
 })
+
+# These two carry an enum in the schema above, but a violation of it is reported
+# through the dedicated refusal codes the profile already uses (Section 3.1 for
+# the profile identifier, Section 3.15 for the version) rather than through the
+# generic SCHEMA_ENUM code.  Their declared *type* is still checked generically.
+_ENUM_REPORTED_ELSEWHERE = frozenset({"eat_profile", "psea_proof_version"})
+
+
+class _Omit:
+    """Sentinel for claims_override: remove the claim rather than set it."""
+
+    def __repr__(self):
+        return "OMIT"
+
+
+OMIT = _Omit()
 
 
 def b64u(b: bytes) -> str:
@@ -103,7 +160,16 @@ class Attester:
     def sign(self, *, action, op, tier, aud, iss, uv=True, uv_method="biometric",
              jti=None, iat=None, exp=None, user_hash=None, counter=None,
              override_payload_hash=None, header_extra=None, alg="ES256",
-             typ=TYP, proof_version=PROOF_VERSION):
+             typ=TYP, proof_version=PROOF_VERSION, claims_override=None,
+             raw_payload=None):
+        """Sign a proof.
+
+        claims_override and raw_payload exist so the suite can construct the
+        malformed tokens a Verifier has to refuse.  claims_override merges into
+        the claim set, with the OMIT sentinel removing a claim; raw_payload
+        replaces the serialized payload entirely, which is the only way to put
+        a repeated member name on the wire.  A conforming Attester uses neither.
+        """
         self.counter += 1
         hdr = {"alg": alg, "typ": typ, "kid": self.kid}
         if header_extra:
@@ -125,8 +191,16 @@ class Attester:
         }
         if user_hash is not None:
             body["psea_user_hash"] = user_hash
+        if claims_override:
+            for k, val in claims_override.items():
+                if val is OMIT:
+                    body.pop(k, None)
+                else:
+                    body[k] = val
         h = b64u(json.dumps(hdr, separators=(",", ":")).encode())
-        p = b64u(json.dumps(body, separators=(",", ":")).encode())
+        payload_bytes = (raw_payload if raw_payload is not None
+                         else json.dumps(body, separators=(",", ":")).encode())
+        p = b64u(payload_bytes)
         signing_input = f"{h}.{p}".encode()
         if alg == "none":
             return f"{h}.{p}."
@@ -143,6 +217,120 @@ class Refusal(Exception):
         self.detail = detail
 
 
+class _DuplicateMember(Exception):
+    """Raised by the parse hook; converted to a Refusal by the caller."""
+
+    def __init__(self, name):
+        super().__init__(name)
+        self.name = name
+
+
+def _reject_duplicate_members(pairs):
+    """json object_pairs_hook: refuse a repeated member name.
+
+    json.loads keeps the last of a repeated name and discards the earlier ones
+    silently, so a producer and a Verifier reading the same bytes with different
+    parsers can disagree about what was signed.  RFC 8259 Section 4 says names
+    SHOULD be unique and that behaviour is unpredictable when they are not;
+    unpredictable is not something a Verifier may resolve by guessing.  Applied
+    to the protected header and the payload, and recursively to nested objects.
+    """
+    seen = set()
+    for k, _ in pairs:
+        if k in seen:
+            raise _DuplicateMember(k)
+        seen.add(k)
+    return dict(pairs)
+
+
+def _type_matches(value, declared):
+    if declared == "string":
+        return isinstance(value, str)
+    if declared == "boolean":
+        return isinstance(value, bool)
+    if declared == "object":
+        return isinstance(value, dict)
+    if declared == "integer":
+        # bool is a subclass of int in Python, but a JSON boolean is not a JSON
+        # integer.  A float is refused outright rather than accepted when its
+        # fractional part is zero: Section 2.5 restricts payload numbers to JSON
+        # integers, and src/jcs.py refuses floats on the same ground.
+        return isinstance(value, int) and not isinstance(value, bool)
+    raise Refusal("SCHEMA_INTERNAL", f"unknown declared type {declared!r}")
+
+
+def _type_name(value):
+    return "boolean" if isinstance(value, bool) else type(value).__name__
+
+
+def _validate_value(where, value, spec):
+    """Enforce one node of the Section 3.5 schema.  Every failure is a Refusal."""
+    if "type" in spec and not _type_matches(value, spec["type"]):
+        raise Refusal("SCHEMA_TYPE",
+                      f"{where}: expected {spec['type']}, got {_type_name(value)}")
+
+    if "enum" in spec and value not in spec["enum"]:
+        raise Refusal("SCHEMA_ENUM", f"{where}: {value!r} not among declared values")
+
+    if isinstance(value, str):
+        if "minLength" in spec and len(value) < spec["minLength"]:
+            raise Refusal("SCHEMA_MIN_LENGTH",
+                          f"{where}: length {len(value)} below declared minimum "
+                          f"{spec['minLength']}")
+        if "maxLength" in spec and len(value) > spec["maxLength"]:
+            raise Refusal("SCHEMA_MAX_LENGTH",
+                          f"{where}: length {len(value)} above declared maximum "
+                          f"{spec['maxLength']}")
+        # fullmatch, not match: Python's "$" also matches immediately before a
+        # trailing newline, so re.match would accept a 44-character ueid with a
+        # "\n" glued on the end.  Every pattern here is anchored in the schema
+        # and must hold over the whole string.
+        if "pattern" in spec and re.fullmatch(spec["pattern"], value) is None:
+            raise Refusal("SCHEMA_PATTERN", f"{where}: does not match declared pattern")
+
+    if isinstance(value, int) and not isinstance(value, bool):
+        if "minimum" in spec and value < spec["minimum"]:
+            raise Refusal("SCHEMA_MINIMUM",
+                          f"{where}: {value} below declared minimum {spec['minimum']}")
+        if "maximum" in spec and value > spec["maximum"]:
+            raise Refusal("SCHEMA_MAXIMUM",
+                          f"{where}: {value} above declared maximum {spec['maximum']}")
+
+    if isinstance(value, dict):
+        for member in spec.get("required", ()):
+            if member not in value:
+                raise Refusal("SCHEMA_MISSING_MEMBER", f"{where}.{member}")
+        for member, sub in spec.get("properties", {}).items():
+            if member in value:
+                _validate_value(f"{where}.{member}", value[member], sub)
+
+
+def validate_claim_set(body):
+    """Section 3.5, the whole of it, over an already-parsed payload.
+
+    additionalProperties: false first, then the REQUIRED list, then the declared
+    type / pattern / enum / range / sub-member constraints of every claim
+    present.  Runs before any claim is given meaning, so no later stage has to
+    defend itself against a claim of the wrong shape.
+    """
+    if not isinstance(body, dict):
+        raise Refusal("SCHEMA_TYPE", f"payload: expected object, got {_type_name(body)}")
+
+    unknown = sorted(set(body) - DECLARED_CLAIMS)
+    if unknown:
+        raise Refusal("SCHEMA_UNKNOWN_CLAIM", ", ".join(unknown))
+
+    missing = sorted(REQUIRED_CLAIMS - set(body))
+    if missing:
+        raise Refusal("SCHEMA_MISSING_CLAIM", ", ".join(missing))
+
+    for name in sorted(body):
+        spec = CLAIM_SCHEMA[name]
+        if name in _ENUM_REPORTED_ELSEWHERE:
+            spec = {k: v for k, v in spec.items() if k != "enum"}
+        _validate_value(name, body[name], spec)
+
+
 class Verifier:
     """Section 3.4 header hardening, 3.5 claim set, 3.7.1 UV anchoring,
     3.13.2 fail-closed."""
@@ -157,6 +345,22 @@ class Verifier:
         self.last_counter = {}
 
     def verify(self, token: str, *, action: dict, op: str, tier: str, now=None):
+        """Section 3.13.2, fail-closed: anything that is not an explicit accept
+        is a refusal.
+
+        An unexpected exception is converted to a refusal rather than allowed to
+        propagate.  A reference that raises where it should refuse has failed
+        open -- the caller sees a crash, not a verdict, and a crash is not a
+        rejection.  Refusal itself passes through untouched.
+        """
+        try:
+            return self._verify(token, action=action, op=op, tier=tier, now=now)
+        except Refusal:
+            raise
+        except Exception as e:
+            raise Refusal("INTERNAL_REFUSAL", f"{type(e).__name__}: {e}") from e
+
+    def _verify(self, token: str, *, action: dict, op: str, tier: str, now=None):
         now = now if now is not None else int(time.time())
         parts = token.split(".")
         if len(parts) != 3:
@@ -164,10 +368,14 @@ class Verifier:
         h_b64, p_b64, s_b64 = parts
 
         try:
-            hdr = json.loads(b64u_dec(h_b64))
-            body = json.loads(b64u_dec(p_b64))
+            hdr = json.loads(b64u_dec(h_b64), object_pairs_hook=_reject_duplicate_members)
+            body = json.loads(b64u_dec(p_b64), object_pairs_hook=_reject_duplicate_members)
+        except _DuplicateMember as e:
+            raise Refusal("DUPLICATE_MEMBER", e.name)
         except Exception as e:
             raise Refusal("MALFORMED", str(e))
+        if not isinstance(hdr, dict):
+            raise Refusal("MALFORMED", "header is not a JSON object")
 
         # --- Section 3.4 header hardening ---
         if hdr.get("alg") != "ES256":
@@ -205,13 +413,11 @@ class Verifier:
         # before any claim is given meaning.  additionalProperties: false makes
         # the declared set exhaustive, so an undeclared claim is a refusal
         # rather than something a Verifier may ignore; the profile is
-        # deliberately lock-step rather than ignore-unknown.
-        unknown = sorted(set(body) - DECLARED_CLAIMS)
-        if unknown:
-            raise Refusal("SCHEMA_UNKNOWN_CLAIM", ", ".join(unknown))
-        missing = sorted(REQUIRED_CLAIMS - set(body))
-        if missing:
-            raise Refusal("SCHEMA_MISSING_CLAIM", ", ".join(missing))
+        # deliberately lock-step rather than ignore-unknown.  The declared
+        # types, patterns, enums, ranges and required sub-members are enforced
+        # here too, so every stage below reads a claim whose shape is already
+        # established rather than one it has to defend itself against.
+        validate_claim_set(body)
         if body.get("eat_profile") != EAT_PROFILE:
             raise Refusal("EAT_PROFILE_MISMATCH", repr(body.get("eat_profile")))
 

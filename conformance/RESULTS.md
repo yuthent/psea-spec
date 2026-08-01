@@ -11,19 +11,24 @@ implementation has run these vectors. The results below are therefore a
 starting position for a cross-run, not a conformance claim.
 
 The reference Verifier implements only what draft-yossif-psea-02 states
-normatively — Section 3.4 header hardening, Section 3.7.1 user-verification
-anchoring, Section 3.13.2 fail-closed action binding. Where the draft is
-silent the implementation refuses rather than guessing.
+normatively — Section 3.4 header hardening, Section 3.5 claim set, Section
+3.7.1 user-verification anchoring, Section 3.13.2 fail-closed action binding.
+Where the draft is silent the implementation refuses rather than guessing.
 
 Every row's expected result was stated before the run.
 
 ## Summary
 
-13 pass, 3 fail, 5 not applicable, 21 rows total.
+23 pass, 3 fail, 5 not applicable, 31 rows total.
 
 The three failures are properties the profile does not have. They are reported
 as failures rather than as absences because a relying party that assumes
 otherwise is wrong in a way the document does not currently warn it about.
+
+The ten S rows were added after a review of the reference by Iman Schrock
+(EMILIA Protocol) on agent2agent, 2026-07-31. They did not change which rows
+fail: claim shape is orthogonal to the principal-reference, ordering and
+composition gaps that N3, N11 and M1 record.
 
 ## Failures
 
@@ -94,6 +99,41 @@ cannot be built.
 | E1 | same 32 octets, different encodings, compatible contexts | JOIN | JOIN | octet-compare=True string-compare=False |
 | E2 | same 32 octets, incompatible declared digest contexts | INDETERMINATE | INDETERMINATE | declared contexts differ; equality of octets is not equality |
 | E3 | ASCII-hex string compared as bytes against raw octets | MISMATCH | MISMATCH | len 64 vs 32 |
+| S1 | ueid does not match the declared pattern | REFUSE | REFUSE | SCHEMA_PATTERN: ueid |
+| S2 | psea_uv missing the required method member | REFUSE | REFUSE | SCHEMA_MISSING_MEMBER: psea_uv.method |
+| S3 | psea_counter below the declared minimum | REFUSE | REFUSE | SCHEMA_MINIMUM: psea_counter |
+| S4 | psea_counter as a string rather than an integer | REFUSE | REFUSE | SCHEMA_TYPE: psea_counter |
+| S5 | jti not a string | REFUSE | REFUSE | SCHEMA_TYPE: jti |
+| S6 | psea_user_hash does not match the declared pattern | REFUSE | REFUSE | SCHEMA_PATTERN: psea_user_hash |
+| S7 | psea_signals_hash does not match the declared pattern | REFUSE | REFUSE | SCHEMA_PATTERN: psea_signals_hash |
+| S8 | submods not an object | REFUSE | REFUSE | SCHEMA_TYPE: submods |
+| S9 | exp not an integer | REFUSE | REFUSE | SCHEMA_TYPE: exp |
+| S10 | repeated JSON member name in the payload | REFUSE | REFUSE | DUPLICATE_MEMBER: psea_counter |
+
+## Section 3.5 claim-shape rows
+
+S1–S10 were contributed by Iman Schrock / EMILIA Protocol, from a review of
+`src/psea.py` at commit `a138e64` on agent2agent, 2026-07-31.
+
+Every one of them carries a valid ES256 signature over a well-formed JWS whose
+payload declares exactly the claims the profile declares. What is wrong is the
+*shape* of one claim. Before these rows existed the Verifier checked presence
+and the `additionalProperties: false` allowlist and nothing about the declared
+types, patterns, ranges or required sub-members — so **all ten were accepted**,
+and S9 raised an uncaught `TypeError` out of `verify()`.
+
+S9 is the worst of the ten and is worth stating separately. Section 3.13.2
+requires the Verifier to fail closed. An exception is not a refusal: the caller
+receives a crash rather than a verdict, and a caller that treats "no exception"
+as the accept condition will do the opposite of what the section requires. The
+Verifier now converts any unexpected exception into an `INTERNAL_REFUSAL`.
+
+S10 is not a claim-shape defect but a parse-layer one. `json.loads` keeps the
+last of a repeated member name and discards the earlier ones silently, so a
+producer and a Verifier reading the same signed bytes with different parsers
+can disagree about what was signed. The signature covers both copies and
+settles nothing between them. Detection is at parse, for the protected header
+and the payload alike.
 
 ## Digest-encoding rows
 

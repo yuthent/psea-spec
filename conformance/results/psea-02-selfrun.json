@@ -193,6 +193,96 @@
    "observed": "ACCEPT",
    "detail": "psea principal=bob grant principal=alice",
    "verdict": "FAIL"
+  },
+  {
+   "id": "S1",
+   "class": "ueid does not match the declared pattern",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_PATTERN: ueid: does not match declared pattern",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S2",
+   "class": "psea_uv missing the required method member",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_MISSING_MEMBER: psea_uv.method",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S3",
+   "class": "psea_counter below the declared minimum",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_MINIMUM: psea_counter: -1 below declared minimum 0",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S4",
+   "class": "psea_counter as a string rather than an integer",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_TYPE: psea_counter: expected integer, got str",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S5",
+   "class": "jti not a string",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_TYPE: jti: expected string, got int",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S6",
+   "class": "psea_user_hash does not match the declared pattern",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_PATTERN: psea_user_hash: does not match declared pattern",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S7",
+   "class": "psea_signals_hash does not match the declared pattern",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_PATTERN: psea_signals_hash: does not match declared pattern",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S8",
+   "class": "submods not an object",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_TYPE: submods: expected object, got str",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S9",
+   "class": "exp not an integer",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "SCHEMA_TYPE: exp: expected integer, got str",
+   "verdict": "PASS"
+  },
+  {
+   "id": "S10",
+   "class": "repeated JSON member name in the payload",
+   "source": "3.5",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "DUPLICATE_MEMBER: psea_counter",
+   "verdict": "PASS"
   }
  ]
 }

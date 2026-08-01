@@ -20,7 +20,8 @@ profile.
 | Draft section | What is implemented |
 |---|---|
 | Section 3.4 | JOSE header hardening — `alg`/`typ` pinning, `crit` and `b64:false` rejection, and key resolution from the enrolled record only, never from token-carried `jwk`/`jku`/`x5u` |
-| Section 3.5 | JWS payload claim set — the declared set is exhaustive (`additionalProperties: false`), so an undeclared claim is refused rather than ignored; the thirteen REQUIRED claims must be present; `eat_profile` must carry the profile identifier; `psea_proof_version` is the string `"1"` |
+| Section 3.5 | JWS payload claim set — the declared set is exhaustive (`additionalProperties: false`), so an undeclared claim is refused rather than ignored; the thirteen REQUIRED claims must be present; and for every claim present, the declared **type, pattern, enum, minimum, maximum and required sub-members** are enforced. `src/psea.py` carries the schema as a table (`CLAIM_SCHEMA`) transcribed from the draft, so what the code enforces can be read against Section 3.5 side by side |
+| Parse layer | A repeated JSON member name is refused, in the protected header and in the payload alike. Not a Section 3.5 rule — the schema cannot express it, because by the time a schema sees an object the duplicate has already been resolved by the parser |
 | Section 3.7.1 | User-verification claim anchoring — `psea_uv.verified == true` required; cross-checked against attested UV-enforcement where the enrolment record conveys it; refused for high-assurance operations where it does not |
 | Section 3.13.2 | Fail-closed action binding — re-canonicalize, SHA-256, byte-compare against `psea_payload_hash`, refuse on mismatch or missing payload |
 
@@ -32,6 +33,16 @@ Verifier were corrected together in one change. No recorded row moved, because
 no row in the suite exercised any of those paths — which is itself the finding:
 a harness cannot detect a defect in a rule it does not implement.
 
+That first pass implemented **presence and the allowlist, and nothing about
+claim shape** — which is the same finding a second time. A review of the
+reference by Iman Schrock (EMILIA Protocol) on agent2agent, 2026-07-31, found
+nine claims of the wrong type, pattern or range being accepted, and one wrongly
+typed `exp` raising an uncaught `TypeError` out of `verify()` rather than
+refusing. Under Section 3.13.2 the exception is the worse of the two: an
+exception is not a refusal. The declared shape is now enforced, any unexpected
+exception is converted to a refusal, and the ten cases are rows S1–S10.
+**Negative cases contributed by Iman Schrock / EMILIA Protocol.**
+
 The Attester emits the thirteen REQUIRED claims and nothing else. It does not
 emit `psea_signals_hash`, which the profile declares OPTIONAL: the reference
 carries no auxiliary transport document for that claim to commit to, and putting
@@ -42,11 +53,38 @@ the coverage above.
 That is deliberate. A harness that invents behaviour to fill a specification gap
 reports its own choices back as though they were properties of the profile.
 
+### What the table does not say
+
+The table above says what is implemented. It says nothing beyond that, and the
+two limits below are the ones most likely to be read into it by mistake.
+
+**Replay state is in-memory and process-local.** The finalized-`jti` set and the
+per-key counter high-water map are ordinary Python objects on a single
+`Verifier` instance in a single process. They demonstrate that the check exists
+and that a replayed `jti` or a non-advancing counter is refused. **Nothing about
+atomicity, durability, or cross-node enforcement follows from any row in this
+suite.** Section 3.10 requires the counter compare-and-advance and the `jti`
+finalization to be one atomic step; Section 6.5 requires a sharded deployment to
+serialize all submissions for a given (Attester, counter scope) to a single
+authority, to keep the `jti` finalization index globally consistent across
+nodes, and to protect that state against rollback so a restore or failover
+cannot lower a high-water mark or forget a finalized `jti`. This harness
+demonstrates none of those. A single-process dictionary is atomic and durable
+for free and so proves nothing about a deployment where neither is free — which
+is exactly where a horizontally-scaled Verifier fails.
+
+**Coverage is exactly the table.** A draft section absent from it is not
+implemented — not partially, not incidentally. In particular the harness does
+not implement the enrollment lifecycle trust gate (Section 3.14), the chain
+layer's linkage check (Section 3.12.3), caller-identity binding (Section
+3.13.5), or `eat_nonce` challenge correlation, and no row here bears on any of
+them.
+
 `src/jcs.py` implements the RFC 8785 integers-only subset the profile restricts
 the action payload to; a float in a payload is a profile violation and is
 rejected rather than serialized.
 
-## Result: 13 pass, 3 fail, 5 not applicable (21 rows)
+## Result: 23 pass, 3 fail, 5 not applicable (31 rows)
 
 The three failures are properties the profile does not have:
 
@@ -73,9 +111,13 @@ and the profile defines no quorum construct at this revision; N12b requires a
 reusable-authorization mode it does not define; N9 is not constructible, because
 `psea_payload_hash` sits inside the signed payload by construction.
 
-Full per-row detail, including the passing rows and the three digest-encoding
-rows, is in [RESULTS.md](RESULTS.md). The recorded run is in
-[results/psea-02-selfrun.json](results/psea-02-selfrun.json).
+Rows S1–S10 are the Section 3.5 claim-shape cases and all pass. They did not
+change which rows fail: claim shape is orthogonal to the principal-reference,
+ordering and composition gaps above.
+
+Full per-row detail, including the passing rows, the three digest-encoding rows
+and the ten claim-shape rows, is in [RESULTS.md](RESULTS.md). The recorded run
+is in [results/psea-02-selfrun.json](results/psea-02-selfrun.json).
 
 [`interop-aae/`](interop-aae/) holds the PSEA side of a candidate two-way
 cross-run with draft-kroehl-agentic-trust-aae — one action, two proofs from
