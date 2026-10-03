@@ -2055,7 +2055,8 @@ li > p:last-of-type:only-child {
         and <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> defines no registry for profile identifiers, so this identifier
         requires no registration and carries no dependency on the publication stream this document
         appears in. A Verifier <span class="bcp14">MUST</span> reject a
-        proof whose <code>eat_profile</code> claim is absent or carries any other value.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
+        proof whose <code>eat_profile</code> claim is absent or carries any other value, except as
+        permitted in <a href="#proof-schema" class="auto internal xref">Section 3.5</a>.<a href="#section-3.1-1" class="pilcrow">¶</a></p>
 <p id="section-3.1-2">The profile is composed of three claim families:<a href="#section-3.1-2" class="pilcrow">¶</a></p>
 <ul class="normal">
 <li class="normal" id="section-3.1-3.1">
@@ -2438,7 +2439,12 @@ entirely.
         require the claim on every proof, and a Verifier in such a deployment <span class="bcp14">MUST</span> refuse
         a proof that omits it: a proof without the claim bypasses the linkage check, so it could be
         inserted into the stored proof sequence without the gap being detected.<a href="#section-3.5-6" class="pilcrow">¶</a></p>
-<div class="breakable lang-json sourcecode" id="section-3.5-7">
+<p id="section-3.5-7">The <code>eat_profile</code> claim carries the profile identifier of
+        <a href="#eat-profile" class="auto internal xref">Section 3.1</a>, and a conforming Attester emits only that value. Notwithstanding
+        the enumeration in the schema below, a Verifier <span class="bcp14">MAY</span> additionally accept the value
+        <code>urn:ietf:params:psea:eat-profile:2</code>, which implementations built before this revision
+        emit, provided every other requirement of this profile is met.<a href="#section-3.5-7" class="pilcrow">¶</a></p>
+<div class="breakable lang-json sourcecode" id="section-3.5-8">
 <pre>
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2610,7 +2616,7 @@ entirely.
   },
   "additionalProperties": false
 }
-</pre><a href="#section-3.5-7" class="pilcrow">¶</a>
+</pre><a href="#section-3.5-8" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -4436,7 +4442,7 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
 </li>
             <li class="normal" id="appendix-B.3.1-2.3">MUST reject a proof whose <code>eat_profile</code> claim is absent or is not
             <code>https://datatracker.ietf.org/doc/draft-yossif-psea/</code> (<a href="#eat-profile" class="auto internal xref">Section 3.1</a>),
-            and a proof whose
+            except as permitted in <a href="#proof-schema" class="auto internal xref">Section 3.5</a>, and a proof whose
             <code>psea_proof_version</code> is an unknown value (<a href="#proof-versioning" class="auto internal xref">Section 3.15</a>).<a href="#appendix-B.3.1-2.3" class="pilcrow">¶</a>
 </li>
             <li class="normal" id="appendix-B.3.1-2.4">MUST validate freshness per <a href="#freshness" class="auto internal xref">Section 3.11</a>: reject a proof whose <code>exp</code>
@@ -4672,6 +4678,14 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.18 to Section 4.2.18.3, which defines nested tokens, and
         rewrapped over-long lines in the <a href="#proof-schema" class="auto internal xref">Section 3.5</a> schema and in
         <a href="#appendix-canonical-test-vectors" class="auto internal xref">Appendix A</a>; no content of either changes.<a href="#appendix-C-3.16" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.17">Added to <a href="#proof-schema" class="auto internal xref">Section 3.5</a> that a Verifier <span class="bcp14">MAY</span> additionally accept
+        the <code>eat_profile</code> value <code>urn:ietf:params:psea:eat-profile:2</code> when every other
+        requirement of this profile is met, and qualified the matching rejection rules in
+        <a href="#eat-profile" class="auto internal xref">Section 3.1</a> and <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>. In deployed
+        implementations the <code>:2</code> suffix marked the corrected <code>ueid</code> derivation;
+        <code>psea_proof_version</code> remains the wire-format revision marker
+        (<a href="#proof-versioning" class="auto internal xref">Section 3.15</a>). No claim is added.<a href="#appendix-C-3.17" class="pilcrow">¶</a>
 </li>
       </ul>
 </section>

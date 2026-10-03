@@ -413,7 +413,8 @@
         and <xref target="RFC9711"/> defines no registry for profile identifiers, so this identifier
         requires no registration and carries no dependency on the publication stream this document
         appears in. A Verifier <bcp14>MUST</bcp14> reject a
-        proof whose <tt>eat_profile</tt> claim is absent or carries any other value.</t>
+        proof whose <tt>eat_profile</tt> claim is absent or carries any other value, except as
+        permitted in <xref target="proof-schema"/>.</t>
 
         <t>The profile is composed of three claim families:</t>
 
@@ -766,6 +767,12 @@ entirely.
         require the claim on every proof, and a Verifier in such a deployment <bcp14>MUST</bcp14> refuse
         a proof that omits it: a proof without the claim bypasses the linkage check, so it could be
         inserted into the stored proof sequence without the gap being detected.</t>
+
+        <t>The <tt>eat_profile</tt> claim carries the profile identifier of
+        <xref target="eat-profile"/>, and a conforming Attester emits only that value. Notwithstanding
+        the enumeration in the schema below, a Verifier <bcp14>MAY</bcp14> additionally accept the value
+        <tt>urn:ietf:params:psea:eat-profile:2</tt>, which implementations built before this revision
+        emit, provided every other requirement of this profile is met.</t>
 
         <sourcecode type="json"><![CDATA[
 {
@@ -2607,7 +2614,7 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             thereafter read claims only from the verified payload.</li>
             <li>MUST reject a proof whose <tt>eat_profile</tt> claim is absent or is not
             <tt>https://datatracker.ietf.org/doc/draft-yossif-psea/</tt> (<xref target="eat-profile"/>),
-            and a proof whose
+            except as permitted in <xref target="proof-schema"/>, and a proof whose
             <tt>psea_proof_version</tt> is an unknown value (<xref target="proof-versioning"/>).</li>
             <li>MUST validate freshness per <xref target="freshness"/>: reject a proof whose <tt>exp</tt>
             is in the past or whose <tt>iat</tt> is implausibly in the future, applying only a small
@@ -2804,6 +2811,13 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         <xref target="RFC9711"/>, Section 4.2.18 to Section 4.2.18.3, which defines nested tokens, and
         rewrapped over-long lines in the <xref target="proof-schema"/> schema and in
         <xref target="appendix-canonical-test-vectors"/>; no content of either changes.</li>
+        <li>Added to <xref target="proof-schema"/> that a Verifier <bcp14>MAY</bcp14> additionally accept
+        the <tt>eat_profile</tt> value <tt>urn:ietf:params:psea:eat-profile:2</tt> when every other
+        requirement of this profile is met, and qualified the matching rejection rules in
+        <xref target="eat-profile"/> and <xref target="conformance-verifier"/>. In deployed
+        implementations the <tt>:2</tt> suffix marked the corrected <tt>ueid</tt> derivation;
+        <tt>psea_proof_version</tt> remains the wire-format revision marker
+        (<xref target="proof-versioning"/>). No claim is added.</li>
       </ul>
     </section>
 
