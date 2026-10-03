@@ -1479,9 +1479,11 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
           <t>When a deployment has enrolled an expected caller identity for the operation, a conforming
           Verifier <bcp14>MUST</bcp14> reject a proof whose signed <tt>psea_caller_package</tt> is absent
-          or does not byte-exactly equal the expected value, before any state mutation. A deployment that
-          has not enrolled an expected caller identity <bcp14>MUST NOT</bcp14> treat the claim's absence
-          as failure. The binding is covered by the JWS signature; the comparison is a byte-equality
+          or does not byte-exactly equal the expected value, before any state mutation. A Verifier
+          <bcp14>MUST</bcp14> refuse a proof that omits <tt>psea_caller_package</tt> where the deployment
+          has registered caller identities, and <bcp14>SHOULD</bcp14> refuse it otherwise. This is
+          stricter than -02, which required a deployment without an enrolled caller identity not to treat
+          the claim's absence as failure. The binding is covered by the JWS signature; the comparison is a byte-equality
           string comparison that <bcp14>MUST NOT</bcp14> normalize case or whitespace.</t>
         </section>
       </section>
@@ -2618,9 +2620,9 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             whitespace-exact comparison, after signature verification and before any state mutation.</li>
             <li>MUST, when the deployment has enrolled an expected caller identity for the operation,
             reject a proof whose signed <tt>psea_caller_package</tt> is absent or does not byte-exactly
-            equal the expected value, before any state mutation (<xref target="caller-binding"/>); a
-            deployment that has not enrolled an expected caller identity MUST NOT treat the claim's
-            absence as failure.</li>
+            equal the expected value, before any state mutation (<xref target="caller-binding"/>); MUST
+            refuse a proof that omits <tt>psea_caller_package</tt> where the deployment has registered
+            caller identities, and SHOULD refuse it otherwise.</li>
             <li>MAY require that <tt>psea_user_hash</tt> match the value recorded for the subject at
             enrollment; a Verifier that does so MUST refuse a proof whose <tt>psea_user_hash</tt> is absent
             or does not byte-exactly equal the recorded value (<xref target="user-id-hash"/>).</li>
