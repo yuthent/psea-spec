@@ -239,14 +239,21 @@
       </section>
 
       <section anchor="canonical-encoding-keys" numbered="true">
-        <name>Object Key Ordering (Case-Sensitive Unicode Code-Point Sort)</name>
-        <t>Object members <bcp14>MUST</bcp14> be ordered by case-sensitive ascending Unicode code-point
-        comparison of their keys, byte by byte after UTF-8 encoding. The comparison <bcp14>MUST NOT</bcp14>
-        normalize case, fold Unicode equivalence classes, or apply collation rules. Two keys that differ
-        only in case (for example, "endedAt" and "endReason") <bcp14>MUST</bcp14> order according to the
-        Unicode code-point value of their differing character; in this example, "endReason" (uppercase
-        "R" = U+0052 = 82) sorts before "endedAt" (lowercase "e" at the comparison position = U+0065 = 101)
-        because 82 &lt; 101.</t>
+        <name>Object Key Ordering (UTF-16 Code-Unit Sort)</name>
+        <t>Object members <bcp14>MUST</bcp14> be ordered as <xref target="RFC8785"/>, Section 3.2.3
+        specifies: property names, in their raw (unescaped) form, are compared as arrays of UTF-16 code
+        units, each code unit treated as an unsigned integer, independent of locale. The comparison
+        <bcp14>MUST NOT</bcp14> normalize case, fold Unicode equivalence classes, or apply collation
+        rules. Two keys that differ only in case (for example, "endedAt" and "endReason")
+        <bcp14>MUST</bcp14> order according to the value of their first differing code unit; in this
+        example, "endReason" (uppercase "R" = U+0052 = 82) sorts before "endedAt" (lowercase "e" at the
+        comparison position = U+0065 = 101) because 82 &lt; 101.</t>
+
+        <t>For names that contain no character outside the Basic Multilingual Plane, UTF-16 code-unit
+        order, Unicode code-point order, and UTF-8 byte order coincide. They diverge when one name
+        carries a character outside the Basic Multilingual Plane (encoded in UTF-16 as a surrogate pair
+        in the range U+D800 to U+DFFF) and the other carries a character in the range U+E000 to U+FFFF at
+        the same position; the UTF-16 code-unit order governs in that case.</t>
 
         <t>This rule is the canonical encoding's most consequential implementer-warning point. See
         <xref target="canonical-encoding-conformance"/> for cross-platform notes.</t>
@@ -262,11 +269,15 @@
       <section anchor="canonical-encoding-strings" numbered="true">
         <name>String Serialization</name>
         <t>String values <bcp14>MUST</bcp14> be serialized following the encoding rules in
-        <xref target="RFC8785"/>, Section 3.2.2.2 (Serialization of Strings). In particular: the JSON six-
-        character escape forms for U+0022 (quotation mark), U+005C (reverse solidus), U+0008, U+000C,
-        U+000A, U+000D, and U+0009 <bcp14>MUST</bcp14> be used; the "\uXXXX" form <bcp14>MUST</bcp14> use
-        lowercase hexadecimal digits; surrogate pairs <bcp14>MUST</bcp14> be emitted as written by the
-        producer (canonical encoding does not normalize Unicode form).</t>
+        <xref target="RFC8785"/>, Section 3.2.2.2 (Serialization of Strings). In particular: U+0022
+        (quotation mark) and U+005C (reverse solidus) <bcp14>MUST</bcp14> be serialized as the
+        two-character escapes \" and \\; U+0008, U+0009, U+000A, U+000C, and U+000D
+        <bcp14>MUST</bcp14> be serialized as the two-character escapes \b, \t, \n, \f, and \r; every other
+        code point in the range U+0000 to U+001F <bcp14>MUST</bcp14> be serialized in the six-character
+        form \uhhhh with lowercase hexadecimal digits; and every other code point is emitted as is.
+        Input containing a lone surrogate (an unpaired code point in the range U+D800 to U+DFFF)
+        <bcp14>MUST</bcp14> cause canonicalization to fail with an error. Canonical encoding does not
+        normalize Unicode form.</t>
       </section>
 
       <section anchor="canonical-encoding-numbers" numbered="true">
@@ -325,28 +336,31 @@
           <dd><tt>JSONSerialization</tt> with the <tt>sortedKeys</tt> option performs a
           <em>case-insensitive</em> sort, which diverges from this section's <em>case-sensitive</em> rule (see
           <xref target="canonical-encoding-keys"/>). Implementations on Apple platforms
-          <bcp14>MUST NOT</bcp14> rely on <tt>sortedKeys</tt>; they <bcp14>MUST</bcp14> emit canonical
-          bytes via a manual sort using a case-sensitive comparator (for example, Swift's
-          <tt>Dictionary.keys.sorted()</tt> with the default less-than operator on String, which is
-          case-sensitive).</dd>
+          <bcp14>MUST NOT</bcp14> rely on <tt>sortedKeys</tt>. Swift's default comparison of
+          <tt>String</tt> values does not compare UTF-16 code units either, so an implementation
+          <bcp14>MUST</bcp14> emit canonical bytes via a manual sort that compares the UTF-16 code units
+          of each name.</dd>
 
           <dt>JavaScript / TypeScript platforms</dt>
-          <dd><tt>Array.prototype.sort()</tt> on string keys performs a case-sensitive Unicode code-point
-          sort, matching this section's requirement. <tt>JSON.stringify</tt> with a comparator option is
-          not standard; use a manual canonicalization pass.</dd>
+          <dd><tt>Array.prototype.sort()</tt> on string keys compares UTF-16 code units, matching this
+          section's requirement. <tt>JSON.stringify</tt> with a comparator option is not standard; use a
+          manual canonicalization pass.</dd>
 
           <dt>Java / Kotlin</dt>
-          <dd><tt>String.compareTo()</tt> performs case-sensitive Unicode code-point comparison; the
-          standard JCS implementations in major libraries (Jackson, Gson) produce conformant output when
-          configured for canonical mode.</dd>
+          <dd><tt>String.compareTo()</tt> compares UTF-16 code units, matching this section's
+          requirement; the standard JCS implementations in major libraries (Jackson, Gson) produce
+          conformant output when configured for canonical mode.</dd>
 
           <dt>Python</dt>
-          <dd>The standard <tt>sorted()</tt> on strings performs case-sensitive Unicode code-point sort.
-          The <tt>json</tt> module's <tt>sort_keys=True</tt> matches this section's rule.</dd>
+          <dd>The standard <tt>sorted()</tt> on strings, and the <tt>json</tt> module's
+          <tt>sort_keys=True</tt>, order by Unicode code point, which diverges from UTF-16 code-unit order
+          in the case described in <xref target="canonical-encoding-keys"/>; an implementation
+          <bcp14>MUST</bcp14> sort by the UTF-16 encoding of each name.</dd>
 
           <dt>Go, Rust</dt>
-          <dd>Default string comparison on both languages is case-sensitive byte-wise on UTF-8, which
-          matches this section's rule for keys composed entirely of ASCII characters.</dd>
+          <dd>Default string comparison on both languages is byte-wise on UTF-8, which matches this
+          section's rule only for names containing no character outside the Basic Multilingual Plane; an
+          implementation <bcp14>MUST</bcp14> sort by the UTF-16 encoding of each name.</dd>
         </dl>
 
         <t>The most consequential pitfall is an Apple <tt>sortedKeys</tt> case-insensitive sort silently
@@ -2488,7 +2502,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
   "sessionId": "abc-123",
   "startedAt": 1700000000 }
 ]]></sourcecode>
-        <t>Canonical bytes (the keys ordered by case-sensitive Unicode code-point sort: 'R' = U+0052 = 82
+        <t>Canonical bytes (the keys ordered by UTF-16 code-unit sort: 'R' = U+0052 = 82
         sorts before 'e' = U+0065 = 101, so "endReason" precedes "endedAt"):</t>
         <sourcecode type="text"><![CDATA[
 {"endReason":"TtlExpired","endedAt":1700000060,"sessionId":"abc-123","startedAt":1700000000}
@@ -2510,7 +2524,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <sourcecode type="json"><![CDATA[
 { "amount": 2500, "actionType": "transfer", "to": "alice", "currency": "EUR" }
 ]]></sourcecode>
-        <t>the canonical encoding orders the keys by case-sensitive Unicode code-point sort
+        <t>the canonical encoding orders the keys by UTF-16 code-unit sort
         (<tt>actionType</tt> &lt; <tt>amount</tt> &lt; <tt>currency</tt> &lt; <tt>to</tt>), removes all
         inter-token whitespace, and serializes the integer with no decimal point or exponent, yielding the
         69 canonical octets:</t>
