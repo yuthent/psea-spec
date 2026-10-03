@@ -1076,7 +1076,9 @@ entirely.
         <t>The OPTIONAL <tt>psea_user_hash</tt> claim (<xref target="proof-schema"/>) is an Attester-signed
         subject-binding commitment: the SHA-256 of an opaque, deployment-issued subject identifier,
         encoded as base64url without padding. The claim cryptographically attributes the action to a
-        subject identifier for the audit trail.</t>
+        subject identifier for the audit trail. It is a pairwise, deployment-local commitment to the
+        enrolled subject: it does not establish who the subject is, and a Verifier <bcp14>MUST NOT</bcp14>
+        treat it as proof of the identity of any person.</t>
 
         <t>When present, <tt>psea_user_hash</tt> <bcp14>MUST</bcp14> be derived so that it does not
         function as a cross-deployment correlator, mirroring the pairwise <tt>ueid</tt> derivation
@@ -1086,17 +1088,20 @@ entirely.
         identifier. A deployment <bcp14>MUST NOT</bcp14> emit a bare SHA-256 of a globally stable subject
         identifier (see <xref target="privacy-hashing"/>).</t>
 
-        <t>A Verifier <bcp14>MUST NOT</bcp14> make an authorization decision based on the per-proof
-        <tt>psea_user_hash</tt> claim of a PSEA proof. Subject attribution is for ledger and audit purposes
-        only. The cryptographic chain of authorization at the Verifier rests on the device-bound signature,
-        the monotonic counter, and the presence Evidence (<xref target="presence-via-signature"/>); the
-        Attester's commitment to a subject identifier is an additional audit-trail property, not a security
-        gate.</t>
+        <t>A Verifier <bcp14>MAY</bcp14> require that the per-proof <tt>psea_user_hash</tt> match the
+        value recorded for the subject at enrollment. A Verifier that does so <bcp14>MUST</bcp14> refuse a
+        proof whose <tt>psea_user_hash</tt> is absent or does not byte-exactly equal the recorded value.
+        Such a check establishes only that the proof was produced for the same deployment-issued subject
+        identifier the enrollment recorded; it does not establish which natural person that identifier
+        denotes. The cryptographic chain of authorization at the Verifier continues to rest on the
+        device-bound signature, the monotonic counter, and the presence Evidence
+        (<xref target="presence-via-signature"/>); the subject-hash comparison is a consistency check
+        against the enrollment record, not a substitute for any of them.</t>
 
-        <t>The per-proof <tt>psea_user_hash</tt> is distinct from any enrollment-bound subject binding a
-        deployment records at enrollment time; that binding, and its use in decision-bearing checks, is
-        deployment-specific and out of scope. The per-proof signed value on the PSEA
-        proof is a commitment whose role is solely audit-trail attribution.</t>
+        <t>The per-proof <tt>psea_user_hash</tt> is distinct from the enrollment-bound subject binding a
+        deployment records at enrollment time. The binding between the recorded value and a natural
+        person is established at enrollment, by the deployment's enrollment ceremony and identity
+        proofing, and is out of scope of this profile (<xref target="enrollment-root-of-trust"/>).</t>
       </section>
 
       <section anchor="device-state" numbered="true">
@@ -2607,6 +2612,9 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             equal the expected value, before any state mutation (<xref target="caller-binding"/>); a
             deployment that has not enrolled an expected caller identity MUST NOT treat the claim's
             absence as failure.</li>
+            <li>MAY require that <tt>psea_user_hash</tt> match the value recorded for the subject at
+            enrollment; a Verifier that does so MUST refuse a proof whose <tt>psea_user_hash</tt> is absent
+            or does not byte-exactly equal the recorded value (<xref target="user-id-hash"/>).</li>
             <li>MUST enforce the monotonic <tt>psea_counter</tt> (<xref target="counter-model"/>): select
             the comparison bucket using only a cryptographically bound scope identifier, reject a value
             not strictly greater than the stored value for that scope, and treat the claim as a 64-bit
