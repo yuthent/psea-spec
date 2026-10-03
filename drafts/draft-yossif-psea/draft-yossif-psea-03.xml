@@ -492,8 +492,9 @@
             profile.</dd>
             <dt>UEID type</dt>
             <dd>The <tt>ueid</tt> claim carries a deterministic per-issuer value under the RFC 9711 RAND
-            type tag (<tt>0x01</tt>); this is a deliberate, disclosed choice whose rationale and migration
-            path are stated in <xref target="privacy-ueid"/>.</dd>
+            type tag (<tt>0x01</tt>). The value is not preserved across factory reset, so it does not meet
+            the permanence <xref target="RFC9711"/> requires of a UEID; it is retained for wire continuity,
+            and the migration to <tt>sueids</tt> is stated in <xref target="privacy-ueid"/>.</dd>
             <dt>Extensibility model</dt>
             <dd>This profile is a deliberately strict, lock-step profile rather than an
             ignore-unknown-claims profile. A conforming Verifier rejects a proof carrying any claim outside
@@ -2050,33 +2051,26 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         requires it.</t>
 
         <t>This profile carries a deterministic per-issuer value under the RFC 9711 RAND type tag
-        (<tt>0x01</tt>). This is a deliberate, disclosed design choice, not an oversight, and it warrants an
-        explicit justification because the RAND type tag nominally denotes a randomly generated UEID
-        (<xref target="RFC9711"/>, Section 4.2.1.1, Table 1), whereas the value this profile places under
-        that tag is
-        the deterministic derivation stated above over the <tt>deviceId</tt> and <tt>iss</tt> inputs. The
-        cross-issuer unlinkability this profile requires is supplied here by the per-issuer derivation
-        (a distinct, non-correlatable
-        value per <tt>iss</tt>), not by randomness; within a single issuer the value is intentionally
-        stable, because this profile depends on binding a device's successive proofs to one
-        enrollment. The semantically purer vehicle for a stable-but-pairwise identifier of this kind is the
-        EAT semipermanent UEID (<tt>sueids</tt>) claim (<xref target="RFC9711"/>), which is defined
-        precisely for non-random, semipermanent per-relationship identifiers.</t>
+        (<tt>0x01</tt>). <xref target="RFC9711"/>, Section 4.2.1.1 requires that a UEID be permanent and
+        not change for a given entity. The value this profile carries does not meet that requirement: it
+        is derived from a <tt>deviceId</tt> input that is wiped on factory reset and re-derived
+        afterwards, as happens both to a platform-provided device identifier and to an identifier
+        generated and stored on the device, so the same entity presents a new value after a factory
+        reset. <xref target="RFC9711"/>, Section 4.2.2 defines the semipermanent UEID (<tt>sueids</tt>)
+        claim for this case: a value with the format of a UEID that may change on entity life-cycle
+        events, of which factory reset is one. <tt>sueids</tt> is the correct claim for the value this
+        profile carries. This revision retains <tt>ueid</tt> for wire continuity only.</t>
 
-        <t>The trade-off this revision weighed is the following. The <tt>sueids</tt> claim is the more exact
-        EAT semantics, but adopting it adds a second identifier claim to the wire with its own array
-        structure and per-entry labelling semantics, which every conforming Attester and every conforming
-        Verifier must then produce and appraise. The RAND-tagged <tt>ueid</tt> reuses a single,
-        already-specified 33-octet UEID encoding that all parties already implement, and the per-issuer
-        derivation gives the required cross-issuer confinement (<xref target="privacy-ueid"/>) without a
-        second claim. This revision therefore chose one stable per-issuer <tt>ueid</tt> over introducing
-        <tt>sueids</tt> handling, accepting the looser fit against the RAND tag's "randomly generated"
-        connotation as the cost of that simplicity. The choice is recorded here so a consumer is not misled
-        into treating the value as random: it is a per-issuer pseudonym, deterministic by construction and
-        verifiable from the enrolled <tt>deviceId</tt> input. A future revision <bcp14>MAY</bcp14> migrate
-        the per-issuer (and per-Relying-Party) identifier to the <tt>sueids</tt> form; that migration is the
-        recommended direction for aligning the wire encoding with the EAT identifier semantics, and it
-        composes with the per-Relying-Party unlinkability direction noted below.</t>
+        <t>The <tt>sueids</tt> claim is a map, not an array: each entry pairs a text-string label with a
+        value in the UEID format, and a label is required even when only one entry is present
+        (<xref target="RFC9711"/>, Section 4.2.2). This profile defines no means for a device owner to
+        add an identifier: the Attester emits exactly one device identifier, derived from its
+        <tt>deviceId</tt> input and the signed <tt>iss</tt>.</t>
+
+        <t>Migrating the identifier to <tt>sueids</tt> is a wire-incompatible change. It is the stated
+        intent for the next wire-incompatible revision of this profile, which will also define the label.
+        Until then the <tt>ueid</tt> value is a per-issuer pseudonym for the current enrollment:
+        deterministic by construction, not random, and not preserved across factory reset.</t>
 
         <t>Per-issuer derivation does not provide per-Relying-Party unlinkability <em>within</em> a single
         deployment, nor does it defeat correlation by other shared fields. A future revision
@@ -2734,7 +2728,10 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         pairwise derivation exists to achieve. The two inputs are now encoded as a canonical JSON object
         (<xref target="RFC8785"/>) before hashing, reusing the canonicalization this profile already
         requires (<xref target="canonical-encoding"/>) rather than introducing a second one. The pairwise
-        approach itself is unchanged and remains the one <xref target="RFC9711"/>, Section 8.1 sanctions.</li>
+        approach itself is unchanged. It achieves per-deployment separation; it is not the strategy of
+        <xref target="RFC9711"/>, Section 8.1, whose precondition, that the entity authenticate the relying
+        party before deriving an identifier for it, this profile does not meet, since <tt>iss</tt> is the
+        identifier the Attester has locally available rather than one the relying party has proven.</li>
         <li>Withdrew the request to register the <tt>urn:ietf:params:psea</tt> URN sub-namespace, and
         removed with it the fallback profile identifier written for the case where that registration was
         not granted (<xref target="iana-registries-overview"/>). The <tt>urn:ietf:params</tt> policy would
