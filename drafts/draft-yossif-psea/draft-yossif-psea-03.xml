@@ -2475,11 +2475,13 @@ Total: 114 bytes → SHA-256 → 64 hex chars
       <xref target="canonical-encoding"/>.</t>
 
       <t>Implementations SHOULD construct their own canonical-encoding test suite covering the
-      canonical-JSON input that PSEA hashes (the action payload bound by <tt>psea_payload_hash</tt>) plus
+      canonical-JSON inputs that PSEA hashes (the action payload bound by <tt>psea_payload_hash</tt> and
+      the two-member object of the <tt>ueid</tt> derivation) plus
       boundary cases for case-sensitive sort, mixed-case keys, integer serialization, escape forms, and
       UTF-8 multi-byte sequences. The PSEA proof and the acknowledgement are JWS objects verified over
-      their received octets and so do not depend on canonical encoding for signature verification; only
-      the action-payload hash is taken over canonical JSON octets. Implementations
+      their received octets and so do not depend on canonical encoding for signature verification; the
+      two hashes taken over canonical JSON octets are the action-payload hash and the <tt>ueid</tt>
+      derivation (<xref target="canonical-encoding"/>). Implementations
       <bcp14>SHOULD</bcp14> maintain machine-readable golden vectors covering these dimensions;
       consulting or publishing them is informative and not a normative requirement of this
       specification.</t>
@@ -2512,7 +2514,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
 
       <section anchor="tv-payload-hash" numbered="true">
         <name>Action-Payload Hash (End-to-End Worked Example)</name>
-        <t>This vector demonstrates the one normative use of canonical encoding
+        <t>This vector demonstrates the first of the two normative uses of canonical encoding
         (<xref target="canonical-encoding"/>): the action-payload binding. Given the logical
         <tt>actionPayload</tt>:</t>
         <sourcecode type="json"><![CDATA[
@@ -2686,13 +2688,15 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
       <name>Changes from draft-yossif-psea-02</name>
 
       <t>This revision states one known limitation, corrects three claim-set descriptions against the
-      reference implementation, corrects the <tt>ueid</tt> derivation, and withdraws the URN
-      sub-namespace registration request. Apart from the <tt>ueid</tt> derivation, it adds no new
-      requirement and defines no new mechanism, and no normative requirement is changed: the
-      <xref target="envelope-schemas"/> prohibition on using unsigned
-      transport-body fields as security-decision inputs, and the Verifier obligations of
-      <xref target="conformance-verifier"/>, retain their force unaltered; the only edits to either are to
-      the illustrative lists that named a field incorrectly.</t>
+      reference implementation, corrects the <tt>ueid</tt> derivation, withdraws the URN sub-namespace
+      registration request, and corrects the restatement of RFC 8785. It also changes normative Verifier
+      requirements in three places: a Verifier may act on <tt>psea_user_hash</tt> against the enrollment
+      record (<xref target="user-id-hash"/>), a deployment may require <tt>psea_chain_prev</tt> and
+      <tt>psea_signals_hash</tt> (<xref target="proof-schema"/>), and an absent
+      <tt>psea_caller_package</tt> is refused (<xref target="caller-binding"/>). Each change is listed
+      below. The <xref target="envelope-schemas"/> prohibition on using unsigned transport-body fields as
+      security-decision inputs retains its force; the only edits to it are to the illustrative lists
+      that named a field incorrectly.</t>
 
       <t><strong>The <tt>ueid</tt> change is a wire-format correction, not an editorial one.</strong> A
       conforming Attester built against -02 and one built against this revision derive different
@@ -2762,6 +2766,39 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         RAND-tag rationale of <xref target="privacy-ueid"/> against Section 4.2.1 would not find it
         there. The citation of Section 4.2.1 in <xref target="eat-profile"/> is for the <tt>ueid</tt>
         claim itself and is unchanged.</li>
+        <li>Changed <xref target="user-id-hash"/> and <xref target="conformance-verifier"/>: a Verifier
+        <bcp14>MAY</bcp14> require <tt>psea_user_hash</tt> to match the value recorded at enrollment and,
+        where it does, <bcp14>MUST</bcp14> refuse an absent or differing value; -02 prohibited any
+        authorization decision based on the claim. The claim is stated as a pairwise, deployment-local
+        commitment that establishes no identity, because a deployment that records a subject at
+        enrollment can then detect a proof produced for a different subject identifier.</li>
+        <li>Added to <xref target="proof-schema"/> and <xref target="conformance-verifier"/> that a
+        deployment <bcp14>MAY</bcp14> require <tt>psea_chain_prev</tt> or <tt>psea_signals_hash</tt> and
+        that its Verifier <bcp14>MUST</bcp14> refuse a proof omitting the required claim; both remain
+        OPTIONAL in the schema, because omission would bypass the chain linkage check or leave the
+        auxiliary document unsigned.</li>
+        <li>Changed <xref target="caller-binding"/> and <xref target="conformance-verifier"/>: a Verifier
+        <bcp14>MUST</bcp14> refuse an absent <tt>psea_caller_package</tt> where the deployment has
+        registered caller identities and <bcp14>SHOULD</bcp14> refuse it otherwise, which is stricter
+        than -02, because an absent claim would otherwise bypass the caller binding.</li>
+        <li>Corrected <xref target="canonical-encoding-keys"/>, <xref target="canonical-encoding-strings"/>,
+        <xref target="canonical-encoding-conformance"/>, and <xref target="appendix-canonical-test-vectors"/>:
+        object keys sort by UTF-16 code units (<xref target="RFC8785"/>, Section 3.2.3), not by UTF-8
+        bytes; the string escapes for quotation mark, reverse solidus, and the five named controls are
+        two-character, and a lone surrogate is an error (<xref target="RFC8785"/>, Section 3.2.2.2); the
+        platform notes, including the Swift advice, are corrected to match. The earlier text contradicted
+        the RFC that <xref target="canonical-encoding"/> already required in full.</li>
+        <li>Rewrote the identifier discussion in <xref target="privacy-ueid"/> and the "UEID type" entry of
+        <xref target="eat-profile-definition"/>: the carried value is not preserved across factory reset,
+        so <xref target="RFC9711"/>, Section 4.2.2 <tt>sueids</tt> is the correct claim for it;
+        <tt>ueid</tt> is retained for wire continuity only, the description of <tt>sueids</tt> as an array
+        is corrected to a labelled map, and migration to <tt>sueids</tt> is the stated intent for the next
+        wire-incompatible revision. No wire change.</li>
+        <li>Recorded that <xref target="canonical-encoding"/> now makes canonical encoding normative for
+        two uses, the action-payload binding and the <tt>ueid</tt> derivation, rather than one, and
+        corrected the two sentences of <xref target="appendix-canonical-test-vectors"/> that still named
+        one use. Removed the RFC 3553 and RFC 8126 references, which were cited only by the withdrawn URN
+        sub-namespace registration.</li>
       </ul>
     </section>
 
