@@ -739,7 +739,16 @@ entirely.
         signed payload. It relates to that document as <tt>psea_payload_hash</tt> relates to
         <tt>actionPayload</tt>: the digest is signed, the document is not, and the document is bound only
         to the extent that a Verifier recomputes the digest over it. The document's content model is
-        deployment-defined and out of scope.</t>
+        deployment-defined and out of scope. A deployment <bcp14>MAY</bcp14> require
+        <tt>psea_signals_hash</tt> on every proof, and a Verifier in such a deployment
+        <bcp14>MUST</bcp14> refuse a proof that omits it: without the claim the auxiliary document is
+        unsigned and can be stripped, substituted, or replayed independently of the proof.</t>
+
+        <t>The OPTIONAL member <tt>psea_chain_prev</tt> is carried only where the deployment enables the
+        chain layer (<xref target="chain-entry"/>). A deployment that enables it <bcp14>MAY</bcp14>
+        require the claim on every proof, and a Verifier in such a deployment <bcp14>MUST</bcp14> refuse
+        a proof that omits it: a proof without the claim bypasses the linkage check, so it could be
+        inserted into the stored proof sequence without the gap being detected.</t>
 
         <sourcecode type="json"><![CDATA[
 {
@@ -2634,6 +2643,8 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
             perform the strict-equality <tt>psea_chain_prev</tt> linkage check of
             <xref target="chain-verifier-behavior"/>; a Verifier that does not enable the chain layer
             is not required to implement it.</li>
+            <li>MUST, in a deployment that requires <tt>psea_chain_prev</tt> or <tt>psea_signals_hash</tt>
+            on every proof, refuse a proof that omits the required claim (<xref target="proof-schema"/>).</li>
             <li>MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended,
             revoked) as the trust gate, and MUST reject proofs whose enrollment is not active
             (<xref target="enrollment-lifecycle"/>).</li>
