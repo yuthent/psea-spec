@@ -36,18 +36,18 @@
 <meta content="draft-yossif-psea-03" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.0
-    Python 3.12.13
-    ConfigArgParse 1.7.5
+    Python 3.14.7
+    ConfigArgParse 1.8.0
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.1.1
+    lxml 6.1.3
     natsort 8.4.0
-    platformdirs 4.10.0
+    platformdirs 4.12.2
     pycountry 26.2.16
     PyYAML 6.0.3
     requests 2.34.2
-    wcwidth 0.8.1
+    wcwidth 0.9.1
 -->
 <link href="draft-yossif-psea-03.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1238,11 +1238,11 @@ li > p:last-of-type:only-child {
 <thead><tr>
 <td class="left">Internet-Draft</td>
 <td class="center">PSEA Token Profile</td>
-<td class="right">July 2026</td>
+<td class="right">October 2026</td>
 </tr></thead>
 <tfoot><tr>
 <td class="left">Yossif</td>
-<td class="center">Expires 30 January 2027</td>
+<td class="center">Expires 6 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1255,12 +1255,12 @@ li > p:last-of-type:only-child {
 <dd class="internet-draft">draft-yossif-psea-03</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-07-29" class="published">29 July 2026</time>
+<time datetime="2026-10-03" class="published">3 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-01-30">30 January 2027</time></dd>
+<dd class="expires"><time datetime="2027-04-06">6 April 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1323,7 +1323,7 @@ li > p:last-of-type:only-child {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 30 January 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 6 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1370,7 +1370,7 @@ li > p:last-of-type:only-child {
                 <p id="section-toc.1-1.2.2.1.1"><a href="#section-2.1" class="auto internal xref">2.1</a>.  <a href="#name-utf-8-serialization" class="internal xref">UTF-8 Serialization</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.2">
-                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-object-key-ordering-case-se" class="internal xref">Object Key Ordering (Case-Sensitive Unicode Code-Point Sort)</a></p>
+                <p id="section-toc.1-1.2.2.2.1"><a href="#section-2.2" class="auto internal xref">2.2</a>.  <a href="#name-object-key-ordering-utf-16-" class="internal xref">Object Key Ordering (UTF-16 Code-Unit Sort)</a></p>
 </li>
               <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.2.2.3">
                 <p id="section-toc.1-1.2.2.3.1"><a href="#section-2.3" class="auto internal xref">2.3</a>.  <a href="#name-array-ordering" class="internal xref">Array Ordering</a></p>
@@ -1855,18 +1855,24 @@ li > p:last-of-type:only-child {
 </div>
 <div id="canonical-encoding-keys">
 <section id="section-2.2">
-        <h3 id="name-object-key-ordering-case-se">
-<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-object-key-ordering-case-se" class="section-name selfRef">Object Key Ordering (Case-Sensitive Unicode Code-Point Sort)</a>
+        <h3 id="name-object-key-ordering-utf-16-">
+<a href="#section-2.2" class="section-number selfRef">2.2. </a><a href="#name-object-key-ordering-utf-16-" class="section-name selfRef">Object Key Ordering (UTF-16 Code-Unit Sort)</a>
         </h3>
-<p id="section-2.2-1">Object members <span class="bcp14">MUST</span> be ordered by case-sensitive ascending Unicode code-point
-        comparison of their keys, byte by byte after UTF-8 encoding. The comparison <span class="bcp14">MUST NOT</span>
-        normalize case, fold Unicode equivalence classes, or apply collation rules. Two keys that differ
-        only in case (for example, "endedAt" and "endReason") <span class="bcp14">MUST</span> order according to the
-        Unicode code-point value of their differing character; in this example, "endReason" (uppercase
-        "R" = U+0052 = 82) sorts before "endedAt" (lowercase "e" at the comparison position = U+0065 = 101)
-        because 82 &lt; 101.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
-<p id="section-2.2-2">This rule is the canonical encoding's most consequential implementer-warning point. See
-        <a href="#canonical-encoding-conformance" class="auto internal xref">Section 2.8</a> for cross-platform notes.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+<p id="section-2.2-1">Object members <span class="bcp14">MUST</span> be ordered as <span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>, Section 3.2.3
+        specifies: property names, in their raw (unescaped) form, are compared as arrays of UTF-16 code
+        units, each code unit treated as an unsigned integer, independent of locale. The comparison
+        <span class="bcp14">MUST NOT</span> normalize case, fold Unicode equivalence classes, or apply collation
+        rules. Two keys that differ only in case (for example, "endedAt" and "endReason")
+        <span class="bcp14">MUST</span> order according to the value of their first differing code unit; in this
+        example, "endReason" (uppercase "R" = U+0052 = 82) sorts before "endedAt" (lowercase "e" at the
+        comparison position = U+0065 = 101) because 82 &lt; 101.<a href="#section-2.2-1" class="pilcrow">¶</a></p>
+<p id="section-2.2-2">For names that contain no character outside the Basic Multilingual Plane, UTF-16 code-unit
+        order, Unicode code-point order, and UTF-8 byte order coincide. They diverge when one name
+        carries a character outside the Basic Multilingual Plane (encoded in UTF-16 as a surrogate pair
+        in the range U+D800 to U+DFFF) and the other carries a character in the range U+E000 to U+FFFF at
+        the same position; the UTF-16 code-unit order governs in that case.<a href="#section-2.2-2" class="pilcrow">¶</a></p>
+<p id="section-2.2-3">This rule is the canonical encoding's most consequential implementer-warning point. See
+        <a href="#canonical-encoding-conformance" class="auto internal xref">Section 2.8</a> for cross-platform notes.<a href="#section-2.2-3" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="canonical-encoding-arrays">
@@ -1885,11 +1891,15 @@ li > p:last-of-type:only-child {
 <a href="#section-2.4" class="section-number selfRef">2.4. </a><a href="#name-string-serialization" class="section-name selfRef">String Serialization</a>
         </h3>
 <p id="section-2.4-1">String values <span class="bcp14">MUST</span> be serialized following the encoding rules in
-        <span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>, Section 3.2.2.2 (Serialization of Strings). In particular: the JSON six-
-        character escape forms for U+0022 (quotation mark), U+005C (reverse solidus), U+0008, U+000C,
-        U+000A, U+000D, and U+0009 <span class="bcp14">MUST</span> be used; the "\uXXXX" form <span class="bcp14">MUST</span> use
-        lowercase hexadecimal digits; surrogate pairs <span class="bcp14">MUST</span> be emitted as written by the
-        producer (canonical encoding does not normalize Unicode form).<a href="#section-2.4-1" class="pilcrow">¶</a></p>
+        <span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>, Section 3.2.2.2 (Serialization of Strings). In particular: U+0022
+        (quotation mark) and U+005C (reverse solidus) <span class="bcp14">MUST</span> be serialized as the
+        two-character escapes \" and \\; U+0008, U+0009, U+000A, U+000C, and U+000D
+        <span class="bcp14">MUST</span> be serialized as the two-character escapes \b, \t, \n, \f, and \r; every other
+        code point in the range U+0000 to U+001F <span class="bcp14">MUST</span> be serialized in the six-character
+        form \uhhhh with lowercase hexadecimal digits; and every other code point is emitted as is.
+        Input containing a lone surrogate (an unpaired code point in the range U+D800 to U+DFFF)
+        <span class="bcp14">MUST</span> cause canonicalization to fail with an error. Canonical encoding does not
+        normalize Unicode form.<a href="#section-2.4-1" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="canonical-encoding-numbers">
@@ -1959,34 +1969,37 @@ li > p:last-of-type:only-child {
             <code>JSONSerialization</code> with the <code>sortedKeys</code> option performs a
           <em>case-insensitive</em> sort, which diverges from this section's <em>case-sensitive</em> rule (see
           <a href="#canonical-encoding-keys" class="auto internal xref">Section 2.2</a>). Implementations on Apple platforms
-          <span class="bcp14">MUST NOT</span> rely on <code>sortedKeys</code>; they <span class="bcp14">MUST</span> emit canonical
-          bytes via a manual sort using a case-sensitive comparator (for example, Swift's
-          <code>Dictionary.keys.sorted()</code> with the default less-than operator on String, which is
-          case-sensitive).<a href="#section-2.8-3.2" class="pilcrow">¶</a>
+          <span class="bcp14">MUST NOT</span> rely on <code>sortedKeys</code>. Swift's default comparison of
+          <code>String</code> values does not compare UTF-16 code units either, so an implementation
+          <span class="bcp14">MUST</span> emit canonical bytes via a manual sort that compares the UTF-16 code units
+          of each name.<a href="#section-2.8-3.2" class="pilcrow">¶</a>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.8-3.3">JavaScript / TypeScript platforms</dt>
           <dd style="margin-left: 1.5em" id="section-2.8-3.4">
-            <code>Array.prototype.sort()</code> on string keys performs a case-sensitive Unicode code-point
-          sort, matching this section's requirement. <code>JSON.stringify</code> with a comparator option is
-          not standard; use a manual canonicalization pass.<a href="#section-2.8-3.4" class="pilcrow">¶</a>
+            <code>Array.prototype.sort()</code> on string keys compares UTF-16 code units, matching this
+          section's requirement. <code>JSON.stringify</code> with a comparator option is not standard; use a
+          manual canonicalization pass.<a href="#section-2.8-3.4" class="pilcrow">¶</a>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.8-3.5">Java / Kotlin</dt>
           <dd style="margin-left: 1.5em" id="section-2.8-3.6">
-            <code>String.compareTo()</code> performs case-sensitive Unicode code-point comparison; the
-          standard JCS implementations in major libraries (Jackson, Gson) produce conformant output when
-          configured for canonical mode.<a href="#section-2.8-3.6" class="pilcrow">¶</a>
+            <code>String.compareTo()</code> compares UTF-16 code units, matching this section's
+          requirement; the standard JCS implementations in major libraries (Jackson, Gson) produce
+          conformant output when configured for canonical mode.<a href="#section-2.8-3.6" class="pilcrow">¶</a>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.8-3.7">Python</dt>
-          <dd style="margin-left: 1.5em" id="section-2.8-3.8">The standard <code>sorted()</code> on strings performs case-sensitive Unicode code-point sort.
-          The <code>json</code> module's <code>sort_keys=True</code> matches this section's rule.<a href="#section-2.8-3.8" class="pilcrow">¶</a>
+          <dd style="margin-left: 1.5em" id="section-2.8-3.8">The standard <code>sorted()</code> on strings, and the <code>json</code> module's
+          <code>sort_keys=True</code>, order by Unicode code point, which diverges from UTF-16 code-unit order
+          in the case described in <a href="#canonical-encoding-keys" class="auto internal xref">Section 2.2</a>; an implementation
+          <span class="bcp14">MUST</span> sort by the UTF-16 encoding of each name.<a href="#section-2.8-3.8" class="pilcrow">¶</a>
 </dd>
           <dd class="break"></dd>
 <dt id="section-2.8-3.9">Go, Rust</dt>
-          <dd style="margin-left: 1.5em" id="section-2.8-3.10">Default string comparison on both languages is case-sensitive byte-wise on UTF-8, which
-          matches this section's rule for keys composed entirely of ASCII characters.<a href="#section-2.8-3.10" class="pilcrow">¶</a>
+          <dd style="margin-left: 1.5em" id="section-2.8-3.10">Default string comparison on both languages is byte-wise on UTF-8, which matches this
+          section's rule only for names containing no character outside the Basic Multilingual Plane; an
+          implementation <span class="bcp14">MUST</span> sort by the UTF-16 encoding of each name.<a href="#section-2.8-3.10" class="pilcrow">¶</a>
 </dd>
         <dd class="break"></dd>
 </dl>
@@ -2134,7 +2147,7 @@ li > p:last-of-type:only-child {
             <dd class="break"></dd>
 <dt id="section-3.1.1-2.15">Detached EAT Bundles and nested tokens</dt>
             <dd style="margin-left: 1.5em" id="section-3.1.1-2.16">This profile does not use Detached EAT Bundles (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 5) and
-            does not use nested tokens (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.18): a conforming PSEA proof
+            does not use nested tokens (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.18.3): a conforming PSEA proof
             is a single, self-contained JWS whose payload is one EAT-JSON claims-set. A Verifier
             <span class="bcp14">MUST NOT</span> accept a Detached EAT Bundle or a nested token as conforming to this
             profile.<a href="#section-3.1.1-2.16" class="pilcrow">¶</a>
@@ -2142,8 +2155,9 @@ li > p:last-of-type:only-child {
             <dd class="break"></dd>
 <dt id="section-3.1.1-2.17">UEID type</dt>
             <dd style="margin-left: 1.5em" id="section-3.1.1-2.18">The <code>ueid</code> claim carries a deterministic per-issuer value under the RFC 9711 RAND
-            type tag (<code>0x01</code>); this is a deliberate, disclosed choice whose rationale and migration
-            path are stated in <a href="#privacy-ueid" class="auto internal xref">Section 7.1</a>.<a href="#section-3.1.1-2.18" class="pilcrow">¶</a>
+            type tag (<code>0x01</code>). The value is not preserved across factory reset, so it does not meet
+            the permanence <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span> requires of a UEID; it is retained for wire continuity,
+            and the migration to <code>sueids</code> is stated in <a href="#privacy-ueid" class="auto internal xref">Section 7.1</a>.<a href="#section-3.1.1-2.18" class="pilcrow">¶</a>
 </dd>
             <dd class="break"></dd>
 <dt id="section-3.1.1-2.19">Extensibility model</dt>
@@ -2290,14 +2304,16 @@ entirely.
 <div class="lang-json sourcecode" id="section-3.2-6">
 <pre>
 {
-  "proof":            "&lt;compact JWS&gt;",
-  "actionPayload":    { ... },        // unsigned cleartext; the Verifier
-                                      //   re-canonicalizes, SHA-256s, and
-                                      //   compares against psea_payload_hash
-  "integrityEvidence": { ... },       // OPTIONAL attestation evidence
-  "requestId":        "...",          // OPTIONAL opaque request id
-  "signalReport":     { ... },        // OPTIONAL device-signal report
-  "proofId":          "..."           // OPTIONAL opaque proof identifier
+  "proof":             "&lt;compact JWS&gt;",
+  "actionPayload":     { ... },  // unsigned cleartext; the
+                                 //   Verifier re-canonicalizes,
+                                 //   SHA-256s, and compares against
+                                 //   psea_payload_hash
+  "integrityEvidence": { ... },  // OPTIONAL attestation evidence
+  "requestId":         "...",    // OPTIONAL opaque request id
+  "signalReport":      { ... },  // OPTIONAL device-signal report
+  "proofId":           "..."     // OPTIONAL opaque proof
+                                 //   identifier
 }
 </pre><a href="#section-3.2-6" class="pilcrow">¶</a>
 </div>
@@ -2413,8 +2429,16 @@ entirely.
         signed payload. It relates to that document as <code>psea_payload_hash</code> relates to
         <code>actionPayload</code>: the digest is signed, the document is not, and the document is bound only
         to the extent that a Verifier recomputes the digest over it. The document's content model is
-        deployment-defined and out of scope.<a href="#section-3.5-5" class="pilcrow">¶</a></p>
-<div class="breakable lang-json sourcecode" id="section-3.5-6">
+        deployment-defined and out of scope. A deployment <span class="bcp14">MAY</span> require
+        <code>psea_signals_hash</code> on every proof, and a Verifier in such a deployment
+        <span class="bcp14">MUST</span> refuse a proof that omits it: without the claim the auxiliary document is
+        unsigned and can be stripped, substituted, or replayed independently of the proof.<a href="#section-3.5-5" class="pilcrow">¶</a></p>
+<p id="section-3.5-6">The OPTIONAL member <code>psea_chain_prev</code> is carried only where the deployment enables the
+        chain layer (<a href="#chain-entry" class="auto internal xref">Section 3.12</a>). A deployment that enables it <span class="bcp14">MAY</span>
+        require the claim on every proof, and a Verifier in such a deployment <span class="bcp14">MUST</span> refuse
+        a proof that omits it: a proof without the claim bypasses the linkage check, so it could be
+        inserted into the stored proof sequence without the gap being detected.<a href="#section-3.5-6" class="pilcrow">¶</a></p>
+<div class="breakable lang-json sourcecode" id="section-3.5-7">
 <pre>
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2429,122 +2453,119 @@ entirely.
   "properties": {
     "jti":  { "type": "string", "minLength": 1, "maxLength": 128,
               "pattern": "^[A-Za-z0-9._-]+$",
-              "description": "Action id; also the global-uniqueness key.
-                              Alphanumeric/dot/underscore/hyphen only.
-                              UUID RECOMMENDED." },
+              "description": "Action id; also the global-uniqueness
+                key. Alphanumeric/dot/underscore/hyphen only. UUID
+                RECOMMENDED." },
     "aud":  { "type": "string", "minLength": 1, "maxLength": 256,
-              "description": "JWT audience (RFC 7519): identifier of the
-                              intended Verifier/audience. See cross-replay
-                              binding." },
+              "description": "JWT audience (RFC 7519): identifier of
+                the intended Verifier/audience. See cross-replay
+                binding." },
     "iss":  { "type": "string", "minLength": 1, "maxLength": 128,
-              "description": "Tenant / deployment identifier; verified against
-                              the deployment/tenant the Verifier resolves for
-                              the request. See cross-replay binding." },
+              "description": "Tenant / deployment identifier;
+                verified against the deployment/tenant the Verifier
+                resolves for the request. See cross-replay
+                binding." },
     "iat":  { "type": "integer", "minimum": 0,
               "description": "NumericDate; epoch SECONDS." },
     "exp":  { "type": "integer", "minimum": 0,
               "description": "NumericDate; epoch SECONDS." },
     "ueid": { "type": "string", "pattern": "^[A-Za-z0-9_-]{44}$",
-              "description": "RFC 9711 Sec 4.2.1.1 RAND-type
-                              UEID: base64url (no padding) of
-                              the 33-byte string
-                              0x01 || SHA-256(JCS({\"deviceId\":
-                              &lt;deviceId&gt;, \"iss\": &lt;iss&gt;})).
-                              JCS is the RFC 8785 canonical
-                              form of that two-member object;
-                              the inputs are encoded, not
-                              concatenated, so the pair cannot
-                              be read two ways. Per-issuer
-                              (pairwise): the same device
-                              yields a distinct ueid per iss,
-                              preventing cross-deployment
-                              correlation. The leading 0x01 is
-                              the RAND type tag. See Privacy
-                              Considerations." },
+              "description": "RFC 9711 Sec 4.2.1.1 RAND-type UEID:
+                base64url (no padding) of the 33-byte string 0x01 ||
+                SHA-256(JCS({\"deviceId\": &lt;deviceId&gt;, \"iss\":
+                &lt;iss&gt;})). JCS is the RFC 8785 canonical form of that
+                two-member object; the inputs are encoded, not
+                concatenated, so the pair cannot be read two ways.
+                Per-issuer (pairwise): the same device yields a
+                distinct ueid per iss, preventing cross-deployment
+                correlation. The leading 0x01 is the RAND type tag.
+                See Privacy Considerations." },
     "eat_nonce": { "type": "string",
-              "description": "OPTIONAL. Server nonce for push-initiated
-                              freshness. Omitted entirely when absent." },
+              "description": "OPTIONAL. Server nonce for
+                push-initiated freshness. Omitted entirely when
+                absent." },
     "submods": { "type": "object",
               "properties": {
                 "psea-device-state": { "type": "object",
-                  "description": "Reserved placeholder extension point;
-                                  contributes nothing wire-normative in this
-                                  revision (contents out of scope)." }
+                  "description": "Reserved placeholder extension
+                    point; contributes nothing wire-normative in this
+                    revision (contents out of scope)." }
               },
               "description": "OPTIONAL EAT submodules map. The
-                              psea-device-state submodule is a reserved,
-                              deployment-specific placeholder; an authenticator
-                              that cannot produce device-state omits submods
-                              entirely." },
+                psea-device-state submodule is a reserved,
+                deployment-specific placeholder; an authenticator
+                that cannot produce device-state omits submods
+                entirely." },
     "eat_profile": { "type": "string",
       "enum": [
         "https://datatracker.ietf.org/doc/draft-yossif-psea/"
       ],
-              "description": "EAT profile identifier (RFC 9711 Sec 4.3.2).
-                              REQUIRED. This document fixes
-                              exactly one value for this claim.
-                              The claim carries a URI or an OID
-                              and RFC 9711 defines no registry
-                              for profile identifiers, so no
-                              registration is requested for
-                              this value." },
-    "psea_tier": { "type": "string", "minLength": 1, "maxLength": 128,
-              "description": "Capability/assurance-level binding. Opaque to
-                              this profile; deployment-defined value space
-                              agreed out of band. The Verifier rejects the
-                              proof if it does not match the level expected
-                              for the operation. See cross-replay binding." },
+              "description": "EAT profile identifier (RFC 9711 Sec
+                4.3.2). REQUIRED. This document fixes exactly one
+                value for this claim. The claim carries a URI or an
+                OID and RFC 9711 defines no registry for profile
+                identifiers, so no registration is requested for this
+                value." },
+    "psea_tier": { "type": "string", "minLength": 1,
+              "maxLength": 128,
+              "description": "Capability/assurance-level binding.
+                Opaque to this profile; deployment-defined value
+                space agreed out of band. The Verifier rejects the
+                proof if it does not match the level expected for the
+                operation. See cross-replay binding." },
     "psea_op": { "type": "string", "minLength": 1, "maxLength": 128,
-              "description": "Operation / authority-context discriminator the
-                              proof is bound to. Opaque to this profile; the
-                              Verifier rejects the proof if it does not match
-                              the operation being performed. See cross-replay
-                              binding." },
+              "description": "Operation / authority-context
+                discriminator the proof is bound to. Opaque to this
+                profile; the Verifier rejects the proof if it does
+                not match the operation being performed. See
+                cross-replay binding." },
     "psea_counter": { "type": "integer", "minimum": 0,
                       "maximum": 9007199254740991,
-              "description": "Monotonic per (attester, counter scope). JSON
-                              integer in [0, 2^53-1]; see counter model." },
+              "description": "Monotonic per (attester, counter
+                scope). JSON integer in [0, 2^53-1]; see counter
+                model." },
     "psea_payload_hash": { "type": "string",
               "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$",
               "description": "Standard base64 (with padding) of
-                              SHA-256(canonical actionPayload); the action
-                              binding. The restricted final-sextet class
-                              rejects non-canonical encodings (the digest's
-                              trailing two bits are always zero). See action
-                              binding." },
-    "psea_chain_prev": { "type": "string", "pattern": "^[0-9a-f]{64}$",
-              "description": "OPTIONAL deployment-optional hash-chain anchor.
-                              64-char lowercase hex; sentinel 64 ASCII '0'
-                              for the first proof. Present only when the
-                              deployment enables the chain tamper-evidence
-                              layer. See ChainEntry." },
+                SHA-256(canonical actionPayload); the action binding.
+                The restricted final-sextet class rejects
+                non-canonical encodings (the digest's trailing two
+                bits are always zero). See action binding." },
+    "psea_chain_prev": { "type": "string",
+              "pattern": "^[0-9a-f]{64}$",
+              "description": "OPTIONAL deployment-optional hash-chain
+                anchor. 64-char lowercase hex; sentinel 64 ASCII '0'
+                for the first proof. Present only when the deployment
+                enables the chain tamper-evidence layer. See
+                ChainEntry." },
     "psea_uv": { "type": "object",
               "required": ["verified", "method"],
               "properties": {
                 "verified": { "type": "boolean",
                   "description": "Whether a contemporaneous user-
-                                  verification event gated this signature." },
+                    verification event gated this signature." },
                 "method": { "type": "string",
-                  "description": "User-verification method. Extensible string;
-                                  suggested baseline values include
-                                  \"biometric\", \"pin\", \"fido_uv\" (no IANA
-                                  registry is defined). Unknown values MUST be
-                                  tolerated." }
+                  "description": "User-verification method.
+                    Extensible string; suggested baseline values
+                    include \"biometric\", \"pin\", \"fido_uv\" (no
+                    IANA registry is defined). Unknown values MUST be
+                    tolerated." }
               },
-              "description": "User-verification claim. REQUIRED on the PSEA
-                              proof. The Verifier MUST require verified==true
-                              and MUST cross-check it against the
-                              authenticator's attested UV-enforcement where the
-                              attestation conveys it. See the
-                              user-verification claim section." },
+              "description": "User-verification claim. REQUIRED on
+                the PSEA proof. The Verifier MUST require
+                verified==true and MUST cross-check it against the
+                authenticator's attested UV-enforcement where the
+                attestation conveys it. See the user-verification
+                claim section." },
     "psea_proof_version": { "type": "string", "enum": ["1"] },
     "psea_caller_package": { "type": "string", "minLength": 1,
               "maxLength": 256,
-              "description": "OPTIONAL profile-extension claim. Reverse-DNS
-                              identifier of the calling application." },
+              "description": "OPTIONAL profile-extension claim.
+                Reverse-DNS identifier of the calling
+                application." },
     "psea_sdk_version": { "type": "string", "maxLength": 64,
-              "description": "OPTIONAL profile-extension claim. Attester
-                              implementation version." },
+      "description": "OPTIONAL profile-extension claim. Attester
+        implementation version." },
     "psea_signals_hash": { "type": "string",
       "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$",
       "description": "OPTIONAL profile-extension claim. Standard
@@ -2559,12 +2580,11 @@ entirely.
         deployment-defined and out of scope." },
     "psea_user_hash": { "type": "string",
               "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$",
-              "description": "OPTIONAL. base64url (no padding) of
-                              SHA-256(subject_id); audit-attribution only.
-                              The restricted final-sextet class rejects
-                              non-canonical encodings. Omitted entirely when
-                              empty. MUST be derived pairwise per issuer
-                              (see Privacy Considerations)." },
+      "description": "OPTIONAL. base64url (no padding) of
+        SHA-256(subject_id); audit-attribution only. The restricted
+        final-sextet class rejects non-canonical encodings. Omitted
+        entirely when empty. MUST be derived pairwise per issuer (see
+        Privacy Considerations)." },
     "psea_chain_pending": {
       "description": "OPTIONAL registered opaque profile-extension
         member; empty schema (any JSON value). Semantics are
@@ -2590,7 +2610,7 @@ entirely.
   },
   "additionalProperties": false
 }
-</pre><a href="#section-3.5-6" class="pilcrow">¶</a>
+</pre><a href="#section-3.5-7" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -2754,7 +2774,9 @@ entirely.
 <p id="section-3.8-1">The OPTIONAL <code>psea_user_hash</code> claim (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>) is an Attester-signed
         subject-binding commitment: the SHA-256 of an opaque, deployment-issued subject identifier,
         encoded as base64url without padding. The claim cryptographically attributes the action to a
-        subject identifier for the audit trail.<a href="#section-3.8-1" class="pilcrow">¶</a></p>
+        subject identifier for the audit trail. It is a pairwise, deployment-local commitment to the
+        enrolled subject: it does not establish who the subject is, and a Verifier <span class="bcp14">MUST NOT</span>
+        treat it as proof of the identity of any person.<a href="#section-3.8-1" class="pilcrow">¶</a></p>
 <p id="section-3.8-2">When present, <code>psea_user_hash</code> <span class="bcp14">MUST</span> be derived so that it does not
         function as a cross-deployment correlator, mirroring the pairwise <code>ueid</code> derivation
         (<a href="#privacy-ueid" class="auto internal xref">Section 7.1</a>): the subject identifier <span class="bcp14">MUST</span> be bound to the
@@ -2762,16 +2784,19 @@ entirely.
         (<code>iss</code>) secret not published with the proofs, or by deriving a per-issuer subject
         identifier. A deployment <span class="bcp14">MUST NOT</span> emit a bare SHA-256 of a globally stable subject
         identifier (see <a href="#privacy-hashing" class="auto internal xref">Section 7.2</a>).<a href="#section-3.8-2" class="pilcrow">¶</a></p>
-<p id="section-3.8-3">A Verifier <span class="bcp14">MUST NOT</span> make an authorization decision based on the per-proof
-        <code>psea_user_hash</code> claim of a PSEA proof. Subject attribution is for ledger and audit purposes
-        only. The cryptographic chain of authorization at the Verifier rests on the device-bound signature,
-        the monotonic counter, and the presence Evidence (<a href="#presence-via-signature" class="auto internal xref">Section 3.7</a>); the
-        Attester's commitment to a subject identifier is an additional audit-trail property, not a security
-        gate.<a href="#section-3.8-3" class="pilcrow">¶</a></p>
-<p id="section-3.8-4">The per-proof <code>psea_user_hash</code> is distinct from any enrollment-bound subject binding a
-        deployment records at enrollment time; that binding, and its use in decision-bearing checks, is
-        deployment-specific and out of scope. The per-proof signed value on the PSEA
-        proof is a commitment whose role is solely audit-trail attribution.<a href="#section-3.8-4" class="pilcrow">¶</a></p>
+<p id="section-3.8-3">A Verifier <span class="bcp14">MAY</span> require that the per-proof <code>psea_user_hash</code> match the
+        value recorded for the subject at enrollment. A Verifier that does so <span class="bcp14">MUST</span> refuse a
+        proof whose <code>psea_user_hash</code> is absent or does not byte-exactly equal the recorded value.
+        Such a check establishes only that the proof was produced for the same deployment-issued subject
+        identifier the enrollment recorded; it does not establish which natural person that identifier
+        denotes. The cryptographic chain of authorization at the Verifier continues to rest on the
+        device-bound signature, the monotonic counter, and the presence Evidence
+        (<a href="#presence-via-signature" class="auto internal xref">Section 3.7</a>); the subject-hash comparison is a consistency check
+        against the enrollment record, not a substitute for any of them.<a href="#section-3.8-3" class="pilcrow">¶</a></p>
+<p id="section-3.8-4">The per-proof <code>psea_user_hash</code> is distinct from the enrollment-bound subject binding a
+        deployment records at enrollment time. The binding between the recorded value and a natural
+        person is established at enrollment, by the deployment's enrollment ceremony and identity
+        proofing, and is out of scope of this profile (<a href="#enrollment-root-of-trust" class="auto internal xref">Section 6.3</a>).<a href="#section-3.8-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="device-state">
@@ -3161,9 +3186,11 @@ Total: 114 bytes → SHA-256 → 64 hex chars
           </h4>
 <p id="section-3.13.5-1">When a deployment has enrolled an expected caller identity for the operation, a conforming
           Verifier <span class="bcp14">MUST</span> reject a proof whose signed <code>psea_caller_package</code> is absent
-          or does not byte-exactly equal the expected value, before any state mutation. A deployment that
-          has not enrolled an expected caller identity <span class="bcp14">MUST NOT</span> treat the claim's absence
-          as failure. The binding is covered by the JWS signature; the comparison is a byte-equality
+          or does not byte-exactly equal the expected value, before any state mutation. A Verifier
+          <span class="bcp14">MUST</span> refuse a proof that omits <code>psea_caller_package</code> where the deployment
+          has registered caller identities, and <span class="bcp14">SHOULD</span> refuse it otherwise. This is
+          stricter than -02, which required a deployment without an enrolled caller identity not to treat
+          the claim's absence as failure. The binding is covered by the JWS signature; the comparison is a byte-equality
           string comparison that <span class="bcp14">MUST NOT</span> normalize case or whitespace.<a href="#section-3.13.5-1" class="pilcrow">¶</a></p>
 </section>
 </div>
@@ -3817,40 +3844,32 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         the identifier to <code>iss</code> confines linkability to the single deployment that legitimately
         requires it.<a href="#section-7.1-2" class="pilcrow">¶</a></p>
 <p id="section-7.1-3">This profile carries a deterministic per-issuer value under the RFC 9711 RAND type tag
-        (<code>0x01</code>). This is a deliberate, disclosed design choice, not an oversight, and it warrants an
-        explicit justification because the RAND type tag nominally denotes a randomly generated UEID
-        (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.1.1, Table 1), whereas the value this profile places under
-        that tag is
-        the deterministic derivation stated above over the <code>deviceId</code> and <code>iss</code> inputs. The
-        cross-issuer unlinkability this profile requires is supplied here by the per-issuer derivation
-        (a distinct, non-correlatable
-        value per <code>iss</code>), not by randomness; within a single issuer the value is intentionally
-        stable, because this profile depends on binding a device's successive proofs to one
-        enrollment. The semantically purer vehicle for a stable-but-pairwise identifier of this kind is the
-        EAT semipermanent UEID (<code>sueids</code>) claim (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>), which is defined
-        precisely for non-random, semipermanent per-relationship identifiers.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
-<p id="section-7.1-4">The trade-off this revision weighed is the following. The <code>sueids</code> claim is the more exact
-        EAT semantics, but adopting it adds a second identifier claim to the wire with its own array
-        structure and per-entry labelling semantics, which every conforming Attester and every conforming
-        Verifier must then produce and appraise. The RAND-tagged <code>ueid</code> reuses a single,
-        already-specified 33-octet UEID encoding that all parties already implement, and the per-issuer
-        derivation gives the required cross-issuer confinement (<a href="#privacy-ueid" class="auto internal xref">Section 7.1</a>) without a
-        second claim. This revision therefore chose one stable per-issuer <code>ueid</code> over introducing
-        <code>sueids</code> handling, accepting the looser fit against the RAND tag's "randomly generated"
-        connotation as the cost of that simplicity. The choice is recorded here so a consumer is not misled
-        into treating the value as random: it is a per-issuer pseudonym, deterministic by construction and
-        verifiable from the enrolled <code>deviceId</code> input. A future revision <span class="bcp14">MAY</span> migrate
-        the per-issuer (and per-Relying-Party) identifier to the <code>sueids</code> form; that migration is the
-        recommended direction for aligning the wire encoding with the EAT identifier semantics, and it
-        composes with the per-Relying-Party unlinkability direction noted below.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
-<p id="section-7.1-5">Per-issuer derivation does not provide per-Relying-Party unlinkability <em>within</em> a single
+        (<code>0x01</code>). <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.1.1 requires that a UEID be permanent and
+        not change for a given entity. The value this profile carries does not meet that requirement: it
+        is derived from a <code>deviceId</code> input that is wiped on factory reset and re-derived
+        afterwards, as happens both to a platform-provided device identifier and to an identifier
+        generated and stored on the device, so the same entity presents a new value after a factory
+        reset. <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.2 defines the semipermanent UEID (<code>sueids</code>)
+        claim for this case: a value with the format of a UEID that may change on entity life-cycle
+        events, of which factory reset is one. <code>sueids</code> is the correct claim for the value this
+        profile carries. This revision retains <code>ueid</code> for wire continuity only.<a href="#section-7.1-3" class="pilcrow">¶</a></p>
+<p id="section-7.1-4">The <code>sueids</code> claim is a map, not an array: each entry pairs a text-string label with a
+        value in the UEID format, and a label is required even when only one entry is present
+        (<span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.2). This profile defines no means for a device owner to
+        add an identifier: the Attester emits exactly one device identifier, derived from its
+        <code>deviceId</code> input and the signed <code>iss</code>.<a href="#section-7.1-4" class="pilcrow">¶</a></p>
+<p id="section-7.1-5">Migrating the identifier to <code>sueids</code> is a wire-incompatible change. It is the stated
+        intent for the next wire-incompatible revision of this profile, which will also define the label.
+        Until then the <code>ueid</code> value is a per-issuer pseudonym for the current enrollment:
+        deterministic by construction, not random, and not preserved across factory reset.<a href="#section-7.1-5" class="pilcrow">¶</a></p>
+<p id="section-7.1-6">Per-issuer derivation does not provide per-Relying-Party unlinkability <em>within</em> a single
         deployment, nor does it defeat correlation by other shared fields. A future revision
         <span class="bcp14">MAY</span> define a pairwise / <code>sueids</code>-style per-Relying-Party identifier
         derivation (in the spirit of the EAT semipermanent-UEID concept, <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>) so that
         one device presents a distinct, unlinkable identifier to each Relying Party within a deployment;
         this is the path to per-RP unlinkability and is RECOMMENDED as the direction for deployments with
-        strong unlinkability requirements.<a href="#section-7.1-5" class="pilcrow">¶</a></p>
-<p id="section-7.1-6">The same "hashing is not anonymization" caution that applies to <code>psea_user_hash</code>
+        strong unlinkability requirements.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+<p id="section-7.1-7">The same "hashing is not anonymization" caution that applies to <code>psea_user_hash</code>
         (<a href="#privacy-hashing" class="auto internal xref">Section 7.2</a>) applies to the <code>deviceId</code> input of the <code>ueid</code>
         derivation. If <code>deviceId</code> is a low-entropy or enumerable value (for example a hardware
         serial number or other guessable platform identifier), then the derived <code>ueid</code> is
@@ -3860,7 +3879,7 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         A deployment <span class="bcp14">SHOULD</span> use a high-entropy,
         per-enrollment random value as <code>deviceId</code> (a value generated at enrollment and not derived
         from a stable hardware identifier), so that the derived <code>ueid</code> is not recoverable from
-        guessable inputs and is not a globally stable value computable by any other party.<a href="#section-7.1-6" class="pilcrow">¶</a></p>
+        guessable inputs and is not a globally stable value computable by any other party.<a href="#section-7.1-7" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="privacy-hashing">
@@ -4242,11 +4261,13 @@ Total: 114 bytes → SHA-256 → 64 hex chars
       implementation that produces output matching every vector in this appendix is conformant with
       <a href="#canonical-encoding" class="auto internal xref">Section 2</a>.<a href="#appendix-A-1" class="pilcrow">¶</a></p>
 <p id="appendix-A-2">Implementations SHOULD construct their own canonical-encoding test suite covering the
-      canonical-JSON input that PSEA hashes (the action payload bound by <code>psea_payload_hash</code>) plus
+      canonical-JSON inputs that PSEA hashes (the action payload bound by <code>psea_payload_hash</code> and
+      the two-member object of the <code>ueid</code> derivation) plus
       boundary cases for case-sensitive sort, mixed-case keys, integer serialization, escape forms, and
       UTF-8 multi-byte sequences. The PSEA proof and the acknowledgement are JWS objects verified over
-      their received octets and so do not depend on canonical encoding for signature verification; only
-      the action-payload hash is taken over canonical JSON octets. Implementations
+      their received octets and so do not depend on canonical encoding for signature verification; the
+      two hashes taken over canonical JSON octets are the action-payload hash and the <code>ueid</code>
+      derivation (<a href="#canonical-encoding" class="auto internal xref">Section 2</a>). Implementations
       <span class="bcp14">SHOULD</span> maintain machine-readable golden vectors covering these dimensions;
       consulting or publishing them is informative and not a normative requirement of this
       specification.<a href="#appendix-A-2" class="pilcrow">¶</a></p>
@@ -4266,11 +4287,13 @@ Total: 114 bytes → SHA-256 → 64 hex chars
   "startedAt": 1700000000 }
 </pre><a href="#appendix-A.1-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.1-3">Canonical bytes (the keys ordered by case-sensitive Unicode code-point sort: 'R' = U+0052 = 82
-        sorts before 'e' = U+0065 = 101, so "endReason" precedes "endedAt"):<a href="#appendix-A.1-3" class="pilcrow">¶</a></p>
+<p id="appendix-A.1-3">Canonical bytes (the keys ordered by UTF-16 code-unit sort: 'R' = U+0052 = 82
+        sorts before 'e' = U+0065 = 101, so "endReason" precedes "endedAt"), shown with one line break
+        added for display only; the canonical form contains no line break:<a href="#appendix-A.1-3" class="pilcrow">¶</a></p>
 <div class="lang-text sourcecode" id="appendix-A.1-4">
 <pre>
-{"endReason":"TtlExpired","endedAt":1700000060,"sessionId":"abc-123","startedAt":1700000000}
+{"endReason":"TtlExpired","endedAt":1700000060,
+"sessionId":"abc-123","startedAt":1700000000}
 </pre><a href="#appendix-A.1-4" class="pilcrow">¶</a>
 </div>
 </section>
@@ -4290,15 +4313,16 @@ Total: 114 bytes → SHA-256 → 64 hex chars
         <h3 id="name-action-payload-hash-end-to-">
 <a href="#appendix-A.3" class="section-number selfRef">A.3. </a><a href="#name-action-payload-hash-end-to-" class="section-name selfRef">Action-Payload Hash (End-to-End Worked Example)</a>
         </h3>
-<p id="appendix-A.3-1">This vector demonstrates the one normative use of canonical encoding
+<p id="appendix-A.3-1">This vector demonstrates the first of the two normative uses of canonical encoding
         (<a href="#canonical-encoding" class="auto internal xref">Section 2</a>): the action-payload binding. Given the logical
         <code>actionPayload</code>:<a href="#appendix-A.3-1" class="pilcrow">¶</a></p>
 <div class="lang-json sourcecode" id="appendix-A.3-2">
 <pre>
-{ "amount": 2500, "actionType": "transfer", "to": "alice", "currency": "EUR" }
+{ "amount": 2500, "actionType": "transfer",
+  "to": "alice", "currency": "EUR" }
 </pre><a href="#appendix-A.3-2" class="pilcrow">¶</a>
 </div>
-<p id="appendix-A.3-3">the canonical encoding orders the keys by case-sensitive Unicode code-point sort
+<p id="appendix-A.3-3">the canonical encoding orders the keys by UTF-16 code-unit sort
         (<code>actionType</code> &lt; <code>amount</code> &lt; <code>currency</code> &lt; <code>to</code>), removes all
         inter-token whitespace, and serializes the integer with no decimal point or exponent, yielding the
         69 canonical octets:<a href="#appendix-A.3-3" class="pilcrow">¶</a></p>
@@ -4442,49 +4466,56 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
 </li>
             <li class="normal" id="appendix-B.3.1-2.9">MUST, when the deployment has enrolled an expected caller identity for the operation,
             reject a proof whose signed <code>psea_caller_package</code> is absent or does not byte-exactly
-            equal the expected value, before any state mutation (<a href="#caller-binding" class="auto internal xref">Section 3.13.5</a>); a
-            deployment that has not enrolled an expected caller identity MUST NOT treat the claim's
-            absence as failure.<a href="#appendix-B.3.1-2.9" class="pilcrow">¶</a>
+            equal the expected value, before any state mutation (<a href="#caller-binding" class="auto internal xref">Section 3.13.5</a>); MUST
+            refuse a proof that omits <code>psea_caller_package</code> where the deployment has registered
+            caller identities, and SHOULD refuse it otherwise.<a href="#appendix-B.3.1-2.9" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.10">MUST enforce the monotonic <code>psea_counter</code> (<a href="#counter-model" class="auto internal xref">Section 3.10</a>): select
+            <li class="normal" id="appendix-B.3.1-2.10">MAY require that <code>psea_user_hash</code> match the value recorded for the subject at
+            enrollment; a Verifier that does so MUST refuse a proof whose <code>psea_user_hash</code> is absent
+            or does not byte-exactly equal the recorded value (<a href="#user-id-hash" class="auto internal xref">Section 3.8</a>).<a href="#appendix-B.3.1-2.10" class="pilcrow">¶</a>
+</li>
+            <li class="normal" id="appendix-B.3.1-2.11">MUST enforce the monotonic <code>psea_counter</code> (<a href="#counter-model" class="auto internal xref">Section 3.10</a>): select
             the comparison bucket using only a cryptographically bound scope identifier, reject a value
             not strictly greater than the stored value for that scope, and treat the claim as a 64-bit
-            unsigned integer.<a href="#appendix-B.3.1-2.10" class="pilcrow">¶</a>
+            unsigned integer.<a href="#appendix-B.3.1-2.11" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.11">MUST maintain the global <code>jti</code> uniqueness check (<a href="#counter-model" class="auto internal xref">Section 3.10</a>),
+            <li class="normal" id="appendix-B.3.1-2.12">MUST maintain the global <code>jti</code> uniqueness check (<a href="#counter-model" class="auto internal xref">Section 3.10</a>),
             finalizing each <code>jti</code> exactly once and retaining finalized <code>jti</code> values for at
-            least the <code>exp</code> validity window.<a href="#appendix-B.3.1-2.11" class="pilcrow">¶</a>
+            least the <code>exp</code> validity window.<a href="#appendix-B.3.1-2.12" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.12">MUST, in a horizontally-scaled deployment, serialize all submissions for a given
+            <li class="normal" id="appendix-B.3.1-2.13">MUST, in a horizontally-scaled deployment, serialize all submissions for a given
             (Attester, counter scope) to a single authority and keep the <code>jti</code> finalization index
             globally consistent across all nodes, so that the counter atomicity and <code>jti</code>
-            uniqueness guarantees hold under sharding (<a href="#verifier-state-integrity" class="auto internal xref">Section 6.5</a>).<a href="#appendix-B.3.1-2.12" class="pilcrow">¶</a>
+            uniqueness guarantees hold under sharding (<a href="#verifier-state-integrity" class="auto internal xref">Section 6.5</a>).<a href="#appendix-B.3.1-2.13" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.13">MUST protect its replay state (per-scope high-water-mark counters and the finalized-<code>jti</code>
+            <li class="normal" id="appendix-B.3.1-2.14">MUST protect its replay state (per-scope high-water-mark counters and the finalized-<code>jti</code>
             set) against rollback, so a backup restore or failover does not lower a stored high-water mark
             or forget a finalized <code>jti</code> still replayable within the <code>exp</code> window
-            (<a href="#verifier-state-integrity" class="auto internal xref">Section 6.5</a>).<a href="#appendix-B.3.1-2.13" class="pilcrow">¶</a>
+            (<a href="#verifier-state-integrity" class="auto internal xref">Section 6.5</a>).<a href="#appendix-B.3.1-2.14" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.14">MUST, when the deployment-optional chain layer (<a href="#chain-entry" class="auto internal xref">Section 3.12</a>) is enabled,
+            <li class="normal" id="appendix-B.3.1-2.15">MUST, when the deployment-optional chain layer (<a href="#chain-entry" class="auto internal xref">Section 3.12</a>) is enabled,
             perform the strict-equality <code>psea_chain_prev</code> linkage check of
             <a href="#chain-verifier-behavior" class="auto internal xref">Section 3.12.3</a>; a Verifier that does not enable the chain layer
-            is not required to implement it.<a href="#appendix-B.3.1-2.14" class="pilcrow">¶</a>
+            is not required to implement it.<a href="#appendix-B.3.1-2.15" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.15">MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended,
+            <li class="normal" id="appendix-B.3.1-2.16">MUST, in a deployment that requires <code>psea_chain_prev</code> or <code>psea_signals_hash</code>
+            on every proof, refuse a proof that omits the required claim (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>).<a href="#appendix-B.3.1-2.16" class="pilcrow">¶</a>
+</li>
+            <li class="normal" id="appendix-B.3.1-2.17">MUST maintain an authoritative enrollment lifecycle (at minimum: active, suspended,
             revoked) as the trust gate, and MUST reject proofs whose enrollment is not active
-            (<a href="#enrollment-lifecycle" class="auto internal xref">Section 3.14</a>).<a href="#appendix-B.3.1-2.15" class="pilcrow">¶</a>
+            (<a href="#enrollment-lifecycle" class="auto internal xref">Section 3.14</a>).<a href="#appendix-B.3.1-2.17" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.16">MUST NOT use any unsigned transport-body field (for example <code>requestId</code>
+            <li class="normal" id="appendix-B.3.1-2.18">MUST NOT use any unsigned transport-body field (for example <code>requestId</code>
             or <code>proofId</code>) as an input to any security decision
             (<a href="#envelope-schemas" class="auto internal xref">Section 3.6</a>); <code>signalReport</code> is such a field unless the proof
             carries <code>psea_signals_hash</code> and the Verifier has appraised the report against that
-            claim, in which case it is a committed field rather than an unsigned one.<a href="#appendix-B.3.1-2.16" class="pilcrow">¶</a>
+            claim, in which case it is a committed field rather than an unsigned one.<a href="#appendix-B.3.1-2.18" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.17">MUST reject non-conforming proofs; the concrete rejection vocabulary is
-            deployment-specific.<a href="#appendix-B.3.1-2.17" class="pilcrow">¶</a>
+            <li class="normal" id="appendix-B.3.1-2.19">MUST reject non-conforming proofs; the concrete rejection vocabulary is
+            deployment-specific.<a href="#appendix-B.3.1-2.19" class="pilcrow">¶</a>
 </li>
-            <li class="normal" id="appendix-B.3.1-2.18">MUST produce integrity-protected Attestation Results for non-co-located Relying
-            Parties (<a href="#action-binding-rp" class="auto internal xref">Section 3.13.3</a>).<a href="#appendix-B.3.1-2.18" class="pilcrow">¶</a>
+            <li class="normal" id="appendix-B.3.1-2.20">MUST produce integrity-protected Attestation Results for non-co-located Relying
+            Parties (<a href="#action-binding-rp" class="auto internal xref">Section 3.13.3</a>).<a href="#appendix-B.3.1-2.20" class="pilcrow">¶</a>
 </li>
           </ul>
 </section>
@@ -4513,13 +4544,15 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
 <a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-changes-from-draft-yossif-p" class="section-name selfRef">Changes from draft-yossif-psea-02</a>
       </h2>
 <p id="appendix-C-1">This revision states one known limitation, corrects three claim-set descriptions against the
-      reference implementation, corrects the <code>ueid</code> derivation, and withdraws the URN
-      sub-namespace registration request. Apart from the <code>ueid</code> derivation, it adds no new
-      requirement and defines no new mechanism, and no normative requirement is changed: the
-      <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> prohibition on using unsigned
-      transport-body fields as security-decision inputs, and the Verifier obligations of
-      <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>, retain their force unaltered; the only edits to either are to
-      the illustrative lists that named a field incorrectly.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
+      reference implementation, corrects the <code>ueid</code> derivation, withdraws the URN sub-namespace
+      registration request, and corrects the restatement of RFC 8785. It also changes normative Verifier
+      requirements in three places: a Verifier may act on <code>psea_user_hash</code> against the enrollment
+      record (<a href="#user-id-hash" class="auto internal xref">Section 3.8</a>), a deployment may require <code>psea_chain_prev</code> and
+      <code>psea_signals_hash</code> (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>), and an absent
+      <code>psea_caller_package</code> is refused (<a href="#caller-binding" class="auto internal xref">Section 3.13.5</a>). Each change is listed
+      below. The <a href="#envelope-schemas" class="auto internal xref">Section 3.6</a> prohibition on using unsigned transport-body fields as
+      security-decision inputs retains its force; the only edits to it are to the illustrative lists
+      that named a field incorrectly.<a href="#appendix-C-1" class="pilcrow">¶</a></p>
 <p id="appendix-C-2"><strong>The <code>ueid</code> change is a wire-format correction, not an editorial one.</strong> A
       conforming Attester built against -02 and one built against this revision derive different
       <code>ueid</code> values from the same <code>deviceId</code> and <code>iss</code>, so an implementation and any
@@ -4557,7 +4590,10 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         pairwise derivation exists to achieve. The two inputs are now encoded as a canonical JSON object
         (<span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>) before hashing, reusing the canonicalization this profile already
         requires (<a href="#canonical-encoding" class="auto internal xref">Section 2</a>) rather than introducing a second one. The pairwise
-        approach itself is unchanged and remains the one <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 8.1 sanctions.<a href="#appendix-C-3.5" class="pilcrow">¶</a>
+        approach itself is unchanged. It achieves per-deployment separation; it is not the strategy of
+        <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 8.1, whose precondition, that the entity authenticate the relying
+        party before deriving an identifier for it, this profile does not meet, since <code>iss</code> is the
+        identifier the Attester has locally available rather than one the relying party has proven.<a href="#appendix-C-3.5" class="pilcrow">¶</a>
 </li>
         <li class="normal" id="appendix-C-3.6">Withdrew the request to register the <code>urn:ietf:params:psea</code> URN sub-namespace, and
         removed with it the fallback profile identifier written for the case where that registration was
@@ -4592,6 +4628,50 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         RAND-tag rationale of <a href="#privacy-ueid" class="auto internal xref">Section 7.1</a> against Section 4.2.1 would not find it
         there. The citation of Section 4.2.1 in <a href="#eat-profile" class="auto internal xref">Section 3.1</a> is for the <code>ueid</code>
         claim itself and is unchanged.<a href="#appendix-C-3.9" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.10">Changed <a href="#user-id-hash" class="auto internal xref">Section 3.8</a> and <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>: a Verifier
+        <span class="bcp14">MAY</span> require <code>psea_user_hash</code> to match the value recorded at enrollment and,
+        where it does, <span class="bcp14">MUST</span> refuse an absent or differing value; -02 prohibited any
+        authorization decision based on the claim. The claim is stated as a pairwise, deployment-local
+        commitment that establishes no identity, because a deployment that records a subject at
+        enrollment can then detect a proof produced for a different subject identifier.<a href="#appendix-C-3.10" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.11">Added to <a href="#proof-schema" class="auto internal xref">Section 3.5</a> and <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a> that a
+        deployment <span class="bcp14">MAY</span> require <code>psea_chain_prev</code> or <code>psea_signals_hash</code> and
+        that its Verifier <span class="bcp14">MUST</span> refuse a proof omitting the required claim; both remain
+        OPTIONAL in the schema, because omission would bypass the chain linkage check or leave the
+        auxiliary document unsigned.<a href="#appendix-C-3.11" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.12">Changed <a href="#caller-binding" class="auto internal xref">Section 3.13.5</a> and <a href="#conformance-verifier" class="auto internal xref">Appendix B.3</a>: a Verifier
+        <span class="bcp14">MUST</span> refuse an absent <code>psea_caller_package</code> where the deployment has
+        registered caller identities and <span class="bcp14">SHOULD</span> refuse it otherwise, which is stricter
+        than -02, because an absent claim would otherwise bypass the caller binding.<a href="#appendix-C-3.12" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.13">Corrected <a href="#canonical-encoding-keys" class="auto internal xref">Section 2.2</a>, <a href="#canonical-encoding-strings" class="auto internal xref">Section 2.4</a>,
+        <a href="#canonical-encoding-conformance" class="auto internal xref">Section 2.8</a>, and <a href="#appendix-canonical-test-vectors" class="auto internal xref">Appendix A</a>:
+        object keys sort by UTF-16 code units (<span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>, Section 3.2.3), not by UTF-8
+        bytes; the string escapes for quotation mark, reverse solidus, and the five named controls are
+        two-character, and a lone surrogate is an error (<span>[<a href="#RFC8785" class="cite xref">RFC8785</a>]</span>, Section 3.2.2.2); the
+        platform notes, including the Swift advice, are corrected to match. The earlier text contradicted
+        the RFC that <a href="#canonical-encoding" class="auto internal xref">Section 2</a> already required in full.<a href="#appendix-C-3.13" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.14">Rewrote the identifier discussion in <a href="#privacy-ueid" class="auto internal xref">Section 7.1</a> and the "UEID type" entry of
+        <a href="#eat-profile-definition" class="auto internal xref">Section 3.1.1</a>: the carried value is not preserved across factory reset,
+        so <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.2 <code>sueids</code> is the correct claim for it;
+        <code>ueid</code> is retained for wire continuity only, the description of <code>sueids</code> as an array
+        is corrected to a labelled map, and migration to <code>sueids</code> is the stated intent for the next
+        wire-incompatible revision. No wire change.<a href="#appendix-C-3.14" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.15">Recorded that <a href="#canonical-encoding" class="auto internal xref">Section 2</a> now makes canonical encoding normative for
+        two uses, the action-payload binding and the <code>ueid</code> derivation, rather than one, and
+        corrected the two sentences of <a href="#appendix-canonical-test-vectors" class="auto internal xref">Appendix A</a> that still named
+        one use. Removed the RFC 3553 and RFC 8126 references, which were cited only by the withdrawn URN
+        sub-namespace registration.<a href="#appendix-C-3.15" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.16">Narrowed the nested-tokens citation in <a href="#eat-profile-definition" class="auto internal xref">Section 3.1.1</a> from
+        <span>[<a href="#RFC9711" class="cite xref">RFC9711</a>]</span>, Section 4.2.18 to Section 4.2.18.3, which defines nested tokens, and
+        rewrapped over-long lines in the <a href="#proof-schema" class="auto internal xref">Section 3.5</a> schema and in
+        <a href="#appendix-canonical-test-vectors" class="auto internal xref">Appendix A</a>; no content of either changes.<a href="#appendix-C-3.16" class="pilcrow">¶</a>
 </li>
       </ul>
 </section>

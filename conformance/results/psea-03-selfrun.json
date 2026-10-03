@@ -1,6 +1,6 @@
 {
- "suite": "psea-02 vs composition-00 S5.2 WHO negative classes",
- "profile": "draft-yossif-psea-02",
+ "suite": "psea-03 vs composition-00 S5.2 WHO negative classes",
+ "profile": "draft-yossif-psea-03",
  "target": "draft-mih-sato-agent-accountability-composition-00",
  "implementations": 1,
  "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",

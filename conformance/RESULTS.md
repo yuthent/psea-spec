@@ -1,6 +1,6 @@
 # PSEA conformance run against the WHO negative classes
 
-**Profile under test:** draft-yossif-psea-02
+**Profile under test:** draft-yossif-psea-03 (unsubmitted)
 **Target class list:** draft-mih-sato-agent-accountability-composition-00, Section 5.2
 **Date:** 2026-07-28
 **Status:** SINGLE IMPLEMENTATION. This is not a cross-run.
@@ -10,7 +10,7 @@ only after at least two independent implementations recompute it. One
 implementation has run these vectors. The results below are therefore a
 starting position for a cross-run, not a conformance claim.
 
-The reference Verifier implements only what draft-yossif-psea-02 states
+The reference Verifier implements only what draft-yossif-psea-03 states
 normatively — Section 3.4 header hardening, Section 3.5 claim set, Section
 3.7.1 user-verification anchoring, Section 3.13.2 fail-closed action binding.
 Where the draft is silent the implementation refuses rather than guessing.
@@ -33,20 +33,22 @@ composition gaps that N3, N11 and M1 record.
 ## Result history
 
 The sha256 of this file is pinned in [`results/RESULTS.sha256`](results/RESULTS.sha256)
-and checked in CI, so it changes whenever the recorded run changes. Both recorded
-states:
+and checked in CI, so it changes whenever this file changes. Every recorded
+state:
 
 | Rows | pass / fail / n-a | sha256 of RESULTS.md | Recorded in | Published |
 |---|---|---|---|---|
 | 21 | 13 / 3 / 5 | `cd96b4602b4c6cecdb8554772f4fc54fb986e2d5e9786f1369e385048cbea6d9` | commit `7956977`, 2026-07-28 | agent2agent, 2026-07-30 |
 | 31 | 23 / 3 / 5 | `b60a07665a067b1928564165495d9a0120943e9ad3c2863151714a7330f93062` | commit `2a85e7e`, 2026-08-01 | — |
+| 31 | 23 / 3 / 5 | `f528d796c1cf1d0afaf5cbee25c85a6381ed480601af4a0ecd76b5f2889b9098` | commit `b0710c2`, 2026-08-01 | — |
+| 31 | 23 / 3 / 5 | `57c81b3b2fdb639ad8007fbb719e9f103206eea3415e8125bee3cf6ac71e4623` | commit `1f681e8`, 2026-08-01 | — |
 
 Each value is the digest of this file as it stood at that commit. The current
 value is whatever `results/RESULTS.sha256` records and is deliberately not
 restated here — a file cannot contain its own digest, so any value written into
 this table is a past one by construction.
 
-The difference between the two states is ten added rows, S1–S10: schema-
+The difference between the 21-row and 31-row states is ten added rows, S1–S10: schema-
 validation negatives contributed by Iman Schrock / EMILIA Protocol, exercising
 Section 3.5 claim shape — declared type, pattern and minimum, a required
 sub-member, and a repeated JSON member name. All ten pass.
@@ -56,8 +58,14 @@ pre-existing row changed verdict or detail.** The suite grew; nothing in it
 moved. A reader holding `cd96b460…` — the value carried in the agent2agent mail
 of 2026-07-30 — and finding a mismatch today is seeing the ten added rows and
 nothing else, and can confirm that by diffing the `rows` array of
-[`results/psea-02-selfrun.json`](results/psea-02-selfrun.json) between the two
-commits.
+`results/psea-02-selfrun.json` between the two commits.
+
+The three later 31-row states change no row. They differ only in the prose of
+this file: the history table itself, and the relabelling of the profile under
+test from -02 to -03, made once the reference implemented -03. The baseline was
+renamed from `results/psea-02-selfrun.json` to
+[`results/psea-03-selfrun.json`](results/psea-03-selfrun.json) in the same
+change; its `rows` array is unchanged.
 
 ## Failures
 

@@ -1,4 +1,4 @@
-"""Cross-run: draft-yossif-psea-02 against the WHO negative classes of
+"""Cross-run: draft-yossif-psea-03 against the WHO negative classes of
 draft-mih-sato-agent-accountability-composition-00 Section 5.2, plus the three
 digest-encoding rows, the multi-artifact principal-divergence case, and the
 Section 3.5 claim-shape rows.
@@ -339,8 +339,8 @@ def main():
                     "expected": expected, "observed": observed,
                     "detail": str(detail), "verdict": verdict})
     print(json.dumps({
-        "suite": "psea-02 vs composition-00 S5.2 WHO negative classes",
-        "profile": "draft-yossif-psea-02",
+        "suite": "psea-03 vs composition-00 S5.2 WHO negative classes",
+        "profile": "draft-yossif-psea-03",
         "target": "draft-mih-sato-agent-accountability-composition-00",
         "implementations": 1,
         "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",

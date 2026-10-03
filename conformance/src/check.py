@@ -21,8 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import run as run_suite  # noqa: E402  (path must be set first)
 
 
-# The current state of draft-yossif-psea-02, as recorded in RESULTS.md and
-# results/psea-02-selfrun.json.
+# The current state of draft-yossif-psea-03, as recorded in RESULTS.md and
+# results/psea-03-selfrun.json.
 #
 # These values MUST be updated deliberately, and only when the profile itself
 # changes — a new revision, a normative edit, a closed gap.  They are not a
@@ -38,7 +38,7 @@ EXPECTED = {
     # orthogonal to the principal-reference, ordering and composition gaps.
     "failing_rows": {"N3", "N11", "M1"},
     # Per-row observed value and refusal code are pinned to this file.
-    "baseline": os.path.join("results", "psea-02-selfrun.json"),
+    "baseline": os.path.join("results", "psea-03-selfrun.json"),
 }
 
 # Fields compared row by row against the baseline.  Every one of these is
@@ -132,7 +132,7 @@ def main():
         print("", file=sys.stderr)
         print(
             "The profile's observed behaviour no longer matches the recorded state\n"
-            "of draft-yossif-psea-02. Either the profile changed and EXPECTED in\n"
+            "of draft-yossif-psea-03. Either the profile changed and EXPECTED in\n"
             f"{os.path.relpath(__file__, REPO_CONFORMANCE)} plus {EXPECTED['baseline']}\n"
             "must be updated deliberately, or this is an unintended regression.",
             file=sys.stderr,

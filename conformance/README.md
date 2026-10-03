@@ -118,7 +118,7 @@ ordering and composition gaps above.
 
 Full per-row detail, including the passing rows, the three digest-encoding rows
 and the ten claim-shape rows, is in [RESULTS.md](RESULTS.md). The recorded run
-is in [results/psea-02-selfrun.json](results/psea-02-selfrun.json).
+is in [results/psea-03-selfrun.json](results/psea-03-selfrun.json).
 
 [`interop-aae/`](interop-aae/) holds the PSEA side of a candidate two-way
 cross-run with draft-kroehl-agentic-trust-aae — one action, two proofs from
@@ -164,7 +164,7 @@ cannot tell you that a row flipped.
 
 `src/check.py` is the regression gate, and is what CI runs. It executes the
 suite in-process and asserts the verdict counts, the failing row set, and every
-row's refusal code against `results/psea-02-selfrun.json`, exiting 1 with a diff
+row's refusal code against `results/psea-03-selfrun.json`, exiting 1 with a diff
 if any of them moved. The expected state is a single dict at the top of that
 file. It must be updated deliberately when the profile changes; re-baselining it
 to make a red build go green discards the only signal this suite produces.
