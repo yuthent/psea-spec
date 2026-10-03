@@ -2587,10 +2587,12 @@ entirely.
     "psea_user_hash": { "type": "string",
               "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$",
       "description": "OPTIONAL. base64url (no padding) of
-        SHA-256(subject_id); audit-attribution only. The restricted
-        final-sextet class rejects non-canonical encodings. Omitted
-        entirely when empty. MUST be derived pairwise per issuer (see
-        Privacy Considerations)." },
+        SHA-256(subject_id): a pairwise, deployment-local commitment
+        to the enrolled subject that establishes no identity, which a
+        Verifier MAY require to match the enrollment record (see
+        Subject Hash). The restricted final-sextet class rejects
+        non-canonical encodings. Omitted entirely when empty. MUST be
+        derived pairwise per issuer (see Privacy Considerations)." },
     "psea_chain_pending": {
       "description": "OPTIONAL registered opaque profile-extension
         member; empty schema (any JSON value). Semantics are
