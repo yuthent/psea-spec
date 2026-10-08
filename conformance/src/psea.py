@@ -36,6 +36,9 @@ P_HEX64 = r"^[0-9a-f]{64}$"
 # emitted by the Attester below -- the reference carries no auxiliary transport
 # document for it to commit to, and inventing one would put a claim on the wire
 # that no part of this harness appraises.
+#
+# psea_stepup_selection is likewise declared OPTIONAL and not emitted: the
+# reference defines no step-up interaction for it to commit to.
 CLAIM_SCHEMA = {
     "jti": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": P_JTI},
     "aud": {"type": "string", "minLength": 1, "maxLength": 256},
@@ -61,6 +64,7 @@ CLAIM_SCHEMA = {
     "psea_sdk_version": {"type": "string", "maxLength": 64},
     "psea_signals_hash": {"type": "string", "pattern": P_B64_STD_DIGEST},
     "psea_user_hash": {"type": "string", "pattern": P_B64URL_DIGEST},
+    "psea_stepup_selection": {"type": "string", "pattern": P_B64URL_DIGEST},
     "psea_chain_pending": {},
     "psea_last_confirmed_head": {},
     "psea_rp_context_hash": {},

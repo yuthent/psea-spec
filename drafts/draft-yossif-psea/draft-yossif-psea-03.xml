@@ -22,7 +22,7 @@
       </address>
     </author>
 
-    <date year="2026" month="October" day="3"/>
+    <date year="2026" month="October" day="8"/>
 
     <area>Security</area>
 
@@ -768,11 +768,24 @@ entirely.
         a proof that omits it: a proof without the claim bypasses the linkage check, so it could be
         inserted into the stored proof sequence without the gap being detected.</t>
 
+        <t>The OPTIONAL member <tt>psea_stepup_selection</tt> is carried only where the deployment,
+        before the signature, asked the user a step-up question about the action and holds a commitment
+        to the expected answer. The claim places a commitment to the user's selection inside the signed
+        payload, so the selection is covered by the proof signature. How the question is formed, how the
+        commitment is constructed, and how the Verifier obtains the value it compares against are
+        deployment-defined and out of scope of this profile. A deployment that issued such a step-up for
+        an action <bcp14>MAY</bcp14> require the claim on the proof for that action, and a Verifier in
+        such a deployment <bcp14>MUST</bcp14> refuse a proof that omits it or whose value does not
+        match.</t>
+
         <t>The <tt>eat_profile</tt> claim carries the profile identifier of
         <xref target="eat-profile"/>, and a conforming Attester emits only that value. Notwithstanding
         the enumeration in the schema below, a Verifier <bcp14>MAY</bcp14> additionally accept the value
         <tt>urn:ietf:params:psea:eat-profile:2</tt>, which implementations built before this revision
-        emit, provided every other requirement of this profile is met.</t>
+        emit, provided every other requirement of this profile is met. That value is not a registered
+        URN: this document requests no registration in the <tt>urn:ietf:params</tt> namespace, and the
+        value is accepted only as an identifier emitted by earlier implementations, never as one a new
+        Attester emits.</t>
 
         <sourcecode type="json"><![CDATA[
 {
@@ -936,6 +949,15 @@ entirely.
         Verifier appraisal obligation, and a Verifier that does not
         recognize it ignores it. Present only when the deployment's
         chain gap-tolerance layer emits it." },
+    "psea_stepup_selection": { "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$",
+      "description": "OPTIONAL profile-extension claim. base64url
+        (no padding) of a 32-octet commitment to a selection the
+        user made in a deployment-defined step-up interaction about
+        the action. Present only when the deployment issued such a
+        step-up for this action. The commitment's construction and
+        the value a Verifier compares it against are
+        deployment-defined and out of scope." },
     "psea_rp_context_hash": {
       "description": "OPTIONAL profile-extension member; empty schema
         (any JSON value). Present only when the deployment binds a
@@ -2697,7 +2719,7 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
     <section anchor="changes-from-02" numbered="true">
       <name>Changes from draft-yossif-psea-02</name>
 
-      <t>This revision states one known limitation, corrects three claim-set descriptions against the
+      <t>This revision states one known limitation, corrects four claim-set descriptions against the
       reference implementation, corrects the <tt>ueid</tt> derivation, withdraws the URN sub-namespace
       registration request, and corrects the restatement of RFC 8785. It also changes normative Verifier
       requirements in three places: a Verifier may act on <tt>psea_user_hash</tt> against the enrollment
@@ -2820,7 +2842,27 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         implementations the <tt>:2</tt> suffix marked the corrected <tt>ueid</tt> derivation;
         <tt>psea_proof_version</tt> remains the wire-format revision marker
         (<xref target="proof-versioning"/>). No claim is added.</li>
+        <li>Declared the OPTIONAL <tt>psea_stepup_selection</tt> claim in the claim-set schema
+        (<xref target="proof-schema"/>). As with <tt>psea_signals_hash</tt>, the claim was already
+        produced by Attesters in the reference implementation when a deployment issues a step-up, and
+        under <tt>additionalProperties: false</tt> its absence from the schema meant such proofs were
+        rejected by the published schema. Its construction is deployment-defined and out of scope. No
+        wire change.</li>
+        <li>Stated in <xref target="proof-schema"/> that <tt>urn:ietf:params:psea:eat-profile:2</tt> is
+        not a registered URN and that this document requests no registration for it.</li>
       </ul>
+    </section>
+
+    <section numbered="false" anchor="acknowledgments">
+      <name>Acknowledgments</name>
+      <t>Thomas Fossati reviewed this profile on the IETF RATS mailing list and found the
+      <tt>ueid</tt> derivation ambiguity and the unnecessary URN registration request, both corrected in
+      this revision. Laurence Lundblade and Giridhar Mandyam answered which UEID claim fits a value that
+      does not survive factory reset. Mikhail Sergeev supplied the criterion for ordering evidence stated
+      in <xref target="open-ordering"/>. Iman Schrock found schema-validation defects in the reference
+      Verifier. Songbo Bu wrote an independent Verifier and cross-ran the conformance suite against it,
+      and Lars Kroehl independently recomputed the canonical encoding. Any remaining errors are the
+      author's.</t>
     </section>
 
   </back>

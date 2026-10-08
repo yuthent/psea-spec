@@ -36,18 +36,18 @@
 <meta content="draft-yossif-psea-03" name="ietf.draft">
 <!-- Generator version information:
   xml2rfc 3.34.0
-    Python 3.14.7
-    ConfigArgParse 1.8.0
+    Python 3.12.13
+    ConfigArgParse 1.7.5
     google-i18n-address 3.1.1
     intervaltree 3.2.1
     Jinja2 3.1.6
-    lxml 6.1.3
+    lxml 6.1.1
     natsort 8.4.0
-    platformdirs 4.12.2
+    platformdirs 4.10.0
     pycountry 26.2.16
     PyYAML 6.0.3
     requests 2.34.2
-    wcwidth 0.9.1
+    wcwidth 0.8.1
 -->
 <link href="draft-yossif-psea-03.xml" rel="alternate" type="application/rfc+xml">
 <link href="#copyright" rel="license">
@@ -1242,7 +1242,7 @@ li > p:last-of-type:only-child {
 </tr></thead>
 <tfoot><tr>
 <td class="left">Yossif</td>
-<td class="center">Expires 6 April 2027</td>
+<td class="center">Expires 11 April 2027</td>
 <td class="right">[Page]</td>
 </tr></tfoot>
 </table>
@@ -1255,12 +1255,12 @@ li > p:last-of-type:only-child {
 <dd class="internet-draft">draft-yossif-psea-03</dd>
 <dt class="label-published">Published:</dt>
 <dd class="published">
-<time datetime="2026-10-03" class="published">3 October 2026</time>
+<time datetime="2026-10-08" class="published">8 October 2026</time>
     </dd>
 <dt class="label-intended-status">Intended Status:</dt>
 <dd class="intended-status">Standards Track</dd>
 <dt class="label-expires">Expires:</dt>
-<dd class="expires"><time datetime="2027-04-06">6 April 2027</time></dd>
+<dd class="expires"><time datetime="2027-04-11">11 April 2027</time></dd>
 <dt class="label-authors">Author:</dt>
 <dd class="authors">
 <div class="author">
@@ -1323,7 +1323,7 @@ li > p:last-of-type:only-child {
         time. It is inappropriate to use Internet-Drafts as reference
         material or to cite them other than as "work in progress."<a href="#section-boilerplate.1-3" class="pilcrow">¶</a></p>
 <p id="section-boilerplate.1-4">
-        This Internet-Draft will expire on 6 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
+        This Internet-Draft will expire on 11 April 2027.<a href="#section-boilerplate.1-4" class="pilcrow">¶</a></p>
 </section>
 </div>
 <div id="copyright">
@@ -1663,7 +1663,10 @@ li > p:last-of-type:only-child {
             <p id="section-toc.1-1.13.1"><a href="#appendix-C" class="auto internal xref">Appendix C</a>.  <a href="#name-changes-from-draft-yossif-p" class="internal xref">Changes from draft-yossif-psea-02</a></p>
 </li>
           <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.14">
-            <p id="section-toc.1-1.14.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
+            <p id="section-toc.1-1.14.1"><a href="#appendix-D" class="auto internal xref"></a><a href="#name-acknowledgments" class="internal xref">Acknowledgments</a></p>
+</li>
+          <li class="compact toc ulBare ulEmpty" id="section-toc.1-1.15">
+            <p id="section-toc.1-1.15.1"><a href="#appendix-E" class="auto internal xref"></a><a href="#name-authors-address" class="internal xref">Author's Address</a></p>
 </li>
         </ul>
 </nav>
@@ -2439,12 +2442,24 @@ entirely.
         require the claim on every proof, and a Verifier in such a deployment <span class="bcp14">MUST</span> refuse
         a proof that omits it: a proof without the claim bypasses the linkage check, so it could be
         inserted into the stored proof sequence without the gap being detected.<a href="#section-3.5-6" class="pilcrow">¶</a></p>
-<p id="section-3.5-7">The <code>eat_profile</code> claim carries the profile identifier of
+<p id="section-3.5-7">The OPTIONAL member <code>psea_stepup_selection</code> is carried only where the deployment,
+        before the signature, asked the user a step-up question about the action and holds a commitment
+        to the expected answer. The claim places a commitment to the user's selection inside the signed
+        payload, so the selection is covered by the proof signature. How the question is formed, how the
+        commitment is constructed, and how the Verifier obtains the value it compares against are
+        deployment-defined and out of scope of this profile. A deployment that issued such a step-up for
+        an action <span class="bcp14">MAY</span> require the claim on the proof for that action, and a Verifier in
+        such a deployment <span class="bcp14">MUST</span> refuse a proof that omits it or whose value does not
+        match.<a href="#section-3.5-7" class="pilcrow">¶</a></p>
+<p id="section-3.5-8">The <code>eat_profile</code> claim carries the profile identifier of
         <a href="#eat-profile" class="auto internal xref">Section 3.1</a>, and a conforming Attester emits only that value. Notwithstanding
         the enumeration in the schema below, a Verifier <span class="bcp14">MAY</span> additionally accept the value
         <code>urn:ietf:params:psea:eat-profile:2</code>, which implementations built before this revision
-        emit, provided every other requirement of this profile is met.<a href="#section-3.5-7" class="pilcrow">¶</a></p>
-<div class="breakable lang-json sourcecode" id="section-3.5-8">
+        emit, provided every other requirement of this profile is met. That value is not a registered
+        URN: this document requests no registration in the <code>urn:ietf:params</code> namespace, and the
+        value is accepted only as an identifier emitted by earlier implementations, never as one a new
+        Attester emits.<a href="#section-3.5-8" class="pilcrow">¶</a></p>
+<div class="breakable lang-json sourcecode" id="section-3.5-9">
 <pre>
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2607,6 +2622,15 @@ entirely.
         Verifier appraisal obligation, and a Verifier that does not
         recognize it ignores it. Present only when the deployment's
         chain gap-tolerance layer emits it." },
+    "psea_stepup_selection": { "type": "string",
+      "pattern": "^[A-Za-z0-9_-]{42}[AEIMQUYcgkosw048]$",
+      "description": "OPTIONAL profile-extension claim. base64url
+        (no padding) of a 32-octet commitment to a selection the
+        user made in a deployment-defined step-up interaction about
+        the action. Present only when the deployment issued such a
+        step-up for this action. The commitment's construction and
+        the value a Verifier compares it against are
+        deployment-defined and out of scope." },
     "psea_rp_context_hash": {
       "description": "OPTIONAL profile-extension member; empty schema
         (any JSON value). Present only when the deployment binds a
@@ -2618,7 +2642,7 @@ entirely.
   },
   "additionalProperties": false
 }
-</pre><a href="#section-3.5-8" class="pilcrow">¶</a>
+</pre><a href="#section-3.5-9" class="pilcrow">¶</a>
 </div>
 </section>
 </div>
@@ -4551,7 +4575,7 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
       <h2 id="name-changes-from-draft-yossif-p">
 <a href="#appendix-C" class="section-number selfRef">Appendix C. </a><a href="#name-changes-from-draft-yossif-p" class="section-name selfRef">Changes from draft-yossif-psea-02</a>
       </h2>
-<p id="appendix-C-1">This revision states one known limitation, corrects three claim-set descriptions against the
+<p id="appendix-C-1">This revision states one known limitation, corrects four claim-set descriptions against the
       reference implementation, corrects the <code>ueid</code> derivation, withdraws the URN sub-namespace
       registration request, and corrects the restatement of RFC 8785. It also changes normative Verifier
       requirements in three places: a Verifier may act on <code>psea_user_hash</code> against the enrollment
@@ -4689,11 +4713,36 @@ f0f8eb390ecdb3b312765cfe3a888c39ad4571bb94ddfc553230a4b85171e942
         <code>psea_proof_version</code> remains the wire-format revision marker
         (<a href="#proof-versioning" class="auto internal xref">Section 3.15</a>). No claim is added.<a href="#appendix-C-3.17" class="pilcrow">¶</a>
 </li>
+        <li class="normal" id="appendix-C-3.18">Declared the OPTIONAL <code>psea_stepup_selection</code> claim in the claim-set schema
+        (<a href="#proof-schema" class="auto internal xref">Section 3.5</a>). As with <code>psea_signals_hash</code>, the claim was already
+        produced by Attesters in the reference implementation when a deployment issues a step-up, and
+        under <code>additionalProperties: false</code> its absence from the schema meant such proofs were
+        rejected by the published schema. Its construction is deployment-defined and out of scope. No
+        wire change.<a href="#appendix-C-3.18" class="pilcrow">¶</a>
+</li>
+        <li class="normal" id="appendix-C-3.19">Stated in <a href="#proof-schema" class="auto internal xref">Section 3.5</a> that <code>urn:ietf:params:psea:eat-profile:2</code> is
+        not a registered URN and that this document requests no registration for it.<a href="#appendix-C-3.19" class="pilcrow">¶</a>
+</li>
       </ul>
 </section>
 </div>
-<div id="authors-addresses">
+<div id="acknowledgments">
 <section id="appendix-D">
+      <h2 id="name-acknowledgments">
+<a href="#name-acknowledgments" class="section-name selfRef">Acknowledgments</a>
+      </h2>
+<p id="appendix-D-1">Thomas Fossati reviewed this profile on the IETF RATS mailing list and found the
+      <code>ueid</code> derivation ambiguity and the unnecessary URN registration request, both corrected in
+      this revision. Laurence Lundblade and Giridhar Mandyam answered which UEID claim fits a value that
+      does not survive factory reset. Mikhail Sergeev supplied the criterion for ordering evidence stated
+      in <a href="#open-ordering" class="auto internal xref">Section 6.8.4</a>. Iman Schrock found schema-validation defects in the reference
+      Verifier. Songbo Bu wrote an independent Verifier and cross-ran the conformance suite against it,
+      and Lars Kroehl independently recomputed the canonical encoding. Any remaining errors are the
+      author's.<a href="#appendix-D-1" class="pilcrow">¶</a></p>
+</section>
+</div>
+<div id="authors-addresses">
+<section id="appendix-E">
       <h2 id="name-authors-address">
 <a href="#name-authors-address" class="section-name selfRef">Author's Address</a>
       </h2>
