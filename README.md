@@ -5,14 +5,14 @@ In one sentence: PSEA is an open, vendor-neutral token profile for producing com
 **An EAT profile for action-bound, user-verification-gated transaction-confirmation evidence.**
 
 This repository is the home of the IETF Internet-Draft
-**`draft-yossif-psea-02`** — the *PSEA Token Profile*. The draft itself is the
+**`draft-yossif-psea-03`** — the *PSEA Token Profile*. The draft itself is the
 authoritative, normative specification. Everything an independent party needs
 to build a conforming implementation is in the draft.
 
 > **Authoritative spec:**
-> [`drafts/draft-yossif-psea/draft-yossif-psea-02.txt`](drafts/draft-yossif-psea/draft-yossif-psea-02.txt)
+> [`drafts/draft-yossif-psea/draft-yossif-psea-03.txt`](drafts/draft-yossif-psea/draft-yossif-psea-03.txt)
 > (plain text) ·
-> [`drafts/draft-yossif-psea/draft-yossif-psea-02.html`](drafts/draft-yossif-psea/draft-yossif-psea-02.html)
+> [`drafts/draft-yossif-psea/draft-yossif-psea-03.html`](drafts/draft-yossif-psea/draft-yossif-psea-03.html)
 > (rendered)
 
 ## What PSEA is
@@ -42,7 +42,7 @@ draft.
 PSEA is designed so that **no gatekeeper is required to participate**:
 
 - **Build from the draft alone.** Any independent party can implement a
-  conforming Attester or Verifier directly from `draft-yossif-psea-02`. No
+  conforming Attester or Verifier directly from `draft-yossif-psea-03`. No
   reference SDK, no shared secret, and no proprietary library is needed.
 - **No bilateral agreement, no vendor blessing.** Conformance is defined by the
   normative text of the draft, not by membership, certification, registration
@@ -145,10 +145,11 @@ them against the current `-02` format.
 
 | Path | Purpose |
 |------|---------|
-| [`conformance/`](conformance/) | Reference Attester/Verifier and the WHO negative-class vector suite. Not a conformance claim — one implementation. |
-| [`drafts/draft-yossif-psea/draft-yossif-psea-02.txt`](drafts/draft-yossif-psea/draft-yossif-psea-02.txt) / [`.html`](drafts/draft-yossif-psea/draft-yossif-psea-02.html) | **Authoritative specification.** |
-| `drafts/draft-yossif-psea/draft-yossif-psea-02.xml` | xml2rfc source for the draft. |
+| [`conformance/`](conformance/) | Reference Attester/Verifier and the WHO negative-class vector suite. Not a conformance claim — one implementation here, one independent cross-run. |
+| [`drafts/draft-yossif-psea/draft-yossif-psea-03.txt`](drafts/draft-yossif-psea/draft-yossif-psea-03.txt) / [`.html`](drafts/draft-yossif-psea/draft-yossif-psea-03.html) | **Authoritative specification.** |
+| `drafts/draft-yossif-psea/draft-yossif-psea-03.xml` | xml2rfc source for the draft. |
 | `drafts/draft-yossif-psea/draft-yossif-psea-00.*`, `draft-yossif-psea-01.*` | **Historical revisions only.** These were the earlier *Informational* PSEA security-model drafts; they are superseded by `-02` and are retained for provenance. They do **not** describe the current protocol. |
+| `drafts/draft-yossif-psea/draft-yossif-psea-02.*` | **Previous revision.** The first protocol-specification revision; superseded by `-03` (see its "Changes from draft-yossif-psea-02" appendix). |
 | [`CITATION.cff`](CITATION.cff) | How to cite this work. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | How to propose changes. |
 | [`SECURITY.md`](SECURITY.md) | How to report a security issue in the spec. |
@@ -179,7 +180,7 @@ session or an authentication event as a stand-in for transaction approval.
 
 ## Status
 
-- Internet-Draft: **`draft-yossif-psea-02`** (intended status: Standards Track;
+- Internet-Draft: **`draft-yossif-psea-03`** (intended status: Standards Track;
   individual submission — not yet adopted by any IETF working group, does not
   represent IETF consensus).
 - Wire-format version: **`"1"`** (`psea_proof_version`).
