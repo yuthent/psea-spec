@@ -105,14 +105,14 @@ organization's own product, not in the standard.
 
 ## Conformance
 
-A reference Attester and Verifier for `-02`, together with a vector suite run
+A reference Attester and Verifier, together with a vector suite run
 against the WHO negative classes of
 draft-mih-sato-agent-accountability-composition-00 Section 5.2, live in
 [`conformance/`](conformance/). The reference Verifier implements only what the
 draft states normatively (Sections 3.4, 3.7.1 and 3.13.2) and refuses where the
 draft is silent.
 
-The recorded run is **13 pass, 3 fail, 5 not applicable** across 21 rows. The
+The recorded run is **23 pass, 3 fail, 5 not applicable** across 31 rows. The
 three failures — a changed authorizing-principal reference, post-hoc
 ratification presented as pre-execution authorization, and two artifacts
 verifying for one action under different principals — are properties the profile
@@ -120,9 +120,19 @@ does not have, and are reported as failures rather than as absences. See
 [`conformance/README.md`](conformance/README.md) and
 [`conformance/RESULTS.md`](conformance/RESULTS.md).
 
-**This is one implementation, and therefore not a conformance claim.** Section 7
-of the composition draft requires that a vector freeze only after at least two
-independent implementations have recomputed it.
+**This is not a conformance claim.** Section 7 of the composition draft requires
+that a vector freeze only after at least two independent implementations have
+recomputed it.
+
+One independently written implementation has cross-run an earlier state of the
+suite: Songbo Bu's verifier, run against commit `c0b3c385` on 4 August 2026,
+reproduced every verdict (23 pass, 3 fail, 5 not applicable across 31
+scenarios) with no verifier-decision disagreement, as reported on the IETF
+agent2agent list. In his own scoping, that is an independent-implementation
+cross-run over the supplied suite, not full conformance and not an
+endorsement; coverage beyond the exercised paths and independent vector
+generation remain open. The suite has since been relabelled to `-03` with the
+failing rows and their refusal codes unchanged.
 
 An earlier `test-vectors/` directory, together with two reference verifiers, was
 removed in commit `bb0a38e` (2026-05-27). Those twenty vectors were keyed to the

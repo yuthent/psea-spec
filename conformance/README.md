@@ -124,7 +124,7 @@ is in [results/psea-03-selfrun.json](results/psea-03-selfrun.json).
 cross-run with draft-kroehl-agentic-trust-aae — one action, two proofs from
 different principals, three composition cases — and is **not frozen**.
 
-## This is ONE implementation
+## One implementation here, one independent cross-run
 
 **Nothing here is a conformance claim.** Section 7 of
 draft-mih-sato-agent-accountability-composition-00 states:
@@ -137,6 +137,16 @@ cross-run and no more. Until a second, independently written implementation
 recomputes them, the refusal codes below cannot be distinguished from choices
 this implementation made where the specification is silent — which is precisely
 what a cross-run is for.
+
+One independently written implementation has cross-run an earlier state of the
+suite: Songbo Bu's verifier, run against commit `c0b3c385` on 4 August 2026,
+reproduced every verdict (23 pass, 3 fail, 5 not applicable across 31
+scenarios) with no verifier-decision disagreement, as reported on the IETF
+agent2agent list. In his own scoping, that is an independent-implementation
+cross-run over the supplied suite, not full conformance and not an
+endorsement; coverage beyond the exercised paths and independent vector
+generation remain open. The suite has since been relabelled to `-03` with the
+failing rows and their refusal codes unchanged.
 
 The three failures are the rows where that distinction matters least; they fail
 for reasons stated in the document itself. The passing rows are where it matters
