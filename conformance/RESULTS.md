@@ -12,14 +12,15 @@ starting position for a cross-run, not a conformance claim.
 
 The reference Verifier implements only what draft-yossif-psea-03 states
 normatively — Section 3.4 header hardening, Section 3.5 claim set, Section
-3.7.1 user-verification anchoring, Section 3.13.2 fail-closed action binding.
+3.7.1 user-verification anchoring, Section 3.13.2 fail-closed action binding,
+Section 3.14 enrollment lifecycle trust gate.
 Where the draft is silent the implementation refuses rather than guessing.
 
 Every row's expected result was stated before the run.
 
 ## Summary
 
-23 pass, 3 fail, 5 not applicable, 31 rows total.
+25 pass, 3 fail, 5 not applicable, 33 rows total.
 
 The three failures are properties the profile does not have. They are reported
 as failures rather than as absences because a relying party that assumes
@@ -42,6 +43,7 @@ state:
 | 31 | 23 / 3 / 5 | `b60a07665a067b1928564165495d9a0120943e9ad3c2863151714a7330f93062` | commit `2a85e7e`, 2026-08-01 | — |
 | 31 | 23 / 3 / 5 | `f528d796c1cf1d0afaf5cbee25c85a6381ed480601af4a0ecd76b5f2889b9098` | commit `b0710c2`, 2026-08-01 | — |
 | 31 | 23 / 3 / 5 | `57c81b3b2fdb639ad8007fbb719e9f103206eea3415e8125bee3cf6ac71e4623` | commit `1f681e8`, 2026-08-01 | — |
+| 31 | 23 / 3 / 5 | `d453558e24d8cc23ad020519ef926d7bc21e6da162c6c128a372092352617eae` | commit `e651b56`, 2026-10-03 | not recorded here |
 
 Each value is the digest of this file as it stood at that commit. The current
 value is whatever `results/RESULTS.sha256` records and is deliberately not
@@ -66,6 +68,13 @@ test from -02 to -03, made once the reference implemented -03. The baseline was
 renamed from `results/psea-02-selfrun.json` to
 [`results/psea-03-selfrun.json`](results/psea-03-selfrun.json) in the same
 change; its `rows` array is unchanged.
+
+The 33-row state adds two rows, N17 and N18: a proof from an enrollment that is
+revoked, and one that is suspended. Section 3.14 requires a Verifier to refuse
+both, and the reference did not enforce Section 3.14 until these rows were
+added. Both pass. The 31 earlier rows are byte-identical in the `rows` array of
+`results/psea-03-selfrun.json`. Independent cross-runs made at 31 rows did not
+cover Section 3.14.
 
 ## Failures
 
@@ -133,6 +142,8 @@ cannot be built.
 | N14 | psea_uv contradicted by platform attestation | REFUSE | REFUSE | UV_CONTRADICTED_BY_ATTESTATION |
 | N15 | header alg none | REFUSE | REFUSE | HEADER_ALG |
 | N16 | key taken from token-carried material instead of enrolled record | REFUSE | REFUSE | SIG_INVALID |
+| N17 | enrollment revoked | REFUSE | REFUSE | ENROLLMENT_NOT_ACTIVE |
+| N18 | enrollment suspended | REFUSE | REFUSE | ENROLLMENT_NOT_ACTIVE |
 | E1 | same 32 octets, different encodings, compatible contexts | JOIN | JOIN | octet-compare=True string-compare=False |
 | E2 | same 32 octets, incompatible declared digest contexts | INDETERMINATE | INDETERMINATE | declared contexts differ; equality of octets is not equality |
 | E3 | ASCII-hex string compared as bytes against raw octets | MISMATCH | MISMATCH | len 64 vs 32 |
