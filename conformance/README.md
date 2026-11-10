@@ -25,6 +25,7 @@ about the harness rather than about the profile.
 | Parse layer | A repeated JSON member name is refused, in the protected header and in the payload alike. Not a Section 3.5 rule — the schema cannot express it, because by the time a schema sees an object the duplicate has already been resolved by the parser |
 | Section 3.7.1 | User-verification claim anchoring — `psea_uv.verified == true` required; cross-checked against attested UV-enforcement where the enrolment record conveys it; refused for high-assurance operations where it does not |
 | Section 3.13.2 | Fail-closed action binding — re-canonicalize, SHA-256, byte-compare against `psea_payload_hash`, refuse on mismatch or missing payload |
+| Section 3.14 | Enrollment lifecycle trust gate — the enrolled record holds a state per kid (`active`, `suspended` or `revoked`, default `active`), set on the Verifier's side and never read from the token; a proof whose enrollment is not `active` is refused with `ENROLLMENT_NOT_ACTIVE`, directly after signature verification and before any state mutation. Rows N17 and N18 |
 
 Section 3.5 was added to the harness after an audit found the Verifier ignoring
 undeclared claims and omitting two REQUIRED ones (`ueid`, `eat_profile`) that
@@ -76,16 +77,17 @@ is exactly where a horizontally-scaled Verifier fails.
 
 **Coverage is exactly the table.** A draft section absent from it is not
 implemented — not partially, not incidentally. In particular the harness does
-not implement the enrollment lifecycle trust gate (Section 3.14), the chain
-layer's linkage check (Section 3.12.3), caller-identity binding (Section
-3.13.5), or `eat_nonce` challenge correlation, and no row here bears on any of
-them.
+not implement the chain layer's linkage check (Section 3.12.3), caller-identity
+binding (Section 3.13.5), or `eat_nonce` challenge correlation, and no row here
+bears on any of them. The enrollment lifecycle trust gate (Section 3.14) was in
+this list until the N17 and N18 rows were added; the 31 rows before them were
+unchanged by that addition.
 
 `src/jcs.py` implements the RFC 8785 integers-only subset the profile restricts
 the action payload to; a float in a payload is a profile violation and is
 rejected rather than serialized.
 
-## Result: 23 pass, 3 fail, 5 not applicable (31 rows)
+## Result: 25 pass, 3 fail, 5 not applicable (33 rows)
 
 The three failures are properties the profile does not have:
 
@@ -111,6 +113,8 @@ The five not-applicable rows are not passes. N5, N6 and N7 are quorum classes
 and the profile defines no quorum construct at this revision; N12b requires a
 reusable-authorization mode it does not define; N9 is not constructible, because
 `psea_payload_hash` sits inside the signed payload by construction.
+
+Rows N17 and N18 are the Section 3.14 enrollment lifecycle cases and both pass.
 
 Rows S1–S10 are the Section 3.5 claim-shape cases and all pass. They did not
 change which rows fail: claim shape is orthogonal to the principal-reference,

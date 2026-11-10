@@ -31,8 +31,10 @@ import run as run_suite  # noqa: E402  (path must be set first)
 # expectation.  Re-baselining to silence a failure discards the only signal
 # this suite produces.
 EXPECTED = {
-    "row_count": 31,
-    "verdicts": {"PASS": 23, "FAIL": 3, "NOT_APPLICABLE": 5},
+    "row_count": 33,
+    # N17 and N18 (Section 3.14 enrollment lifecycle) added two passing rows
+    # when the reference Verifier was brought into line with Section 3.14.
+    "verdicts": {"PASS": 25, "FAIL": 3, "NOT_APPLICABLE": 5},
     # The three properties the profile does not have.  See RESULTS.md.
     # Unchanged by the Section 3.5 work: S1-S10 exercise claim shape, which is
     # orthogonal to the principal-reference, ordering and composition gaps.

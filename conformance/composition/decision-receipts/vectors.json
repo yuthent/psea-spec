@@ -30,16 +30,14 @@
    "differs": "enrollment state revoked",
    "enrollment": "enrollment/revoked.json",
    "presentations": ["proofs/v1.json"],
-   "expected": {"psea_verifier": "ACCEPT", "composition": "REFUSE"},
-   "implementation_gap": "draft-yossif-psea-03 Section 3.14: a conforming Verifier MUST reject a proof whose enrollment is not active, so a conforming psea_verifier result is REFUSE. The reference Enrollment (src/psea.py) holds no lifecycle state and does not implement Section 3.14. psea_verifier is set to what the reference does."
+   "expected": {"psea_verifier": "REFUSE", "composition": "REFUSE"}
   },
   {
    "id": "DR-C3",
    "differs": "enrollment state suspended",
    "enrollment": "enrollment/suspended.json",
    "presentations": ["proofs/v1.json"],
-   "expected": {"psea_verifier": "ACCEPT", "composition": "REFUSE"},
-   "implementation_gap": "draft-yossif-psea-03 Section 3.14: a conforming Verifier MUST reject a proof whose enrollment is not active, so a conforming psea_verifier result is REFUSE. The reference Enrollment (src/psea.py) holds no lifecycle state and does not implement Section 3.14. psea_verifier is set to what the reference does."
+   "expected": {"psea_verifier": "REFUSE", "composition": "REFUSE"}
   },
   {
    "id": "DR-C4",

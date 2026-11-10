@@ -127,20 +127,33 @@ def payload_hash(action: dict) -> str:
     return base64.b64encode(hashlib.sha256(canonicalize(action)).digest()).decode()
 
 
+# Section 3.14, the enrollment lifecycle states a Verifier must maintain.
+ENROLLMENT_STATES = frozenset({"active", "suspended", "revoked"})
+
+
 class Enrollment:
-    """Relying-party-held enrolled record.  Keys resolve from here only."""
+    """Relying-party-held enrolled record.  Keys resolve from here only.
+
+    Holds the Section 3.14 lifecycle state per kid.  The state is set here, on
+    the Verifier's side, and never read from the token: the profile carries no
+    self-asserted wire trust-state field.
+    """
 
     def __init__(self):
         self._keys = {}
         self._attest = {}
         self._principal = {}
+        self._state = {}
 
-    def enroll(self, kid, pubkey, uv_enforced=None, principal=None):
+    def enroll(self, kid, pubkey, uv_enforced=None, principal=None, state="active"):
         # uv_enforced: True/False if the platform attestation conveys a
         # UV-enforcement property, None if the attestation surface cannot.
+        if state not in ENROLLMENT_STATES:
+            raise ValueError(f"unknown enrollment state {state!r}")
         self._keys[kid] = pubkey
         self._attest[kid] = uv_enforced
         self._principal[kid] = principal
+        self._state[kid] = state
 
     def key(self, kid):
         return self._keys.get(kid)
@@ -150,6 +163,9 @@ class Enrollment:
 
     def principal(self, kid):
         return self._principal.get(kid)
+
+    def state(self, kid):
+        return self._state.get(kid)
 
 
 class Attester:
@@ -337,7 +353,7 @@ def validate_claim_set(body):
 
 class Verifier:
     """Section 3.4 header hardening, 3.5 claim set, 3.7.1 UV anchoring,
-    3.13.2 fail-closed."""
+    3.13.2 fail-closed, 3.14 enrollment lifecycle trust gate."""
 
     def __init__(self, enrollment: Enrollment, expected_iss, expected_aud,
                  high_assurance=False):
@@ -411,6 +427,16 @@ class Verifier:
                        f"{h_b64}.{p_b64}".encode(), ec.ECDSA(hashes.SHA256()))
         except InvalidSignature:
             raise Refusal("SIG_INVALID")
+
+        # --- Section 3.14 enrollment lifecycle trust gate ---
+        # "MUST reject any proof whose enrollment is not in the active state
+        # ... The check MUST be applied after signature verification and before
+        # any state mutation."  It sits directly after the signature, so no
+        # later stage, and in particular the jti / counter update at the end,
+        # runs for a proof from an enrollment that is not active.
+        state = self.enr.state(kid)
+        if state != "active":
+            raise Refusal("ENROLLMENT_NOT_ACTIVE", f"state={state!r}")
 
         # --- Section 3.5 claim set ---
         # Runs on the payload only after the signature over it verifies, and

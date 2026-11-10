@@ -30,6 +30,15 @@ jobs:
           set -euo pipefail
           python3 src/check.py
 
+      # The decision-receipt composition set. run.py --check exits non-zero
+      # if any vector's result differs from results/dr-results.json, in either
+      # column. Its digest is verified in the next step.
+      - name: Check composition set (decision receipts) against recorded state
+        working-directory: conformance/composition/decision-receipts
+        run: |
+          set -euo pipefail
+          python3 run.py --check > /dev/null
+
       # Every .sha256 file lists a bare filename, so each is checked from its
       # own directory. The interop fixtures are the PSEA side of candidate
       # cross-runs: if their bytes drift silently the other implementation
@@ -46,6 +55,7 @@ jobs:
           sha256sum -c results/RESULTS.sha256
           ( cd interop-aae && sha256sum -c psea-fixture-v0.sha256 )
           ( cd interop-nep && sha256sum -c psea-nep-fixture-v0.sha256 )
+          ( cd composition/decision-receipts/results && sha256sum -c dr-results.sha256 )
 
   drafts:
     name: Draft build

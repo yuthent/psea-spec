@@ -28,9 +28,10 @@ def row(cid, name, sec, expected, note=""):
     return deco
 
 
-def fresh(uv_enforced=True, principal="alice", high=False):
+def fresh(uv_enforced=True, principal="alice", high=False, state="active"):
     k = ec.generate_private_key(ec.SECP256R1())
-    e = Enrollment(); e.enroll("k1", k.public_key(), uv_enforced=uv_enforced, principal=principal)
+    e = Enrollment(); e.enroll("k1", k.public_key(), uv_enforced=uv_enforced, principal=principal,
+                               state=state)
     return Attester("k1", k), Verifier(e, ISS, AUD, high_assurance=high), e
 
 
@@ -188,6 +189,20 @@ def _():
     jwk = {"kty": "EC", "crv": "P-256"}
     return run(v, rogue_att.sign(action=ACTION, op=OP, tier=TIER, aud=AUD, iss=ISS,
                                  header_extra={"jwk": jwk}))
+
+
+@row("N17", "enrollment revoked", "3.14", "REFUSE")
+def _():
+    # Valid signature from the enrolled key; the Verifier's own record says the
+    # enrollment is revoked.  Section 3.14 makes that a refusal.
+    a, v, _ = fresh(state="revoked")
+    return run(v, base(a))
+
+
+@row("N18", "enrollment suspended", "3.14", "REFUSE")
+def _():
+    a, v, _ = fresh(state="suspended")
+    return run(v, base(a))
 
 
 # ---------- digest-encoding rows (raised on agent2agent 2026-07-25) ----------

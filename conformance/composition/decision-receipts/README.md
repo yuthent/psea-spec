@@ -3,11 +3,11 @@
 Vectors for a draft-yossif-psea-03 proof carried as evidence in an approval
 record of draft-gruszka-audit-decision-receipts-05.
 
-The 31-row suite in `conformance/` tests what a PSEA Verifier decides on its
+The main suite in `conformance/` tests what a PSEA Verifier decides on its
 own. This set tests the cases where the two layers disagree: a PSEA Verifier
 accepts a proof that the composition with the approval record must refuse, or
-it refuses for a reason the composition inherits. The set leaves the 31 rows
-and the Verifier in `conformance/src/` unchanged.
+it refuses for a reason the composition inherits. The set uses the Verifier in
+`conformance/src/` as it is and adds no rule to it.
 
 ## The two columns
 
@@ -15,12 +15,12 @@ Every vector states two expected results before the run.
 
 | Column | Who decides | What it checks |
 |---|---|---|
-| `psea_verifier` | The reference Verifier in `conformance/src/psea.py`, unchanged | Everything that Verifier implements: header, signature under the enrolled key, Section 3.5 claim set, iss/aud/op/tier, freshness, jti and counter replay, UV anchoring, action binding |
+| `psea_verifier` | The reference Verifier in `conformance/src/psea.py` | Everything that Verifier implements: header, signature under the enrolled key, Section 3.14 enrollment state, Section 3.5 claim set, iss/aud/op/tier, freshness, jti and counter replay, UV anchoring, action binding |
 | `composition` | `compose()` in `run.py` | ACCEPT only if `psea_verifier` is ACCEPT **and** all four hold: (1) enrollment state is `active`; (2) enrollment `subject` equals the approval `approver` (principal.id); (3) SHA-256 of the action bytes equals the approval `actionDigest` and equals the decoded `psea_payload_hash`; (4) proof `jti` equals `approvalId` |
 
-`compose()` performs no other check. Where the composition refuses only
-because the PSEA Verifier refused (C4, C7), its detail says
-`psea_verifier_refused`.
+`compose()` performs no other check. Where the composition refuses because the
+PSEA Verifier refused, its detail says `psea_verifier_refused` (C2, C3, C4, C6,
+C7), alongside any of its own checks that also fail.
 
 ## Vectors
 
@@ -28,8 +28,8 @@ because the PSEA Verifier refused (C4, C7), its detail says
 |---|---|---|---|
 | DR-V1 | Nothing; all consistent | ACCEPT | ACCEPT |
 | DR-C1 | Enrollment subject `bob`, approval approver `alice`; proof valid. This is the N3 class (changed authorizing-principal reference) | ACCEPT | REFUSE |
-| DR-C2 | Enrollment state `revoked` | ACCEPT (see below) | REFUSE |
-| DR-C3 | Enrollment state `suspended` | ACCEPT (see below) | REFUSE |
+| DR-C2 | Enrollment state `revoked` | REFUSE (`ENROLLMENT_NOT_ACTIVE`) | REFUSE |
+| DR-C3 | Enrollment state `suspended` | REFUSE (`ENROLLMENT_NOT_ACTIVE`) | REFUSE |
 | DR-C4 | Proof signed by a key that is not the enrolled key, same kid | REFUSE | REFUSE |
 | DR-C5 | Valid proof, same subject and action, `jti` differs from `approvalId` | ACCEPT | REFUSE |
 | DR-C6 | Proof over the action with one value changed (amount 501) | REFUSE | REFUSE |
@@ -37,20 +37,14 @@ because the PSEA Verifier refused (C4, C7), its detail says
 
 No vector is NOT_REPRESENTABLE.
 
-### C2 and C3: a gap in the reference implementation
+### C2 and C3: Section 3.14
 
 Section 3.14 of draft-yossif-psea-03 states that a conforming Verifier MUST
 keep an enrollment lifecycle with at least the states active, suspended and
-revoked, and MUST reject any proof whose enrollment is not active. A conforming
-Verifier therefore refuses C2 and C3.
-
-The reference Verifier does not implement Section 3.14. Its `Enrollment` class
-holds a key, a UV-enforcement flag and a principal per kid, and no state;
-`verify()` resolves the key by kid and nothing else. Section 3.14 is not in the
-scope table of `conformance/README.md`. The `psea_verifier` column records what
-the reference does, ACCEPT, and each result row carries an `implementation_gap`
-note. This is a defect in the reference implementation and says nothing
-against the profile. The draft text stands.
+revoked, and MUST reject any proof whose enrollment is not active. The first
+version of this set found that the reference Verifier did not implement this
+and accepted both. The reference now does (rows N17 and N18 of the main
+suite), and both vectors are refused by the PSEA Verifier itself.
 
 ### C7: replay
 
@@ -70,8 +64,8 @@ The decision-receipt side's own at-most-once check is out of scope here.
 - `enrollment/*.json`: an enrollment record with enrollment id, kid, public
   JWK, RFC 7638 thumbprint, state and subject. **This is a test fixture, not a
   normative format.** PSEA -03 leaves the enrollment ceremony out of scope
-  (Section 3.13.3). The reference `Enrollment` receives kid, key and subject;
-  it cannot receive state. The fixture carries no UV-enforcement property, so
+  (Section 3.13.3). The reference `Enrollment` receives kid, key, subject
+  and state. The fixture carries no UV-enforcement property, so
   UV anchoring is "asserted" and the Verifier runs with its default
   `high_assurance=False`. UV anchoring is not what this set tests.
 - `approval/approval-A.json`: the approval-record fields `approver`,

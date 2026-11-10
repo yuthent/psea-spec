@@ -159,6 +159,24 @@
    "verdict": "PASS"
   },
   {
+   "id": "N17",
+   "class": "enrollment revoked",
+   "source": "3.14",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "ENROLLMENT_NOT_ACTIVE",
+   "verdict": "PASS"
+  },
+  {
+   "id": "N18",
+   "class": "enrollment suspended",
+   "source": "3.14",
+   "expected": "REFUSE",
+   "observed": "REFUSE",
+   "detail": "ENROLLMENT_NOT_ACTIVE",
+   "verdict": "PASS"
+  },
+  {
    "id": "E1",
    "class": "same 32 octets, different encodings, compatible contexts",
    "source": "join",

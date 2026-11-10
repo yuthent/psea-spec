@@ -39,15 +39,14 @@ def public_key(jwk):
 def build_enrollment(rec):
     """Map the fixture onto the reference Enrollment.
 
-    The reference Enrollment takes a kid, a public key, a UV-enforcement flag
-    and a principal.  It has no lifecycle state, so rec["state"] cannot be
-    passed to the PSEA Verifier and is read only by compose() below.  The
-    fixture conveys no UV-enforcement property, so uv_enforced is None
-    (anchoring "asserted"), with the Verifier's default high_assurance=False.
+    The reference Enrollment takes a kid, a public key, a UV-enforcement flag,
+    a principal and the Section 3.14 lifecycle state.  The fixture conveys no
+    UV-enforcement property, so uv_enforced is None (anchoring "asserted"),
+    with the Verifier's default high_assurance=False.
     """
     e = Enrollment()
     e.enroll(rec["kid"], public_key(rec["public_jwk"]), uv_enforced=None,
-             principal=rec["subject"])
+             principal=rec["subject"], state=rec["state"])
     return e
 
 
@@ -126,8 +125,6 @@ def main():
                             "detail": c_detail,
                             "verdict": verdict(exp["composition"], c_obs)},
         }
-        if "implementation_gap" in vec:
-            row["implementation_gap"] = vec["implementation_gap"]
         rows.append(row)
 
     out = json.dumps({
