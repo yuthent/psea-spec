@@ -109,10 +109,10 @@ A reference Attester and Verifier, together with a vector suite run
 against the WHO negative classes of
 draft-mih-sato-agent-accountability-composition-00 Section 5.2, live in
 [`conformance/`](conformance/). The reference Verifier implements only what the
-draft states normatively (Sections 3.4, 3.7.1 and 3.13.2) and refuses where the
-draft is silent.
+draft states normatively (Sections 3.4, 3.5, 3.7.1, 3.13.2 and 3.14) and refuses
+where the draft is silent.
 
-The recorded run is **23 pass, 3 fail, 5 not applicable** across 31 rows. The
+The recorded run is **25 pass, 3 fail, 5 not applicable** across 33 rows. The
 three failures — a changed authorizing-principal reference, post-hoc
 ratification presented as pre-execution authorization, and two artifacts
 verifying for one action under different principals — are properties the profile

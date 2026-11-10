@@ -83,6 +83,52 @@ counterpart has not confirmed which approval-record field correlates with
 `jti` or `psea_counter`. C5 depends on that choice. If the correlation
 changes, C5 and its fixtures change with it.
 
+## Integration contract (PSEA side, draft)
+
+What the vectors assume today at the boundary between a PSEA proof and an
+approval record. A draft for agreement with the decision-receipts side. It is
+not a normative part of either document.
+
+### Enrollment record trust
+
+The vectors take the enrollment record (kid, public key, state, subject) as
+given. It is a test fixture. How a deployment establishes that record, and that
+the key really belongs to the subject, is out of scope for PSEA -03 (Section
+3.13.3) and is the open problem stated in draft-yossif-enrollment-problem.
+Every vector depends on it. DR-C2 and DR-C3 exercise its state; DR-C4 exercises
+its key binding.
+
+### Subject mapping
+
+The enrollment `subject` must equal the approval `approver`, which is the
+`principal.id`. The PSEA proof carries no principal, so only the composition
+check sees a mismatch. Exercised by DR-C1.
+
+### Action digest correspondence
+
+SHA-256 over the RFC 8785 action bytes must equal the approval `actionDigest`
+and must equal the decoded `psea_payload_hash`. The values are compared as
+octets: `actionDigest` is hex, `psea_payload_hash` is standard base64 with
+padding. Exercised by DR-C6.
+
+### Approval-event correlation
+
+`jti -> approvalId`. **PROVISIONAL**, to be agreed with the decision-receipts
+side. Exercised by DR-C5.
+
+### Rejection behaviour
+
+| Vector | Refused by | Code |
+|---|---|---|
+| DR-V1 | nobody | accepted |
+| DR-C1 | composition check | `subject!=approver` |
+| DR-C2 | PSEA verifier | `ENROLLMENT_NOT_ACTIVE` (composition also: `enrollment_state=revoked`) |
+| DR-C3 | PSEA verifier | `ENROLLMENT_NOT_ACTIVE` (composition also: `enrollment_state=suspended`) |
+| DR-C4 | PSEA verifier | `SIG_INVALID` |
+| DR-C5 | composition check | `jti!=approvalId` |
+| DR-C6 | PSEA verifier | `DIGEST_MISMATCH` (composition also: `action_digest_mismatch`) |
+| DR-C7 | PSEA verifier | `JTI_REPLAY` on the second presentation |
+
 ## Out of scope
 
 - Outcome receipts and the decision receipt itself, including the citation of
