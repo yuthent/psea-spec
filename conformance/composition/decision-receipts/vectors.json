@@ -1,0 +1,73 @@
+{
+ "set": "psea-03 evidence inside a decision receipt (draft-gruszka-audit-decision-receipts-05)",
+ "context": {
+  "iss": "as.example",
+  "aud": "rs.example",
+  "op": "payment.execute",
+  "tier": "high",
+  "now": 1794208839,
+  "action": "action/action.json",
+  "approval": "approval/approval-A.json"
+ },
+ "vectors": [
+  {
+   "id": "DR-V1",
+   "differs": "nothing; all consistent",
+   "enrollment": "enrollment/active.json",
+   "presentations": ["proofs/v1.json"],
+   "expected": {"psea_verifier": "ACCEPT", "composition": "ACCEPT"}
+  },
+  {
+   "id": "DR-C1",
+   "differs": "enrollment subject (bob) != approval approver (alice); proof valid",
+   "class": "N3 class: changed authorizing-principal reference",
+   "enrollment": "enrollment/subject-mismatch.json",
+   "presentations": ["proofs/v1.json"],
+   "expected": {"psea_verifier": "ACCEPT", "composition": "REFUSE"}
+  },
+  {
+   "id": "DR-C2",
+   "differs": "enrollment state revoked",
+   "enrollment": "enrollment/revoked.json",
+   "presentations": ["proofs/v1.json"],
+   "expected": {"psea_verifier": "ACCEPT", "composition": "REFUSE"},
+   "implementation_gap": "draft-yossif-psea-03 Section 3.14: a conforming Verifier MUST reject a proof whose enrollment is not active, so a conforming psea_verifier result is REFUSE. The reference Enrollment (src/psea.py) holds no lifecycle state and does not implement Section 3.14. psea_verifier is set to what the reference does."
+  },
+  {
+   "id": "DR-C3",
+   "differs": "enrollment state suspended",
+   "enrollment": "enrollment/suspended.json",
+   "presentations": ["proofs/v1.json"],
+   "expected": {"psea_verifier": "ACCEPT", "composition": "REFUSE"},
+   "implementation_gap": "draft-yossif-psea-03 Section 3.14: a conforming Verifier MUST reject a proof whose enrollment is not active, so a conforming psea_verifier result is REFUSE. The reference Enrollment (src/psea.py) holds no lifecycle state and does not implement Section 3.14. psea_verifier is set to what the reference does."
+  },
+  {
+   "id": "DR-C4",
+   "differs": "proof signed by a key that is not the enrolled key",
+   "enrollment": "enrollment/active.json",
+   "presentations": ["proofs/c4-wrong-key.json"],
+   "expected": {"psea_verifier": "REFUSE", "composition": "REFUSE"}
+  },
+  {
+   "id": "DR-C5",
+   "differs": "valid proof, same subject and action, jti != approvalId",
+   "enrollment": "enrollment/active.json",
+   "presentations": ["proofs/c5-other-jti.json"],
+   "expected": {"psea_verifier": "ACCEPT", "composition": "REFUSE"}
+  },
+  {
+   "id": "DR-C6",
+   "differs": "proof over different action bytes (amount 501 instead of 500)",
+   "enrollment": "enrollment/active.json",
+   "presentations": ["proofs/c6-other-action.json"],
+   "expected": {"psea_verifier": "REFUSE", "composition": "REFUSE"}
+  },
+  {
+   "id": "DR-C7",
+   "differs": "the DR-V1 proof presented a second time to the same Verifier; the result recorded is the second presentation's",
+   "enrollment": "enrollment/active.json",
+   "presentations": ["proofs/v1.json", "proofs/v1.json"],
+   "expected": {"psea_verifier": "REFUSE", "composition": "REFUSE"}
+  }
+ ]
+}

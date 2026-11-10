@@ -1,0 +1,139 @@
+{
+ "set": "psea-03 evidence inside a decision receipt (draft-gruszka-audit-decision-receipts-05)",
+ "profile": "draft-yossif-psea-03",
+ "counterpart": "draft-gruszka-audit-decision-receipts-05",
+ "correlation": "jti -> approvalId (PROVISIONAL)",
+ "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",
+ "rows": [
+  {
+   "id": "DR-V1",
+   "differs": "nothing; all consistent",
+   "psea_verifier": {
+    "expected": "ACCEPT",
+    "observed": "ACCEPT",
+    "detail": "VERIFIED",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "ACCEPT",
+    "observed": "ACCEPT",
+    "detail": "all_checks_hold",
+    "verdict": "PASS"
+   }
+  },
+  {
+   "id": "DR-C1",
+   "differs": "enrollment subject (bob) != approval approver (alice); proof valid",
+   "psea_verifier": {
+    "expected": "ACCEPT",
+    "observed": "ACCEPT",
+    "detail": "VERIFIED",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "subject!=approver",
+    "verdict": "PASS"
+   }
+  },
+  {
+   "id": "DR-C2",
+   "differs": "enrollment state revoked",
+   "psea_verifier": {
+    "expected": "ACCEPT",
+    "observed": "ACCEPT",
+    "detail": "VERIFIED",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "enrollment_state=revoked",
+    "verdict": "PASS"
+   },
+   "implementation_gap": "draft-yossif-psea-03 Section 3.14: a conforming Verifier MUST reject a proof whose enrollment is not active, so a conforming psea_verifier result is REFUSE. The reference Enrollment (src/psea.py) holds no lifecycle state and does not implement Section 3.14. psea_verifier is set to what the reference does."
+  },
+  {
+   "id": "DR-C3",
+   "differs": "enrollment state suspended",
+   "psea_verifier": {
+    "expected": "ACCEPT",
+    "observed": "ACCEPT",
+    "detail": "VERIFIED",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "enrollment_state=suspended",
+    "verdict": "PASS"
+   },
+   "implementation_gap": "draft-yossif-psea-03 Section 3.14: a conforming Verifier MUST reject a proof whose enrollment is not active, so a conforming psea_verifier result is REFUSE. The reference Enrollment (src/psea.py) holds no lifecycle state and does not implement Section 3.14. psea_verifier is set to what the reference does."
+  },
+  {
+   "id": "DR-C4",
+   "differs": "proof signed by a key that is not the enrolled key",
+   "psea_verifier": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "SIG_INVALID",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "psea_verifier_refused",
+    "verdict": "PASS"
+   }
+  },
+  {
+   "id": "DR-C5",
+   "differs": "valid proof, same subject and action, jti != approvalId",
+   "psea_verifier": {
+    "expected": "ACCEPT",
+    "observed": "ACCEPT",
+    "detail": "VERIFIED",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "jti!=approvalId",
+    "verdict": "PASS"
+   }
+  },
+  {
+   "id": "DR-C6",
+   "differs": "proof over different action bytes (amount 501 instead of 500)",
+   "psea_verifier": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "DIGEST_MISMATCH",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "psea_verifier_refused,action_digest_mismatch",
+    "verdict": "PASS"
+   }
+  },
+  {
+   "id": "DR-C7",
+   "differs": "the DR-V1 proof presented a second time to the same Verifier; the result recorded is the second presentation's",
+   "psea_verifier": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "JTI_REPLAY",
+    "verdict": "PASS"
+   },
+   "composition": {
+    "expected": "REFUSE",
+    "observed": "REFUSE",
+    "detail": "psea_verifier_refused",
+    "verdict": "PASS"
+   }
+  }
+ ]
+}

@@ -1,0 +1,8 @@
+{
+ "_label": "Approval-record fields of draft-gruszka-audit-decision-receipts-05 (approver, actionDigest, approvalId). Correlation jti -> approvalId is PROVISIONAL.",
+ "approver": "alice",
+ "actionDigest": {
+  "sha256": "c4edf63992f8497519a4296d3559c37077f7abb3f6951985f82af7a510de902f"
+ },
+ "approvalId": "BgVXFoeczie5vAc-"
+}

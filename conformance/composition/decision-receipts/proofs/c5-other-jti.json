@@ -1,0 +1,6 @@
+{
+ "note": "Enrolled key, the set's action bytes, jti not equal to approvalId.",
+ "generated_with": "conformance/src/psea.py Attester (psea-spec e402b79)",
+ "signed_action_jcs": "{\"amount\":500,\"operation\":\"transfer\",\"target\":\"acct-9\"}",
+ "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6InBzZWEtcHJvb2Yrand0Iiwia2lkIjoiZHItdGVzdC1lczI1Ni0yMDI2LTExIn0.eyJpc3MiOiJhcy5leGFtcGxlIiwiYXVkIjoicnMuZXhhbXBsZSIsImlhdCI6MTc5NDIwODgwOSwiZXhwIjoxNzk0MjA5MTA5LCJqdGkiOiJkci1vdGhlci1hcHByb3ZhbC1ldmVudCIsInVlaWQiOiJBZEZRdzA0Y1BHZXFWNTJlZEZiYmxrdjFaQ0Y0NEFPaWdicmx6T1VoUVN0ViIsImVhdF9wcm9maWxlIjoiaHR0cHM6Ly9kYXRhdHJhY2tlci5pZXRmLm9yZy9kb2MvZHJhZnQteW9zc2lmLXBzZWEvIiwicHNlYV9vcCI6InBheW1lbnQuZXhlY3V0ZSIsInBzZWFfdGllciI6ImhpZ2giLCJwc2VhX3BheWxvYWRfaGFzaCI6InhPMzJPWkw0U1hVWnBDbHROVm5EY0hmM3E3UDJsUm1GK0NyM3BSRGVrQzg9IiwicHNlYV9jb3VudGVyIjoxLCJwc2VhX3V2Ijp7InZlcmlmaWVkIjp0cnVlLCJtZXRob2QiOiJiaW9tZXRyaWMifSwicHNlYV9wcm9vZl92ZXJzaW9uIjoiMSJ9.nHBN3xTBqjOYL7N-Hm8mXs0PUdz5Ni8wDyF2mFAvIZIavaR5Vb17SFIpSc0tWv2alwc7rzTD7L315Jw48yrsSQ"
+}

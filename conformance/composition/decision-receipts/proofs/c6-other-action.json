@@ -1,0 +1,6 @@
+{
+ "note": "Enrolled key, signed over the set's action with amount changed from 500 to 501.",
+ "generated_with": "conformance/src/psea.py Attester (psea-spec e402b79)",
+ "signed_action_jcs": "{\"amount\":501,\"operation\":\"transfer\",\"target\":\"acct-9\"}",
+ "token": "eyJhbGciOiJFUzI1NiIsInR5cCI6InBzZWEtcHJvb2Yrand0Iiwia2lkIjoiZHItdGVzdC1lczI1Ni0yMDI2LTExIn0.eyJpc3MiOiJhcy5leGFtcGxlIiwiYXVkIjoicnMuZXhhbXBsZSIsImlhdCI6MTc5NDIwODgwOSwiZXhwIjoxNzk0MjA5MTA5LCJqdGkiOiJCZ1ZYRm9lY3ppZTV2QWMtIiwidWVpZCI6IkFkRlF3MDRjUEdlcVY1MmVkRmJibGt2MVpDRjQ0QU9pZ2JybHpPVWhRU3RWIiwiZWF0X3Byb2ZpbGUiOiJodHRwczovL2RhdGF0cmFja2VyLmlldGYub3JnL2RvYy9kcmFmdC15b3NzaWYtcHNlYS8iLCJwc2VhX29wIjoicGF5bWVudC5leGVjdXRlIiwicHNlYV90aWVyIjoiaGlnaCIsInBzZWFfcGF5bG9hZF9oYXNoIjoiSkNxdGN6R01hM3NEblZpQlgzNmRZNE5VT2ZlRS9BK2JZenIvYlZnZ1I2az0iLCJwc2VhX2NvdW50ZXIiOjEsInBzZWFfdXYiOnsidmVyaWZpZWQiOnRydWUsIm1ldGhvZCI6ImJpb21ldHJpYyJ9LCJwc2VhX3Byb29mX3ZlcnNpb24iOiIxIn0.5aoLjhJrHfHHBi4qiiQLQBmHMhc7PL6jpwwRjfv_uPsfawgmj90U8pduOQ0PjKX33UPTr1YabgT29DJybE95LQ"
+}

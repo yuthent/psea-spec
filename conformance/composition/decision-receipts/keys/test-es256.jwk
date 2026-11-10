@@ -1,0 +1,9 @@
+{
+ "_label": "TEST ONLY. Generated for this vector set. The private part is published on purpose so anyone can re-sign. Never trust it.",
+ "kid": "dr-test-es256-2026-11",
+ "kty": "EC",
+ "crv": "P-256",
+ "x": "ZQRSECfW83HNHMdLLLv85bvFfOS0emwNb4nODud2A5s",
+ "y": "5KwKut1kJf_wZTw6-PVQbvteoperAHtKv3DiPYjBbzc",
+ "d": "sLZ47rtNhca4g9P_d5qeC4cBd84IpOGHIYQ54OV8HGQ"
+}

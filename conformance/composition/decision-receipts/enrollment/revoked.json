@@ -1,0 +1,14 @@
+{
+ "_label": "Test fixture, not a normative format. PSEA -03 does not define the enrollment ceremony (Section 3.13.3).",
+ "enrollment_id": "enr-dr-revoked",
+ "kid": "dr-test-es256-2026-11",
+ "public_jwk": {
+  "kty": "EC",
+  "crv": "P-256",
+  "x": "ZQRSECfW83HNHMdLLLv85bvFfOS0emwNb4nODud2A5s",
+  "y": "5KwKut1kJf_wZTw6-PVQbvteoperAHtKv3DiPYjBbzc"
+ },
+ "jwk_thumbprint_rfc7638": "rKifIzigu7c_cLqq1WckjAPulISAEaE_nvTZMFI7m6s",
+ "state": "revoked",
+ "subject": "alice"
+}
