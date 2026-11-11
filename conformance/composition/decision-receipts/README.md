@@ -144,6 +144,24 @@ file is its RFC 8785 serialization.
 At-most-once consumption of an approval is the receipt side's check and is not
 exercised by these vectors.
 
+## Independent runs
+
+Konrad Gruszka ran this set with proofbundle
+(<https://github.com/b7n0de/proofbundle>) at commit
+`e564369b9765af02fcdb60d1162b9c9e96189f70`, and reported the result by email
+on 11 November 2026. He permits citing it.
+
+- Inputs: this set at `46b3538` and again at `2371bdd`. The vector inputs are
+  byte-identical between the two apart from `approval/approval-A.json`.
+  `gen.py` and `run.py` were not run; the files were read as data.
+- Result: 8 of 8 vectors give the expected composition result. proofbundle
+  alone decides DR-V1, DR-C1, DR-C4 and DR-C7. For DR-C2, DR-C3, DR-C5 and
+  DR-C6 the refusal came from his script's comparisons: enrollment state,
+  `jti` equal to `approvalId`, and `psea_payload_hash` against SHA-256 of the
+  action bytes.
+- Not measured: the checks only a PSEA Verifier makes (claims, freshness,
+  counter, UV).
+
 ## Out of scope
 
 - Outcome receipts and the decision receipt itself, including the citation of
@@ -165,4 +183,4 @@ python3 run.py --check
 run while `keys/test-es256.jwk` exists, because ECDSA signatures are
 randomized and regenerating would replace every proof.
 
-Status: single implementation, not yet cross-run.
+Status: one independent cross-run recorded; see "Independent runs" above.

@@ -136,7 +136,7 @@ def main():
         "profile": "draft-yossif-psea-03",
         "counterpart": "draft-gruszka-audit-decision-receipts-05",
         "correlation": "jti -> approvalId (agreed with the decision-receipts side)",
-        "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",
+        "status": "ONE_INDEPENDENT_CROSS_RUN_RECORDED (README.md, Independent runs)",
         "rows": rows,
     }, indent=1) + "\n"
     sys.stdout.write(out)
