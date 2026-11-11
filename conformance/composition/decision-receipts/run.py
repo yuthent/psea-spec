@@ -104,7 +104,11 @@ def main():
     action = json.loads(action_bytes)
     if canonicalize(action) != action_bytes:
         sys.exit("action bytes are not RFC 8785 canonical")
-    approval = load(ctx["approval"])
+    approval_bytes = load_bytes(ctx["approval"])
+    approval = json.loads(approval_bytes)
+    if canonicalize(approval) != approval_bytes:
+        sys.exit("approval record bytes are not RFC 8785 canonical: "
+                 + ctx["approval"])
 
     rows = []
     for vec in spec["vectors"]:
