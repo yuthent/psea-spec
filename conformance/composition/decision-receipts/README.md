@@ -76,12 +76,11 @@ The decision-receipt side's own at-most-once check is out of scope here.
   that window (`vectors.json`, `context.now`), so the result does not depend on
   the clock. The C4 signing key was ephemeral and was not kept.
 
-## Correlation: PROVISIONAL
+## Correlation
 
-The approval event is joined to the proof as `jti -> approvalId`. The
-counterpart has not confirmed which approval-record field correlates with
-`jti` or `psea_counter`. C5 depends on that choice. If the correlation
-changes, C5 and its fixtures change with it.
+The approval event is joined to the proof as `jti -> approvalId`, agreed with
+the decision-receipts side; see "Approval-event correlation" below. C5 depends
+on it.
 
 ## Integration contract (PSEA side, draft)
 
@@ -113,8 +112,13 @@ padding. Exercised by DR-C6.
 
 ### Approval-event correlation
 
-`jti -> approvalId`. **PROVISIONAL**, to be agreed with the decision-receipts
-side. Exercised by DR-C5.
+`jti -> approvalId`. **Agreed with the decision-receipts side.** One PSEA proof
+is one approval act: `approvalId` carries the `jti` of that proof, and
+`actionDigest` is SHA-256 of the same RFC 8785 action bytes. Replay of a proof
+is refused by the PSEA verifier (`jti` once, `psea_counter` strictly increasing
+per key); a second use of the same approval is refused by the receipt side's
+consumption check keyed by `approvalId`, `actionDigest` and session. PSEA
+carries no session claim; session stays on the receipt side. Exercised by DR-C5.
 
 ### Rejection behaviour
 
@@ -128,6 +132,9 @@ side. Exercised by DR-C5.
 | DR-C5 | composition check | `jti!=approvalId` |
 | DR-C6 | PSEA verifier | `DIGEST_MISMATCH` (composition also: `action_digest_mismatch`) |
 | DR-C7 | PSEA verifier | `JTI_REPLAY` on the second presentation |
+
+At-most-once consumption of an approval is the receipt side's check and is not
+exercised by these vectors.
 
 ## Out of scope
 
