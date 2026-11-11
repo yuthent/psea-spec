@@ -1,8 +1,1 @@
-{
- "_label": "Approval-record fields of draft-gruszka-audit-decision-receipts-05 (approver, actionDigest, approvalId). Correlation jti -> approvalId agreed with the decision-receipts side.",
- "approver": "alice",
- "actionDigest": {
-  "sha256": "c4edf63992f8497519a4296d3559c37077f7abb3f6951985f82af7a510de902f"
- },
- "approvalId": "BgVXFoeczie5vAc-"
-}
+{"actionDigest":{"sha256":"c4edf63992f8497519a4296d3559c37077f7abb3f6951985f82af7a510de902f"},"approvalId":"BgVXFoeczie5vAc-","approvedAt":"2026-11-09T07:20:09Z","approver":"alice","session":"dr-session-1","validUntil":"2026-11-09T07:25:09Z"}

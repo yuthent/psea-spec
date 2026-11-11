@@ -8,7 +8,7 @@ files are the vectors, and run.py only reads them.
 Refuses to run if the key file already exists, so the committed key and proofs
 cannot be replaced by accident.
 """
-import base64, hashlib, json, os, sys
+import base64, datetime, hashlib, json, os, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "..", "src"))
@@ -21,6 +21,7 @@ ISS, AUD, OP, TIER = "as.example", "rs.example", "payment.execute", "high"
 IAT = 1794208809
 EXP = IAT + 300
 APPROVAL_ID = "BgVXFoeczie5vAc-"
+SESSION = "dr-session-1"
 ACTION_PATH = os.path.join(HERE, "action", "action.json")
 GENERATED_WITH = "conformance/src/psea.py Attester (psea-spec e402b79)"
 
@@ -30,6 +31,11 @@ def write(rel, obj):
     with open(path, "w", encoding="utf-8") as fh:
         json.dump(obj, fh, indent=1, ensure_ascii=False)
         fh.write("\n")
+
+
+def iso_utc(t):
+    return datetime.datetime.fromtimestamp(
+        t, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def coord(n):
@@ -89,15 +95,18 @@ def main():
             "subject": subject,
         })
 
-    write("approval/approval-A.json", {
-        "_label": "Approval-record fields of "
-                  "draft-gruszka-audit-decision-receipts-05 (approver, "
-                  "actionDigest, approvalId). Correlation jti -> approvalId "
-                  "agreed with the decision-receipts side.",
-        "approver": "alice",
-        "actionDigest": {"sha256": hashlib.sha256(action_bytes).hexdigest()},
-        "approvalId": APPROVAL_ID,
-    })
+    # The approval record is written as its RFC 8785 bytes, with no label
+    # and no trailing newline, so that its canonical form is the file itself.
+    # approvedAt and validUntil are the iat and exp of the v1 proof.
+    with open(os.path.join(HERE, "approval", "approval-A.json"), "wb") as fh:
+        fh.write(canonicalize({
+            "approvalId": APPROVAL_ID,
+            "approver": "alice",
+            "actionDigest": {"sha256": hashlib.sha256(action_bytes).hexdigest()},
+            "session": SESSION,
+            "approvedAt": iso_utc(IAT),
+            "validUntil": iso_utc(EXP),
+        }))
 
     rogue = ec.generate_private_key(ec.SECP256R1())
     changed = dict(action, amount=action["amount"] + 1)

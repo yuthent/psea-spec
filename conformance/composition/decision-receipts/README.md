@@ -68,8 +68,13 @@ The decision-receipt side's own at-most-once check is out of scope here.
   and state. The fixture carries no UV-enforcement property, so
   UV anchoring is "asserted" and the Verifier runs with its default
   `high_assurance=False`. UV anchoring is not what this set tests.
-- `approval/approval-A.json`: the approval-record fields `approver`,
-  `actionDigest` and `approvalId` of draft-gruszka-audit-decision-receipts-05.
+- `approval/approval-A.json`: the approval record of
+  draft-gruszka-audit-decision-receipts-05 for DR-V1, as its RFC 8785 bytes
+  (no indentation, no trailing newline). It carries no label, because a label
+  inside the record would change its canonical bytes. `run.py` reads
+  `approver`, `actionDigest` and `approvalId`; `session`, `approvedAt` and
+  `validUntil` complete the record so that a verifier needs no reconstruction.
+  `approvedAt` and `validUntil` are the `iat` and `exp` of the DR-V1 proof.
 - `proofs/*.json`: PSEA -03 proofs produced by the reference Attester in
   `conformance/src/psea.py` via `gen.py`. None was written by hand. All share
   iat 1794208809 and exp 1794209109. `run.py` verifies at a fixed time inside
@@ -119,6 +124,9 @@ is refused by the PSEA verifier (`jti` once, `psea_counter` strictly increasing
 per key); a second use of the same approval is refused by the receipt side's
 consumption check keyed by `approvalId`, `actionDigest` and session. PSEA
 carries no session claim; session stays on the receipt side. Exercised by DR-C5.
+The record in `approval/approval-A.json` has the fields `approvalId`,
+`approver`, `actionDigest`, `session`, `approvedAt` and `validUntil`, and the
+file is its RFC 8785 serialization.
 
 ### Rejection behaviour
 
