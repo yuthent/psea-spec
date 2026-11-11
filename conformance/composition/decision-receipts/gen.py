@@ -93,7 +93,7 @@ def main():
         "_label": "Approval-record fields of "
                   "draft-gruszka-audit-decision-receipts-05 (approver, "
                   "actionDigest, approvalId). Correlation jti -> approvalId "
-                  "is PROVISIONAL.",
+                  "agreed with the decision-receipts side.",
         "approver": "alice",
         "actionDigest": {"sha256": hashlib.sha256(action_bytes).hexdigest()},
         "approvalId": APPROVAL_ID,

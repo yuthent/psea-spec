@@ -2,7 +2,7 @@
  "set": "psea-03 evidence inside a decision receipt (draft-gruszka-audit-decision-receipts-05)",
  "profile": "draft-yossif-psea-03",
  "counterpart": "draft-gruszka-audit-decision-receipts-05",
- "correlation": "jti -> approvalId (PROVISIONAL)",
+ "correlation": "jti -> approvalId (agreed with the decision-receipts side)",
  "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",
  "rows": [
   {

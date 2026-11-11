@@ -70,7 +70,7 @@ def compose(psea_observed, enrollment, approval, action_bytes, token):
       1. enrollment state is active
       2. enrollment subject == approval approver (principal.id)
       3. SHA-256(action bytes) == approval actionDigest == decoded psea_payload_hash
-      4. proof jti == approvalId (PROVISIONAL correlation)
+      4. proof jti == approvalId (correlation agreed with the decision-receipts side)
     At-most-once is not checked here.  Replay is refused by the PSEA Verifier's
     own state, and that refusal reaches this column through psea_observed.
     """
@@ -131,7 +131,7 @@ def main():
         "set": spec["set"],
         "profile": "draft-yossif-psea-03",
         "counterpart": "draft-gruszka-audit-decision-receipts-05",
-        "correlation": "jti -> approvalId (PROVISIONAL)",
+        "correlation": "jti -> approvalId (agreed with the decision-receipts side)",
         "status": "SINGLE_IMPLEMENTATION_NOT_YET_CROSS_RUN",
         "rows": rows,
     }, indent=1) + "\n"
